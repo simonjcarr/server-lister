@@ -150,16 +150,19 @@ export const servers = sqliteTable(
     description: text("description"),
     docLink: text("docLink"),
     business: integer("business"),
+    itar: integer("itar").notNull(),
+    secureServer: integer("secureServer").notNull(),
     updatedAt: text("updated_at").notNull(),
-    createdAt: text("created_at").notNull()
-  }, (table) => [
+    createdAt: text("created_at").notNull(),
+  },
+  (table) => [
     uniqueIndex("unique_server_hostname_idx").on(table.hostname),
     uniqueIndex("unique_server_ipv4_idx").on(table.ipv4),
     uniqueIndex("unique_server_ipv6_idx").on(table.ipv6),
     index("server_project_id_idx").on(table.projectId),
-    index("server_business_id_idx").on(table.business)
+    index("server_business_id_idx").on(table.business),
   ]
-)
+);
 
 export const collections = sqliteTable(
   "collections",
@@ -260,3 +263,65 @@ export const posts = sqliteTable(
     index("post_server_id_idx").on(table.serverId)
   ]
 )
+
+export const applications = sqliteTable(
+  "applications",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    name: text("name").notNull(),
+    description: text("description"),
+    docLink: text("docLink"),
+    updatedAt: text("updated_at").notNull(),
+    createdAt: text("created_at").notNull(),
+  }, (table) => [
+    uniqueIndex("unique_application_name_idx").on(table.name)
+  ]
+)
+
+export const applications_servers = sqliteTable(
+  "applications_servers",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    applicationId: integer("applicationId").notNull().references(() => applications.id, { onDelete: "cascade" }),
+    serverId: integer("serverId").notNull().references(() => servers.id, { onDelete: "cascade" }),
+    createdAt: text("created_at").notNull(),
+  }, (table) => [
+    uniqueIndex("applications_server_application_id_server_id_idx").on(table.applicationId, table.serverId),
+    index("applications_server_application_id_idx").on(table.applicationId),
+    index("applications_server_server_id_idx").on(table.serverId)
+  ]
+)
+
+export const locations = sqliteTable(
+  "locations",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    name: text("name").notNull(),
+    contactName: text("contactName"),
+    contactEmail: text("contactEmail"),
+    contactPhone: text("contactPhone"),
+    address: text("address"),
+    description: text("description"),
+    latitude: text("latitude"),
+    longitude: text("longitude"),
+    updatedAt: text("updated_at").notNull(),
+    createdAt: text("created_at").notNull(),
+  }, (table) => [
+    uniqueIndex("unique_location_name_idx").on(table.name)
+  ]
+)
+
+export const locations_servers = sqliteTable(
+  "locations_servers",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    locationId: integer("locationId").notNull().references(() => locations.id, { onDelete: "cascade" }),
+    serverId: integer("serverId").notNull().references(() => servers.id, { onDelete: "cascade" }),
+    createdAt: text("created_at").notNull(),
+  }, (table) => [
+    uniqueIndex("locations_server_location_id_server_id_idx").on(table.locationId, table.serverId),
+    index("locations_server_location_id_idx").on(table.locationId),
+    index("locations_server_server_id_idx").on(table.serverId)
+  ]
+)
+
