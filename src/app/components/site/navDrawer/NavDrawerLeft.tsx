@@ -29,7 +29,7 @@ const App: React.FC = () => {
         </Button>
       </Space>
       <Drawer
-        title="Basic Drawer"
+        title="Menu"
         placement={placement}
         closable={false}
         onClose={onClose}
