@@ -21,6 +21,14 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     setIsDarkMode(savedTheme === 'dark');
   }, []);
 
+  useEffect(() => {
+    if (isDarkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [isDarkMode]);
+
   const toggleTheme = () => {
     setIsDarkMode(prev => {
       const newTheme = !prev;
@@ -36,6 +44,16 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       <ConfigProvider
         theme={{
           algorithm: isDarkMode ? darkAlgorithm : defaultAlgorithm,
+          token: {
+            colorBgContainer: isDarkMode ? '#1f1f1f' : '#ffffff',
+            colorText: isDarkMode ? '#e5e7eb' : '#171717',
+          },
+          components: {
+            Layout: {
+              bodyBg: isDarkMode ? '#121212' : '#ffffff',
+              headerBg: isDarkMode ? '#1f1f1f' : '#ffffff',
+            },
+          },
         }}
       >
         {children}
