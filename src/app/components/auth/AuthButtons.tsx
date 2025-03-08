@@ -1,4 +1,5 @@
 import { signIn, signOut } from "@/auth"
+import { Button } from "antd"
 
 export function SignIn() {
   return (
@@ -8,7 +9,7 @@ export function SignIn() {
         await signIn("dex")
       }}
     >
-      <button type="submit">Signin</button>
+      <Button type="primary" htmlType="submit">Signin</Button>
     </form>
   )
 } 
@@ -21,7 +22,7 @@ export function SignOut() {
         await signOut()
       }}
     >
-      <button type="submit">Sign Out</button>
+      <Button type="primary" htmlType="submit">Sign Out</Button>
     </form>
   )
 }
