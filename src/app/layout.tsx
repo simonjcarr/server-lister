@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import SiteHeader from "./components/site/SiteHeader";
+import { SiteHeader } from "./components/site/SiteHeader";
 import { Layout } from "antd";
+import { ThemeProvider } from './theme/ThemeProvider';
+import { Providers } from './providers';
 
 const { Header } = Layout;
 
@@ -28,14 +30,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        
-        <div className="container mx-auto">
-          <SiteHeader />
-          {children}
-        </div>
+      <body className={`${geistSans.variable} ${geistMono.variable} dark:bg-gray-900 bg-gray-200`}>
+        <Providers>
+          <Layout>
+            <SiteHeader />
+            {children}
+          </Layout>
+        </Providers>
       </body>
     </html>
   );

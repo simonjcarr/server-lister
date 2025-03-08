@@ -1,27 +1,19 @@
-import { signIn, signOut } from "@/auth"
+'use client';
+
 import { Button } from "antd"
+import { signInAction, signOutAction } from "@/app/actions/authActions";
 
 export function SignIn() {
   return (
-    <form
-      action={async () => {
-        "use server"
-        await signIn("dex")
-      }}
-    >
-      <Button type="primary" htmlType="submit">Signin</Button>
+    <form action={signInAction}>
+      <Button type="primary" htmlType="submit">Sign In</Button>
     </form>
   )
 } 
 
 export function SignOut() {
   return (
-    <form
-      action={async () => {
-        "use server"
-        await signOut()
-      }}
-    >
+    <form action={signOutAction}>
       <Button type="primary" htmlType="submit">Sign Out</Button>
     </form>
   )
