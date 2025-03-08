@@ -1,16 +1,88 @@
-import { sqliteTable, text, integer, uniqueIndex,  index } from "drizzle-orm/sqlite-core";
+import { sqliteTable, text, integer, uniqueIndex,  index, primaryKey } from "drizzle-orm/sqlite-core";
 
 export const users = sqliteTable(
-  "users",
+  "user",
   {
     id: integer("id").primaryKey({ autoIncrement: true }),
+    name: text("name"),
     email: text("email").unique().notNull(),
+    emailVerified: text("emailVerified"),
+    image: text("image"),
     createdAt: text("created_at").notNull(),
     updatedAt: text("updated_at").notNull(),
   },
   (table) => [
     uniqueIndex("unique_email_idx").on(table.email)
 ]);
+
+export const verificationTokens = sqliteTable(
+  "verificationToken",
+  {
+    identifier: text("identified").notNull(),
+    token: text("token").notNull(),
+    expires: text("expires").notNull(),
+  },
+  (verificationToken) => ({
+    compositePk: primaryKey({
+      columns: [verificationToken.identifier, verificationToken.token],
+    }),
+  })
+);
+
+export const accounts = sqliteTable(
+  "account",
+  {
+    userId: integer("userId").notNull(),
+    type: text("type").notNull(),
+    provider: text("provider").notNull(),
+    providerAccountId: text("providerAccountId").notNull(),
+    refresh_token: text("refresh_token"),
+    access_token: text("access_token"),
+    expires_at: integer("expires_at"),
+    token_type: text("token_type"),
+    scope: text("scope"),
+    id_token: text("id_token"),
+    session_state: text("session_state"),
+  },
+  (account) => ({
+    compoundKey: primaryKey({
+      columns: [account.provider, account.providerAccountId],
+    }),
+  })
+);
+
+export const authenticators = sqliteTable(
+  "authenticator",
+  {
+    credentialID: text("credentialID").notNull().unique(),
+    userId: text("userId")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    providerAccountId: text("providerAccountId").notNull(),
+    credentialPublicKey: text("credentialPublicKey").notNull(),
+    counter: integer("counter").notNull(),
+    credentialDeviceType: text("credentialDeviceType").notNull(),
+    credentialBackedUp: integer("credentialBackedUp", {
+      mode: "boolean",
+    }).notNull(),
+    transports: text("transports"),
+  },
+  (authenticator) => ({
+    compositePK: primaryKey({
+      columns: [authenticator.userId, authenticator.credentialID],
+    }),
+  })
+);
+
+export const sessions = sqliteTable(
+  "session",
+{
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  userId: integer("user_id").notNull(),
+  expires: text("expires").notNull(),
+  sessionToken: text("session_token").notNull(),
+}
+)
 
 export const projects = sqliteTable(
   "projects",
