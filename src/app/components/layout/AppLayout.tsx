@@ -2,7 +2,7 @@
 
 import { Layout as AntdLayout } from 'antd';
 import { ReactNode } from 'react';
-import NavDrawerLeft from '../site/NavDrawerLeft';
+import NavDrawerLeft from '../site/navDrawer/NavDrawerLeft';
 
 type AppLayoutProps = {
   children: ReactNode;
@@ -12,10 +12,13 @@ type AppLayoutProps = {
 export function AppLayout({ children, header }: AppLayoutProps) {
   return (
     <AntdLayout style={{ minHeight: '100vh' }}>
-      {header}
-      <AntdLayout.Content className="p-4">
-        {children}
-      </AntdLayout.Content>
+      <div className='container mx-auto'>
+        {header}
+        <AntdLayout.Content className="">
+          {children}
+        </AntdLayout.Content>
+      </div>
+      
     </AntdLayout>
   );
 }

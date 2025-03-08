@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import type { DrawerProps, RadioChangeEvent } from 'antd';
 import { Button, Drawer, Radio, Space } from 'antd';
 import { Menu } from 'lucide-react';
+import ServerMenu from './ServerMenu';
 
 const App: React.FC = () => {
   const [open, setOpen] = useState(false);
@@ -35,9 +36,7 @@ const App: React.FC = () => {
         open={open}
         key={placement}
       >
-        <p>Some contents...</p>
-        <p>Some contents...</p>
-        <p>Some contents...</p>
+        <ServerMenu />
       </Drawer>
     </>
   );
