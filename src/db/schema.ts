@@ -1,26 +1,22 @@
 import { sqliteTable, text, integer, uniqueIndex,  index, primaryKey } from "drizzle-orm/sqlite-core";
+import type { AdapterAccountType } from "next-auth/adapters";
 
-export const users = sqliteTable(
-  "user",
-  {
-    id: integer("id").primaryKey({ autoIncrement: true }),
-    name: text("name"),
-    email: text("email").unique().notNull(),
-    emailVerified: text("emailVerified"),
-    image: text("image"),
-    createdAt: text("created_at").notNull(),
-    updatedAt: text("updated_at").notNull(),
-  },
-  (table) => [
-    uniqueIndex("unique_email_idx").on(table.email)
-]);
+export const users = sqliteTable("user", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  name: text("name"),
+  email: text("email").unique(),
+  emailVerified: integer("emailVerified", { mode: "timestamp_ms" }),
+  image: text("image"),
+});
 
 export const verificationTokens = sqliteTable(
   "verificationToken",
   {
-    identifier: text("identified").notNull(),
+    identifier: text("identifier").notNull(),
     token: text("token").notNull(),
-    expires: text("expires").notNull(),
+    expires: integer("expires", { mode: "timestamp_ms" }).notNull(),
   },
   (verificationToken) => ({
     compositePk: primaryKey({
@@ -32,8 +28,10 @@ export const verificationTokens = sqliteTable(
 export const accounts = sqliteTable(
   "account",
   {
-    userId: integer("userId").notNull(),
-    type: text("type").notNull(),
+    userId: text("userId")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    type: text("type").$type<AdapterAccountType>().notNull(),
     provider: text("provider").notNull(),
     providerAccountId: text("providerAccountId").notNull(),
     refresh_token: text("refresh_token"),
@@ -54,7 +52,7 @@ export const accounts = sqliteTable(
 export const authenticators = sqliteTable(
   "authenticator",
   {
-    credentialID: text("credentialID").notNull().unique(),
+    credentialID: text("credentialID").notNull(),
     userId: text("userId")
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
@@ -74,15 +72,13 @@ export const authenticators = sqliteTable(
   })
 );
 
-export const sessions = sqliteTable(
-  "session",
-{
-  id: integer("id").primaryKey({ autoIncrement: true }),
-  userId: integer("user_id").notNull(),
-  expires: text("expires").notNull(),
-  sessionToken: text("session_token").notNull(),
-}
-)
+export const sessions = sqliteTable("session", {
+  sessionToken: text("sessionToken").primaryKey(),
+  userId: text("userId")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  expires: integer("expires", { mode: "timestamp_ms" }).notNull(),
+});
 
 export const projects = sqliteTable(
   "projects",
@@ -197,8 +193,8 @@ export const users_servers = sqliteTable(
   "users_servers",
   {
     id: integer("id").primaryKey({ autoIncrement: true }),
-    userId: integer("userId").notNull(),
-    serverId: integer("serverId").notNull(),
+    userId: text("userId").notNull().references(() => users.id, { onDelete: "cascade" }),
+    serverId: integer("serverId").notNull().references(() => servers.id, { onDelete: "cascade" }),
     createdAt: text("created_at").notNull(),
   }, (table) => [
     uniqueIndex("users_server_user_id_server_id_idx").on(table.userId, table.serverId),
@@ -225,8 +221,8 @@ export const servers_tags = sqliteTable(
   "servers_tags",
   {
     id: integer("id").primaryKey({ autoIncrement: true }),
-    serverId: integer("serverId").notNull(),
-    tagId: integer("tagId").notNull(),
+    serverId: integer("serverId").notNull().references(() => servers.id, { onDelete: "cascade" }),
+    tagId: integer("tagId").notNull().references(() => tags.id, { onDelete: "cascade" }),
     createdAt: text("created_at").notNull(),
   }, (table) => [
     uniqueIndex("servers_tag_server_id_tag_id_idx").on(table.serverId, table.tagId),
@@ -239,8 +235,8 @@ export const collections_tags = sqliteTable(
   "collections_tags",
   {
     id: integer("id").primaryKey({ autoIncrement: true }),
-    collectionId: integer("collectionId").notNull(),
-    tagId: integer("tagId").notNull(),
+    collectionId: integer("collectionId").notNull().references(() => collections.id, { onDelete: "cascade" }),
+    tagId: integer("tagId").notNull().references(() => tags.id, { onDelete: "cascade" }),
     createdAt: text("created_at").notNull(),
   }, (table) => [
     uniqueIndex("collections_tag_collection_id_tag_id_idx").on(table.collectionId, table.tagId),
@@ -255,8 +251,8 @@ export const posts = sqliteTable(
     id: integer("id").primaryKey({ autoIncrement: true }),
     title: text("title").notNull(),
     content: text("content").notNull(),
-    authorId: integer("authorId"),
-    serverId: integer("serverId"),
+    authorId: text("authorId").notNull().references(() => users.id, { onDelete: "cascade" }),
+    serverId: integer("serverId").notNull().references(() => servers.id, { onDelete: "cascade" }),
     created_at: text("created_at").notNull(),
     updated_at: text("updated_at").notNull(),
   }, (table) => [
@@ -264,8 +260,3 @@ export const posts = sqliteTable(
     index("post_server_id_idx").on(table.serverId)
   ]
 )
-
-
-
-
-
