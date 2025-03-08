@@ -325,3 +325,32 @@ export const locations_servers = sqliteTable(
   ]
 )
 
+export const os = sqliteTable(
+  "os",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    name: text("name").notNull(),
+    version: text("version"),
+    EOLDate: text("eol_date"),
+    description: text("description"),
+    updatedAt: text("updated_at").notNull(),
+    createdAt: text("created_at").notNull(),
+  }, (table) => [
+    uniqueIndex("unique_os_name_idx").on(table.name)
+  ]
+)
+
+export const os_servers = sqliteTable(
+  "os_servers",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    osId: integer("osId").notNull().references(() => os.id, { onDelete: "cascade" }),
+    serverId: integer("serverId").notNull().references(() => servers.id, { onDelete: "cascade" }),
+    createdAt: text("created_at").notNull(),
+  }, (table) => [
+    uniqueIndex("os_server_os_id_server_id_idx").on(table.osId, table.serverId),
+    index("os_server_os_id_idx").on(table.osId),
+    index("os_server_server_id_idx").on(table.serverId)
+  ]
+)
+
