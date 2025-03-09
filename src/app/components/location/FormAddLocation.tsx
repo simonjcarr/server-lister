@@ -53,7 +53,7 @@ export default function FormAddLocation() {
       extra={<Text type="secondary" className="dark:text-gray-300">Create a new server location</Text>}
       className="dark:bg-gray-800 dark:border-gray-700"
       headStyle={{ color: 'inherit' }}
-      bodyStyle={{ color: 'inherit' }}
+      styles={{ body: { color: 'inherit' } }}
     >
       {contextHolder}
       <Form

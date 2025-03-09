@@ -9,6 +9,25 @@ const { Text } = Typography;
 import { addServer } from '@/app/actions/server/crudActions';
 import { getIP } from '@/app/actions/utils/getIP';
 import { getLocations } from '@/app/actions/location/crudActions';
+import { getBusinesses } from '@/app/actions/business/crudActions';
+import { getProjects } from '@/app/actions/projects/crudActions';
+
+interface Business {
+  id: number;
+  name: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface Project {
+  id: number;
+  name: string;
+  description?: string;
+  business?: number;
+  code?: string;
+  createdAt: string;
+  updatedAt: string;
+}
 
 function FormAddServer() {
   const [form] = Form.useForm();
@@ -16,6 +35,8 @@ function FormAddServer() {
   const [messageApi, contextHolder] = notification.useNotification();
   const [osList, setOsList] = useState<InsertOS[]>([]);
   const [locationList, setLocationList] = useState<InsertLocation[]>([]);
+  const [businessList, setBusinessList] = useState<Business[]>([]);
+  const [projectList, setProjectList] = useState<Project[]>([]);
   const [formSubmitStatus, setFormSubmitStatus] = useState<{ status: 'idle' | 'success' | 'error', message?: string }>({ status: 'idle' });
 
 
@@ -28,8 +49,26 @@ function FormAddServer() {
       const locationList = await getLocations();
       setLocationList(locationList);
     };
+    const fetchBusinesses = async () => {
+      const result = await getBusinesses();
+      if (result.success && result.data) {
+        setBusinessList(result.data as Business[]);
+      } else {
+        console.error('Error fetching businesses:', result.error);
+      }
+    };
+    const fetchProjects = async () => {
+      const result = await getProjects();
+      if (result.success && result.data) {
+        setProjectList(result.data as Project[]);
+      } else {
+        console.error('Error fetching projects:', result.error);
+      }
+    };
     fetchOS();
     fetchLocation();
+    fetchBusinesses();
+    fetchProjects();
   }, []);
 
   // Handle notifications based on form submission status
@@ -58,7 +97,7 @@ function FormAddServer() {
         itar: values.itar ? 1 : 0,
         secureServer: values.secureServer ? 1 : 0
       };
-      
+
       // Submit to server action
       const result = await addServer(formattedValues);
 
@@ -93,33 +132,37 @@ function FormAddServer() {
     }
   };
   return (
-    <Card 
-      title="Add Server" 
+    <Card
+      title="Add Server"
       className="dark:bg-gray-800 dark:border-gray-700"
       styles={{
         header: { color: 'inherit' },
         body: { color: 'inherit' }
       }}
     >
-      <Form 
-        form={form} 
-        onFinish={onFinish} 
-        layout="vertical" 
+      <Form
+        form={form}
+        onFinish={onFinish}
+        layout="vertical"
         initialValues={{
           hostname: "",
           ipv4: "",
           ipv6: "",
           locationId: null,
           osId: null,
+          business: null,
+          projectId: null,
           description: "",
           itar: false,
           secureServer: false,
         }}
         className="dark:text-white"
       >
-        <Form.Item 
-          name="hostname" 
-          label="Hostname" 
+
+
+        <Form.Item
+          name="hostname"
+          label="Hostname"
           rules={[
             {
               required: true,
@@ -128,16 +171,16 @@ function FormAddServer() {
           ]}
           className="dark:text-white"
         >
-          <Input 
-            onChange={(e) => handleHostnameChange(e.target.value)} 
+          <Input
+            onChange={(e) => handleHostnameChange(e.target.value)}
             className="dark:bg-gray-700 dark:text-white dark:border-gray-600"
           />
         </Form.Item>
         <Row gutter={[16, 16]}>
           <Col span={12}>
-            <Form.Item 
-              name="ipv4" 
-              label="IPv4" 
+            <Form.Item
+              name="ipv4"
+              label="IPv4"
               rules={[
                 {
                   required: false,
@@ -151,9 +194,9 @@ function FormAddServer() {
           </Col>
 
           <Col span={12}>
-            <Form.Item 
-              name="ipv6" 
-              label="IPv6" 
+            <Form.Item
+              name="ipv6"
+              label="IPv6"
               rules={[
                 {
                   required: false,
@@ -168,9 +211,9 @@ function FormAddServer() {
         </Row>
         <Row gutter={[16, 16]}>
           <Col span={12}>
-            <Form.Item 
-              name="osId" 
-              label="OS" 
+            <Form.Item
+              name="osId"
+              label="OS"
               rules={[
                 {
                   required: true,
@@ -194,9 +237,9 @@ function FormAddServer() {
             </Form.Item>
           </Col>
           <Col span={12}>
-            <Form.Item 
-              name="locationId" 
-              label="Location" 
+            <Form.Item
+              name="locationId"
+              label="Location"
               rules={[
                 {
                   required: true,
@@ -221,9 +264,77 @@ function FormAddServer() {
           </Col>
         </Row>
 
-        <Form.Item 
-          name="description" 
-          label="Description" 
+        <Row gutter={[16, 16]}>
+          <Col span={12}>
+            <Form.Item
+              name="business"
+              label="Business"
+              rules={[
+                {
+                  required: true,
+                  message: "Please select a business",
+                },
+              ]}
+              className="dark:text-white"
+            >
+              <Select
+                placeholder="Select a business"
+                style={{ width: "100%" }}
+                className="dark:bg-gray-700 dark:text-white dark:border-gray-600"
+                dropdownStyle={{ backgroundColor: 'var(--bg-dropdown)', color: 'var(--text-dropdown)' }}
+                allowClear
+              >
+                {businessList.map(business => (
+                  <Select.Option key={business.id} value={business.id}>
+                    {business.name}
+                  </Select.Option>
+                ))}
+              </Select>
+            </Form.Item>
+          </Col>
+          <Col span={12}>
+            <Form.Item
+              name="projectId"
+              label="Project"
+              rules={[
+                {
+                  required: true,
+                  message: "Please select a project",
+                },
+              ]}
+              className="dark:text-white"
+            >
+              <Select
+                placeholder="Select a project"
+                style={{ width: "100%" }}
+                className="dark:bg-gray-700 dark:text-white dark:border-gray-600"
+                dropdownStyle={{ backgroundColor: 'var(--bg-dropdown)', color: 'var(--text-dropdown)' }}
+              >
+                {projectList.map(project => (
+                  <Select.Option key={project.id} value={project.id}>
+                    {project.name}
+                  </Select.Option>
+                ))}
+              </Select>
+            </Form.Item>
+          </Col>
+        </Row>
+        <Form.Item
+          name="docLink"
+          label="Documentation Link"
+          rules={[
+            {
+              max: 500,
+              message: "Documentation link must not exceed 500 characters",
+            },
+          ]}
+          className="dark:text-white"
+        >
+          <Input className="dark:bg-gray-700 dark:text-white dark:border-gray-600" />
+        </Form.Item>
+        <Form.Item
+          name="description"
+          label="Description"
           rules={[
             {
               max: 500,
@@ -237,9 +348,9 @@ function FormAddServer() {
 
         <Row gutter={[16, 16]}>
           <Col>
-            <Form.Item 
-              name="itar" 
-              label="ITAR" 
+            <Form.Item
+              name="itar"
+              label="ITAR"
               rules={[
                 {
                   required: true,
@@ -252,9 +363,9 @@ function FormAddServer() {
             </Form.Item>
           </Col>
           <Col>
-            <Form.Item 
-              name="secureServer" 
-              label="Secure Server" 
+            <Form.Item
+              name="secureServer"
+              label="Secure Server"
               rules={[
                 {
                   required: true,
@@ -267,19 +378,6 @@ function FormAddServer() {
             </Form.Item>
           </Col>
         </Row>
-        <Form.Item 
-          name="docLink" 
-          label="Documentation Link" 
-          rules={[
-            {
-              max: 500,
-              message: "Documentation link must not exceed 500 characters",
-            },
-          ]}
-          className="dark:text-white"
-        >
-          <Input className="dark:bg-gray-700 dark:text-white dark:border-gray-600" />
-        </Form.Item>
         <Form.Item>
           <Button type="primary" htmlType="submit" loading={loading}>Add Server</Button>
         </Form.Item>
