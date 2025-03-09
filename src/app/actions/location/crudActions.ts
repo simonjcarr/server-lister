@@ -12,7 +12,7 @@ import type {
 export async function getLocations() {
   try {
     const locationResult: SelectLocation[] = await db.select().from(locations);
-    return locations;
+    return locationResult;
   } catch (error) {
     console.error("Error getting locations:", error);
     throw new Error("Failed to get locations");
