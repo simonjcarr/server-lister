@@ -93,59 +93,97 @@ function FormAddServer() {
     }
   };
   return (
-    <Card title="Add Server">
-      <Form form={form} onFinish={onFinish} layout="vertical" initialValues={{
-        hostname: "",
-        ipv4: "",
-        ipv6: "",
-        locationId: null,
-        osId: null,
-        description: "",
-        itar: false,
-        secureServer: false,
-      }}>
-        <Form.Item name="hostname" label="Hostname" rules={[
-          {
-            required: true,
-            message: "Please enter a hostname",
-          },
-        ]}>
-          <Input onChange={(e) => handleHostnameChange(e.target.value)} />
+    <Card 
+      title="Add Server" 
+      className="dark:bg-gray-800 dark:border-gray-700"
+      styles={{
+        header: { color: 'inherit' },
+        body: { color: 'inherit' }
+      }}
+    >
+      <Form 
+        form={form} 
+        onFinish={onFinish} 
+        layout="vertical" 
+        initialValues={{
+          hostname: "",
+          ipv4: "",
+          ipv6: "",
+          locationId: null,
+          osId: null,
+          description: "",
+          itar: false,
+          secureServer: false,
+        }}
+        className="dark:text-white"
+      >
+        <Form.Item 
+          name="hostname" 
+          label="Hostname" 
+          rules={[
+            {
+              required: true,
+              message: "Please enter a hostname",
+            },
+          ]}
+          className="dark:text-white"
+        >
+          <Input 
+            onChange={(e) => handleHostnameChange(e.target.value)} 
+            className="dark:bg-gray-700 dark:text-white dark:border-gray-600"
+          />
         </Form.Item>
         <Row gutter={[16, 16]}>
           <Col span={12}>
-            <Form.Item name="ipv4" label="IPv4" rules={[
-              {
-                required: false,
-                message: "Please enter an IPv4 address",
-              },
-            ]}>
-              <Input />
+            <Form.Item 
+              name="ipv4" 
+              label="IPv4" 
+              rules={[
+                {
+                  required: false,
+                  message: "Please enter an IPv4 address",
+                },
+              ]}
+              className="dark:text-white"
+            >
+              <Input className="dark:bg-gray-700 dark:text-white dark:border-gray-600" />
             </Form.Item>
           </Col>
 
           <Col span={12}>
-            <Form.Item name="ipv6" label="IPv6" rules={[
-              {
-                required: false,
-                message: "Please enter an IPv6 address",
-              },
-            ]}>
-              <Input />
+            <Form.Item 
+              name="ipv6" 
+              label="IPv6" 
+              rules={[
+                {
+                  required: false,
+                  message: "Please enter an IPv6 address",
+                },
+              ]}
+              className="dark:text-white"
+            >
+              <Input className="dark:bg-gray-700 dark:text-white dark:border-gray-600" />
             </Form.Item>
           </Col>
         </Row>
         <Row gutter={[16, 16]}>
           <Col span={12}>
-            <Form.Item name="osId" label="OS" rules={[
-              {
-                required: true,
-                message: "Please select an OS",
-              },
-            ]}>
+            <Form.Item 
+              name="osId" 
+              label="OS" 
+              rules={[
+                {
+                  required: true,
+                  message: "Please select an OS",
+                },
+              ]}
+              className="dark:text-white"
+            >
               <Select
                 placeholder="Select an OS"
                 style={{ width: "100%" }}
+                className="dark:bg-gray-700 dark:text-white dark:border-gray-600"
+                dropdownStyle={{ backgroundColor: 'var(--bg-dropdown)', color: 'var(--text-dropdown)' }}
               >
                 {osList.map(os => (
                   <Select.Option key={os.id} value={os.id}>
@@ -156,15 +194,22 @@ function FormAddServer() {
             </Form.Item>
           </Col>
           <Col span={12}>
-            <Form.Item name="locationId" label="Location" rules={[
-              {
-                required: true,
-                message: "Please select a location",
-              },
-            ]}>
+            <Form.Item 
+              name="locationId" 
+              label="Location" 
+              rules={[
+                {
+                  required: true,
+                  message: "Please select a location",
+                },
+              ]}
+              className="dark:text-white"
+            >
               <Select
                 placeholder="Select a location"
                 style={{ width: "100%" }}
+                className="dark:bg-gray-700 dark:text-white dark:border-gray-600"
+                dropdownStyle={{ backgroundColor: 'var(--bg-dropdown)', color: 'var(--text-dropdown)' }}
               >
                 {locationList.map(location => (
                   <Select.Option key={location.id} value={location.id}>
@@ -176,47 +221,67 @@ function FormAddServer() {
           </Col>
         </Row>
 
-        <Form.Item name="description" label="Description" rules={[
-          {
-            max: 500,
-            message: "Description must not exceed 500 characters",
-          },
-        ]}>
-          <TextArea />
+        <Form.Item 
+          name="description" 
+          label="Description" 
+          rules={[
+            {
+              max: 500,
+              message: "Description must not exceed 500 characters",
+            },
+          ]}
+          className="dark:text-white"
+        >
+          <TextArea className="dark:bg-gray-700 dark:text-white dark:border-gray-600" />
         </Form.Item>
 
         <Row gutter={[16, 16]}>
           <Col>
-            <Form.Item name="itar" label="ITAR" rules={[
-              {
-                required: true,
-                message: "Please select an ITAR status",
-              },
-            ]}>
+            <Form.Item 
+              name="itar" 
+              label="ITAR" 
+              rules={[
+                {
+                  required: true,
+                  message: "Please select an ITAR status",
+                },
+              ]}
+              className="dark:text-white"
+            >
               <Switch />
             </Form.Item>
           </Col>
           <Col>
-            <Form.Item name="secureServer" label="Secure Server" rules={[
-              {
-                required: true,
-                message: "Please select a secure server status",
-              },
-            ]}>
+            <Form.Item 
+              name="secureServer" 
+              label="Secure Server" 
+              rules={[
+                {
+                  required: true,
+                  message: "Please select a secure server status",
+                },
+              ]}
+              className="dark:text-white"
+            >
               <Switch />
             </Form.Item>
           </Col>
         </Row>
-        <Form.Item name="docLink" label="Documentation Link" rules={[
-          {
-            max: 500,
-            message: "Documentation link must not exceed 500 characters",
-          },
-        ]}>
-          <Input />
+        <Form.Item 
+          name="docLink" 
+          label="Documentation Link" 
+          rules={[
+            {
+              max: 500,
+              message: "Documentation link must not exceed 500 characters",
+            },
+          ]}
+          className="dark:text-white"
+        >
+          <Input className="dark:bg-gray-700 dark:text-white dark:border-gray-600" />
         </Form.Item>
         <Form.Item>
-          <Button type="primary" htmlType="submit">Add Server</Button>
+          <Button type="primary" htmlType="submit" loading={loading}>Add Server</Button>
         </Form.Item>
       </Form>
     </Card>

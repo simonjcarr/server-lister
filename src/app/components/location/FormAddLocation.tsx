@@ -48,13 +48,20 @@ export default function FormAddLocation() {
   }
 
   return (
-    <Card title="Add New Location" extra={<Text type="secondary">Create a new server location</Text>}>
+    <Card 
+      title="Add New Location" 
+      extra={<Text type="secondary" className="dark:text-gray-300">Create a new server location</Text>}
+      className="dark:bg-gray-800 dark:border-gray-700"
+      headStyle={{ color: 'inherit' }}
+      bodyStyle={{ color: 'inherit' }}
+    >
       {contextHolder}
       <Form
         form={form}
         layout="vertical"
         onFinish={onFinish}
         autoComplete="off"
+        className="dark:text-white"
       >
         <Form.Item
           name="name"
@@ -73,8 +80,9 @@ export default function FormAddLocation() {
               message: "Name must not exceed 100 characters",
             },
           ]}
+          className="dark:text-white"
         >
-          <Input placeholder="Enter location name" />
+          <Input placeholder="Enter location name" className="dark:bg-gray-700 dark:text-white dark:border-gray-600" />
         </Form.Item>
 
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
@@ -87,8 +95,9 @@ export default function FormAddLocation() {
                 message: "Contact name must not exceed 100 characters",
               },
             ]}
+            className="dark:text-white"
           >
-            <Input placeholder="Contact person" />
+            <Input placeholder="Contact person" className="dark:bg-gray-700 dark:text-white dark:border-gray-600" />
           </Form.Item>
 
           <Form.Item
@@ -100,8 +109,9 @@ export default function FormAddLocation() {
                 message: "Please enter a valid email address",
               },
             ]}
+            className="dark:text-white"
           >
-            <Input placeholder="contact@example.com" />
+            <Input placeholder="contact@example.com" className="dark:bg-gray-700 dark:text-white dark:border-gray-600" />
           </Form.Item>
         </div>
 
@@ -115,8 +125,9 @@ export default function FormAddLocation() {
                 message: "Contact phone must not exceed 20 characters",
               },
             ]}
+            className="dark:text-white"
           >
-            <Input placeholder="e.g. 07123456789" />
+            <Input placeholder="e.g. 07123456789" className="dark:bg-gray-700 dark:text-white dark:border-gray-600" />
           </Form.Item>
 
           <Form.Item
@@ -128,8 +139,9 @@ export default function FormAddLocation() {
                 message: "Address must not exceed 200 characters",
               },
             ]}
+            className="dark:text-white"
           >
-            <Input placeholder="Physical address" />
+            <Input placeholder="Physical address" className="dark:bg-gray-700 dark:text-white dark:border-gray-600" />
           </Form.Item>
         </div>
 
@@ -142,10 +154,12 @@ export default function FormAddLocation() {
               message: "Description must not exceed 500 characters",
             },
           ]}
+          className="dark:text-white"
         >
           <TextArea 
             placeholder="Add details about this location" 
             rows={4}
+            className="dark:bg-gray-700 dark:text-white dark:border-gray-600"
           />
         </Form.Item>
 
@@ -159,8 +173,9 @@ export default function FormAddLocation() {
                 message: "Latitude must not exceed 20 characters",
               },
             ]}
+            className="dark:text-white"
           >
-            <Input placeholder="e.g. 40.7128" />
+            <Input placeholder="e.g. 40.7128" className="dark:bg-gray-700 dark:text-white dark:border-gray-600" />
           </Form.Item>
 
           <Form.Item
@@ -172,8 +187,9 @@ export default function FormAddLocation() {
                 message: "Longitude must not exceed 20 characters",
               },
             ]}
+            className="dark:text-white"
           >
-            <Input placeholder="e.g. -74.0060" />
+            <Input placeholder="e.g. -74.0060" className="dark:bg-gray-700 dark:text-white dark:border-gray-600" />
           </Form.Item>
         </div>
 

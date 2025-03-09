@@ -1,13 +1,13 @@
-import Link from 'next/link'
 import React from 'react'
+import { NavLink } from './NavDrawerLeft'
 
 function ServerMenu() {
   return (
     <div>
       <p className='text-lg font-semibold'>Server</p>
       <div className='flex flex-col gap-2'>
-        <Link href="/server/add">Add Server</Link>
-        <Link href="/server/list">Manage Servers</Link>
+        <NavLink href="/server/add">Add Server</NavLink>
+        <NavLink href="/server/list">Manage Servers</NavLink>
       </div>
     </div>
   )

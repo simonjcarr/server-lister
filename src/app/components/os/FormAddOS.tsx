@@ -45,7 +45,13 @@ function FormAddOS() {
   }
 
   return (
-    <Card title="Add OS" extra={<Text type="secondary">Create a new server OS</Text>}>
+    <Card 
+      title="Add OS" 
+      extra={<Text type="secondary" className="dark:text-gray-300">Create a new server OS</Text>}
+      className="dark:bg-gray-800 dark:border-gray-700"
+      headStyle={{ color: 'inherit' }}
+      bodyStyle={{ color: 'inherit' }}
+    >
       {contextHolder}
       <Form
         form={form}
@@ -57,6 +63,7 @@ function FormAddOS() {
           EOLDate: "",
           version: "",
         }}
+        className="dark:text-white"
       >
         <Form.Item
           name="name"
@@ -75,25 +82,36 @@ function FormAddOS() {
               message: "Name must not exceed 100 characters",
             },
           ]}
+          className="dark:text-white"
         >
-          <Input />
+          <Input className="dark:bg-gray-700 dark:text-white dark:border-gray-600" />
         </Form.Item>
-        <Form.Item name="version" label="Version" rules={[
-          {
-            required: true,
-            message: "Please enter an OS version",
-          },
-        ]}>
-          <Input />
+        <Form.Item 
+          name="version" 
+          label="Version" 
+          rules={[
+            {
+              required: true,
+              message: "Please enter an OS version",
+            },
+          ]}
+          className="dark:text-white"
+        >
+          <Input className="dark:bg-gray-700 dark:text-white dark:border-gray-600" />
         </Form.Item>
 
-        <Form.Item name="EOLDate" label="End of Life Date" rules={[
-          {
-            required: true,
-            message: "Please enter an EOL date",
-          },
-        ]}>
-          <Input type="date" />
+        <Form.Item 
+          name="EOLDate" 
+          label="End of Life Date" 
+          rules={[
+            {
+              required: true,
+              message: "Please enter an EOL date",
+            },
+          ]}
+          className="dark:text-white"
+        >
+          <Input type="date" className="dark:bg-gray-700 dark:text-white dark:border-gray-600" />
         </Form.Item>
 
         
@@ -106,12 +124,13 @@ function FormAddOS() {
               message: "Description must not exceed 500 characters",
             },
           ]}
+          className="dark:text-white"
         >
-          <TextArea />
+          <TextArea className="dark:bg-gray-700 dark:text-white dark:border-gray-600" />
         </Form.Item>
 
         <Form.Item>
-          <Button type="primary" htmlType="submit">Add OS</Button>
+          <Button type="primary" htmlType="submit" loading={loading}>Add OS</Button>
         </Form.Item>
       </Form>
 
