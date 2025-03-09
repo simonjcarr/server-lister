@@ -116,7 +116,7 @@ export default function FormAddLocation() {
               },
             ]}
           >
-            <Input placeholder="+1 (555) 123-4567" />
+            <Input placeholder="e.g. 07123456789" />
           </Form.Item>
 
           <Form.Item
