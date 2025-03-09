@@ -1,19 +1,21 @@
 'use client';
 
-import { Card, Form, Input, Button, notification, Typography, Select } from 'antd'
+import { Card, Form, Input, Button, notification, Typography, Select, Switch, Row, Col } from 'antd'
 import React, { useEffect, useState } from 'react'
 import { getOS } from '@/app/actions/os/curdActions';
-import { InsertOS } from '@/db/schema';
+import { InsertLocation, InsertOS } from '@/db/schema';
 const { TextArea } = Input;
 const { Text } = Typography;
 import { addServer } from '@/app/actions/server/crudActions';
 import { getIP } from '@/app/actions/utils/getIP';
+import { getLocations } from '@/app/actions/location/crudActions';
 
 function FormAddServer() {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const [messageApi, contextHolder] = notification.useNotification();
   const [osList, setOsList] = useState<InsertOS[]>([]);
+  const [locationList, setLocationList] = useState<InsertLocation[]>([]);
 
 
   useEffect(() => {
@@ -21,7 +23,12 @@ function FormAddServer() {
       const osList = await getOS();
       setOsList(osList);
     };
+    const fetchLocation = async () => {
+      const locationList = await getLocations();
+      setLocationList(locationList);
+    };
     fetchOS();
+    fetchLocation();
   }, []);
 
   const onFinish = async (values: any) => {
@@ -64,6 +71,10 @@ function FormAddServer() {
         form.setFieldsValue({
           ipv4: result.ip
         });
+      } else {
+        form.setFieldsValue({
+          ipv4: ""
+        });
       }
     } catch (error) {
       console.error("Error fetching IP:", error);
@@ -75,8 +86,11 @@ function FormAddServer() {
         hostname: "",
         ipv4: "",
         ipv6: "",
+        locationId: null,
         osId: null,
         description: "",
+        itar: false,
+        secureServer: false,
       }}>
         <Form.Item name="hostname" label="Hostname" rules={[
           {
@@ -86,44 +100,70 @@ function FormAddServer() {
         ]}>
           <Input onChange={(e) => handleHostnameChange(e.target.value)} />
         </Form.Item>
+        <Row gutter={[16, 16]}>
+          <Col span={12}>
+            <Form.Item name="ipv4" label="IPv4" rules={[
+              {
+                required: false,
+                message: "Please enter an IPv4 address",
+              },
+            ]}>
+              <Input />
+            </Form.Item>
+          </Col>
 
-        {/* When hostname changes, find the IP address using  src/app/api/getip/[hostname]/route.ts*/}
+          <Col span={12}>
+            <Form.Item name="ipv6" label="IPv6" rules={[
+              {
+                required: false,
+                message: "Please enter an IPv6 address",
+              },
+            ]}>
+              <Input />
+            </Form.Item>
+          </Col>
+        </Row>
+        <Row gutter={[16, 16]}>
+          <Col span={12}>
+            <Form.Item name="osId" label="OS" rules={[
+              {
+                required: true,
+                message: "Please select an OS",
+              },
+            ]}>
+              <Select
+                placeholder="Select an OS"
+                style={{ width: "100%" }}
+              >
+                {osList.map(os => (
+                  <Select.Option key={os.id} value={os.id}>
+                    {os.name}
+                  </Select.Option>
+                ))}
+              </Select>
+            </Form.Item>
+          </Col>
+          <Col span={12}>
+            <Form.Item name="locationId" label="Location" rules={[
+              {
+                required: true,
+                message: "Please select a location",
+              },
+            ]}>
+              <Select
+                placeholder="Select a location"
+                style={{ width: "100%" }}
+              >
+                {locationList.map(location => (
+                  <Select.Option key={location.id} value={location.id}>
+                    {location.name}
+                  </Select.Option>
+                ))}
+              </Select>
+            </Form.Item>
+          </Col>
+        </Row>
 
-        <Form.Item name="ipv4" label="IPv4" rules={[
-          {
-            required: false,
-            message: "Please enter an IPv4 address",
-          },
-        ]}>
-          <Input />
-        </Form.Item>
-
-        <Form.Item name="ipv6" label="IPv6" rules={[
-          {
-            required: false,
-            message: "Please enter an IPv6 address",
-          },
-        ]}>
-          <Input />
-        </Form.Item>
-        
-        <Form.Item name="osId" label="OS" rules={[
-          {
-            required: true,
-            message: "Please select an OS",
-          },
-        ]}>
-          <Select
-            placeholder="Select an OS"
-            style={{ width: "100%" }}
-          >
-            {osList.map(os => (
-              <Select.Option key={os.id} value={os.id}>
-                {os.name}
-              </Select.Option>
-            ))}
-          </Select>
-        </Form.Item>
         <Form.Item name="description" label="Description" rules={[
           {
             max: 500,
@@ -132,6 +172,37 @@ function FormAddServer() {
         ]}>
           <TextArea />
         </Form.Item>
+
+        <Row gutter={[16, 16]}>
+          <Col>
+            <Form.Item name="itar" label="ITAR" rules={[
+              {
+                required: true,
+                message: "Please select an ITAR status",
+              },
+            ]}>
+              <Switch />
+            </Form.Item>
+          </Col>
+          <Col>
+            <Form.Item name="secureServer" label="Secure Server" rules={[
+              {
+                required: true,
+                message: "Please select a secure server status",
+              },
+            ]}>
+              <Switch />
+            </Form.Item>
+          </Col>
+        </Row>
+        <Form.Item name="docLink" label="Documentation Link" rules={[
+          {
+            max: 500,
+            message: "Documentation link must not exceed 500 characters",
+          },
+        ]}>
+          <Input />
+        </Form.Item>
         <Form.Item>
           <Button type="primary" htmlType="submit">Add Server</Button>
         </Form.Item>
@@ -139,5 +210,7 @@ function FormAddServer() {
     </Card>
   )
 }
+
+
 
 export default FormAddServer
