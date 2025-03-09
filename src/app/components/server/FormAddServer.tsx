@@ -1,6 +1,6 @@
 'use client';
 
-import { Card, Form, Input, Button, notification, Typography, Select, Switch, Row, Col } from 'antd'
+import { Card, Form, Input, Button, Typography, Select, Switch, Row, Col, App } from 'antd'
 import React, { useEffect, useState } from 'react'
 import { getOS } from '@/app/actions/os/curdActions';
 import { InsertLocation, InsertOS } from '@/db/schema';
@@ -32,13 +32,12 @@ interface Project {
 function FormAddServer() {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
-  const [messageApi, contextHolder] = notification.useNotification();
+  const { notification } = App.useApp();
   const [osList, setOsList] = useState<InsertOS[]>([]);
   const [locationList, setLocationList] = useState<InsertLocation[]>([]);
   const [businessList, setBusinessList] = useState<Business[]>([]);
   const [projectList, setProjectList] = useState<Project[]>([]);
   const [formSubmitStatus, setFormSubmitStatus] = useState<{ status: 'idle' | 'success' | 'error', message?: string }>({ status: 'idle' });
-
 
   useEffect(() => {
     const fetchOS = async () => {
@@ -74,19 +73,19 @@ function FormAddServer() {
   // Handle notifications based on form submission status
   useEffect(() => {
     if (formSubmitStatus.status === 'success') {
-      messageApi.success({
+      notification.success({
         message: "Created",
         description: "Server has been created successfully",
         duration: 3,
       });
     } else if (formSubmitStatus.status === 'error') {
-      messageApi.error({
+      notification.error({
         message: "Failed",
         description: formSubmitStatus.message || "Failed to create server",
         duration: 3,
       });
     }
-  }, [formSubmitStatus, messageApi]);
+  }, [formSubmitStatus, notification]);
 
   const onFinish = async (values: any) => {
     try {
@@ -385,7 +384,5 @@ function FormAddServer() {
     </Card>
   )
 }
-
-
 
 export default FormAddServer

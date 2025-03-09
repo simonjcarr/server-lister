@@ -1,9 +1,11 @@
 import FormAddServer from "@/app/components/server/FormAddServer"
-
+import { App } from "antd"
 
 function page() {
   return (
-    <FormAddServer />
+    <App>
+      <FormAddServer />
+    </App>
   )
 }
 
