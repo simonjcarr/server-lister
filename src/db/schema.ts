@@ -1,3 +1,4 @@
+import { sql } from "drizzle-orm";
 import { sqliteTable, text, integer, uniqueIndex,  index, primaryKey } from "drizzle-orm/sqlite-core";
 import { createInsertSchema, createSelectSchema, createUpdateSchema } from "drizzle-zod";
 import type { AdapterAccountType } from "next-auth/adapters";
@@ -145,7 +146,9 @@ export const servers = sqliteTable(
   "servers",
   {
     id: integer("id").primaryKey({ autoIncrement: true }),
-    projectId: integer("projectId").notNull().references(() => projects.id, { onDelete: "set null" }),
+    projectId: integer("projectId")
+      .notNull()
+      .references(() => projects.id, { onDelete: "set null" }),
     hostname: text("hostname").notNull(),
     ipv4: text("ipv4"),
     ipv6: text("ipv6"),
@@ -155,14 +158,19 @@ export const servers = sqliteTable(
     itar: integer("itar").notNull(),
     secureServer: integer("secureServer").notNull(),
     osId: integer("osId").references(() => os.id, { onDelete: "set null" }),
-    locationId: integer("locationId").references(() => locations.id, { onDelete: "set null" }),
+    locationId: integer("locationId").references(() => locations.id, {
+      onDelete: "set null",
+    }),
     updatedAt: text("updated_at").notNull(),
     createdAt: text("created_at").notNull(),
   },
   (table) => [
     uniqueIndex("unique_server_hostname_idx").on(table.hostname),
-    uniqueIndex("unique_server_ipv4_idx").on(table.ipv4),
-    uniqueIndex("unique_server_ipv6_idx").on(table.ipv6),
+    uniqueIndex("unique_server_ipv4_idx").on(table.ipv4)
+      .where(sql`ipv4 IS NOT NULL`),
+    uniqueIndex("unique_server_ipv6_idx")
+      .on(table.ipv6)
+      .where(sql`ipv6 IS NOT NULL`),
     index("server_project_id_idx").on(table.projectId),
     index("server_business_id_idx").on(table.business),
   ]
