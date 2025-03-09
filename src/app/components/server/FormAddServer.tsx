@@ -52,8 +52,15 @@ function FormAddServer() {
   const onFinish = async (values: any) => {
     try {
       setLoading(true);
+      // Convert boolean values to 0 or 1
+      const formattedValues = {
+        ...values,
+        itar: values.itar ? 1 : 0,
+        secureServer: values.secureServer ? 1 : 0
+      };
+      
       // Submit to server action
-      const result = await addServer(values);
+      const result = await addServer(formattedValues);
 
       if (result.success) {
         setFormSubmitStatus({ status: 'success' });
