@@ -2,7 +2,7 @@
 "use client";
 
 import { useState } from "react";
-import { Button, Card, Form, Input, message, Typography } from "antd";
+import { Button, Card, Form, Input, notification, Typography } from "antd";
 import { addLocation } from "@/app/actions/location/crudActions";
 import type { InsertLocation } from "@/db/schema";
 
@@ -12,6 +12,7 @@ const { Title, Text } = Typography;
 export default function FormAddLocation() {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
+  const [messageApi, contextHolder] = notification.useNotification();
 
   // Handle form submission
   async function onFinish(values: InsertLocation) {
@@ -21,14 +22,26 @@ export default function FormAddLocation() {
       const result = await addLocation(values);
       
       if (result.success) {
-        message.success("Location has been created successfully");
+        messageApi.success({
+          message: "Created",
+          description: "Location has been created successfully",
+          duration: 3,
+        });
         form.resetFields();
       } else {
-        message.error("Failed to create location");
+        messageApi.error({
+          message: "Failed",
+          description: "Failed to create location",
+          duration: 3,
+        });
       }
     } catch (error) {
       console.error("Error creating location:", error);
-      message.error("An unexpected error occurred while creating the location");
+      messageApi.error({
+        message: "Failed",
+        description: "An unexpected error occurred while creating the location",
+        duration: 3,
+      });
     } finally {
       setLoading(false);
     }
@@ -36,6 +49,7 @@ export default function FormAddLocation() {
 
   return (
     <Card title="Add New Location" extra={<Text type="secondary">Create a new location for your servers</Text>}>
+      {contextHolder}
       <Form
         form={form}
         layout="vertical"
