@@ -8,6 +8,9 @@ export async function addServer(data: InsertServer) {
     console.log(data)
     await db.insert(servers).values({
       ...data,
+      // Convert empty strings to null for ipv4 and ipv6
+      ipv4: data.ipv4 === "" ? null : data.ipv4,
+      ipv6: data.ipv6 === "" ? null : data.ipv6,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     });
