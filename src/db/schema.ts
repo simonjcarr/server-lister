@@ -1,5 +1,7 @@
 import { sqliteTable, text, integer, uniqueIndex,  index, primaryKey } from "drizzle-orm/sqlite-core";
+import { createInsertSchema, createSelectSchema, createUpdateSchema } from "drizzle-zod";
 import type { AdapterAccountType } from "next-auth/adapters";
+import { z } from "zod";
 
 export const users = sqliteTable("user", {
   id: text("id")
@@ -152,6 +154,8 @@ export const servers = sqliteTable(
     business: integer("business"),
     itar: integer("itar").notNull(),
     secureServer: integer("secureServer").notNull(),
+    osId: integer("osId").notNull().references(() => os.id, { onDelete: "set null" }),
+    locationId: integer("locationId").notNull().references(() => locations.id, { onDelete: "set null" }),
     updatedAt: text("updated_at").notNull(),
     createdAt: text("created_at").notNull(),
   },
@@ -311,19 +315,14 @@ export const locations = sqliteTable(
   ]
 )
 
-export const locations_servers = sqliteTable(
-  "locations_servers",
-  {
-    id: integer("id").primaryKey({ autoIncrement: true }),
-    locationId: integer("locationId").notNull().references(() => locations.id, { onDelete: "cascade" }),
-    serverId: integer("serverId").notNull().references(() => servers.id, { onDelete: "cascade" }),
-    createdAt: text("created_at").notNull(),
-  }, (table) => [
-    uniqueIndex("locations_server_location_id_server_id_idx").on(table.locationId, table.serverId),
-    index("locations_server_location_id_idx").on(table.locationId),
-    index("locations_server_server_id_idx").on(table.serverId)
-  ]
-)
+// Location Schemas for Zod
+const insertLocationSchema = createInsertSchema(locations)
+const selectLocationSchema = createSelectSchema(locations)
+const updateLocationSchema = createUpdateSchema(locations)
+export type InsertLocation = z.infer<typeof insertLocationSchema>
+export type SelectLocation = z.infer<typeof selectLocationSchema>
+export type UpdateLocation = z.infer<typeof updateLocationSchema>
+
 
 export const os = sqliteTable(
   "os",
@@ -340,17 +339,13 @@ export const os = sqliteTable(
   ]
 )
 
-export const os_servers = sqliteTable(
-  "os_servers",
-  {
-    id: integer("id").primaryKey({ autoIncrement: true }),
-    osId: integer("osId").notNull().references(() => os.id, { onDelete: "cascade" }),
-    serverId: integer("serverId").notNull().references(() => servers.id, { onDelete: "cascade" }),
-    createdAt: text("created_at").notNull(),
-  }, (table) => [
-    uniqueIndex("os_server_os_id_server_id_idx").on(table.osId, table.serverId),
-    index("os_server_os_id_idx").on(table.osId),
-    index("os_server_server_id_idx").on(table.serverId)
-  ]
-)
+// OS Schemas for Zod
+const insertOSSchema = createInsertSchema(os)
+const selectOSSchema = createSelectSchema(os)
+const updateOSSchema = createUpdateSchema(os)
+export type InsertOS = z.infer<typeof insertOSSchema>
+export type SelectOS = z.infer<typeof selectOSSchema>
+export type UpdateOS = z.infer<typeof updateOSSchema>
+
+
 
