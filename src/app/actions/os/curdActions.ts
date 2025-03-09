@@ -1,0 +1,57 @@
+'use server';
+
+import { db } from "@/db";
+import { os } from "@/db/schema";
+import { eq } from "drizzle-orm";
+import type { SelectOS, InsertOS, UpdateOS } from "@/db/schema";
+
+export async function getOS() {
+  try {
+    const osResult: SelectOS[] = await db.select().from(os);
+    return osResult;
+  } catch (error) {
+    console.error("Error getting OS:", error);
+    throw new Error("Failed to get OS");
+  }
+}
+
+export async function addOS(data: InsertOS) {
+  try {
+    await db.insert(os).values({
+      ...data,
+      EOLDate: new Date(data.EOLDate).toISOString(),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    });
+    return { success: true };
+  } catch (error) {
+    console.error("Error adding OS:", error);
+    throw new Error("Failed to create OS");
+  }
+}
+
+export async function updateOS(id: number, data: UpdateOS) {
+  try {
+    await db
+      .update(os)
+      .set({
+        ...data,
+        updatedAt: new Date().toISOString(),
+      })
+      .where(eq(os.id, id));
+    return { success: true };
+  } catch (error) {
+    console.error("Error updating OS:", error);
+    throw new Error("Failed to update OS");
+  }
+}
+
+export async function deleteOS(id: number) {
+  try {
+    await db.delete(os).where(eq(os.id, id));
+    return { success: true };
+  } catch (error) {
+    console.error("Error deleting OS:", error);
+    throw new Error("Failed to delete OS");
+  }
+}

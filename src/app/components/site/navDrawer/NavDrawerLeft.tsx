@@ -5,6 +5,7 @@ import { Menu } from 'lucide-react';
 import ServerMenu from './ServerMenu';
 import UtilsMenu from './UtilsMenu';
 import LocationMenu from './LocationMenu';
+import OSMenu from './OSMenu';
 
 const App: React.FC = () => {
   const [open, setOpen] = useState(false);
@@ -41,6 +42,7 @@ const App: React.FC = () => {
         <div className='flex flex-col gap-2'>
           <ServerMenu />
           <LocationMenu />
+          <OSMenu />
           <UtilsMenu />
           
         </div>

@@ -7,7 +7,7 @@ import { addLocation } from "@/app/actions/location/crudActions";
 import type { InsertLocation } from "@/db/schema";
 
 const { TextArea } = Input;
-const { Title, Text } = Typography;
+const { Text } = Typography;
 
 export default function FormAddLocation() {
   const [form] = Form.useForm();
@@ -48,7 +48,7 @@ export default function FormAddLocation() {
   }
 
   return (
-    <Card title="Add New Location" extra={<Text type="secondary">Create a new location for your servers</Text>}>
+    <Card title="Add New Location" extra={<Text type="secondary">Create a new server location</Text>}>
       {contextHolder}
       <Form
         form={form}

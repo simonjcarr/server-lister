@@ -329,8 +329,8 @@ export const os = sqliteTable(
   {
     id: integer("id").primaryKey({ autoIncrement: true }),
     name: text("name").notNull(),
-    version: text("version"),
-    EOLDate: text("eol_date"),
+    version: text("version").notNull(),
+    EOLDate: text("eol_date").notNull(),
     description: text("description"),
     updatedAt: text("updated_at").notNull(),
     createdAt: text("created_at").notNull(),
