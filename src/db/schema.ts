@@ -168,6 +168,13 @@ export const servers = sqliteTable(
   ]
 );
 
+const insertServerSchema = createInsertSchema(servers)
+const selectServerSchema = createSelectSchema(servers)
+const updateServerSchema = createUpdateSchema(servers)
+export type InsertServer = z.infer<typeof insertServerSchema>
+export type SelectServer = z.infer<typeof selectServerSchema>
+export type UpdateServer = z.infer<typeof updateServerSchema>
+
 export const collections = sqliteTable(
   "collections",
   {

@@ -1,8 +1,9 @@
-import React from 'react'
+import FormAddServer from "@/app/components/server/FormAddServer"
+
 
 function page() {
   return (
-    <div>page</div>
+    <FormAddServer />
   )
 }
 
