@@ -5,6 +5,7 @@ import { InsertServer, servers } from "@/db/schema";
 
 export async function addServer(data: InsertServer) {
   try {
+    console.log(data)
     await db.insert(servers).values({
       ...data,
       createdAt: new Date().toISOString(),

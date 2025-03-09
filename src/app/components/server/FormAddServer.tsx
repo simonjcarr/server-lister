@@ -16,6 +16,7 @@ function FormAddServer() {
   const [messageApi, contextHolder] = notification.useNotification();
   const [osList, setOsList] = useState<InsertOS[]>([]);
   const [locationList, setLocationList] = useState<InsertLocation[]>([]);
+  const [formSubmitStatus, setFormSubmitStatus] = useState<{ status: 'idle' | 'success' | 'error', message?: string }>({ status: 'idle' });
 
 
   useEffect(() => {
@@ -31,6 +32,23 @@ function FormAddServer() {
     fetchLocation();
   }, []);
 
+  // Handle notifications based on form submission status
+  useEffect(() => {
+    if (formSubmitStatus.status === 'success') {
+      messageApi.success({
+        message: "Created",
+        description: "Server has been created successfully",
+        duration: 3,
+      });
+    } else if (formSubmitStatus.status === 'error') {
+      messageApi.error({
+        message: "Failed",
+        description: formSubmitStatus.message || "Failed to create server",
+        duration: 3,
+      });
+    }
+  }, [formSubmitStatus, messageApi]);
+
   const onFinish = async (values: any) => {
     try {
       setLoading(true);
@@ -38,26 +56,14 @@ function FormAddServer() {
       const result = await addServer(values);
 
       if (result.success) {
-        messageApi.success({
-          message: "Created",
-          description: "Server has been created successfully",
-          duration: 3,
-        });
+        setFormSubmitStatus({ status: 'success' });
         form.resetFields();
       } else {
-        messageApi.error({
-          message: "Failed",
-          description: "Failed to create server",
-          duration: 3,
-        });
+        setFormSubmitStatus({ status: 'error', message: "Failed to create server" });
       }
     } catch (error) {
       console.error("Error creating server:", error);
-      messageApi.error({
-        message: "Failed",
-        description: "An unexpected error occurred while creating the server",
-        duration: 3,
-      });
+      setFormSubmitStatus({ status: 'error', message: "An unexpected error occurred while creating the server" });
     } finally {
       setLoading(false);
     }
@@ -65,7 +71,6 @@ function FormAddServer() {
 
   const handleHostnameChange = async (value: string) => {
     try {
-      // Trigger the API call to get IP address
       const result = await getIP(value);
       if (result?.ip) {
         form.setFieldsValue({
