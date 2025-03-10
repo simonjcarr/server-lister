@@ -1,8 +1,10 @@
-import { drizzle } from "drizzle-orm/better-sqlite3";
-import Database from "better-sqlite3";
-import { users } from "./schema";
+import "dotenv/config";
+import { drizzle } from "drizzle-orm/node-postgres";
 
-const sqlite = new Database(process.env.DB_FILE_NAME!);
-export const db = drizzle(sqlite);
-
-export { users };
+// You can specify any property from the node-postgres connection options
+export const db = drizzle({
+  connection: {
+    connectionString: process.env.DATABASE_URL!,
+    ssl: false,
+  },
+});
