@@ -8,6 +8,7 @@ import { Moon, Sun } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import NavDrawerLeft from './navDrawer/NavDrawerLeft';
 import Link from 'next/link';
+import AuthMenu from '../auth/AuthMenu';
 
 export function SiteHeader() {
   const { data: session } = useSession();
@@ -25,7 +26,8 @@ export function SiteHeader() {
         onClick={toggleTheme}
         icon={isDarkMode ? <Moon size={16} /> : <Sun size={16} />}
       />
-      {session?.user ? <div><SignOut /></div> : <div><SignIn /></div>}
+        {session?.user ? <div><AuthMenu /></div> : <div><SignIn /></div>}
+      
       </div>
     </div>
   )
