@@ -3,6 +3,7 @@
 import { Layout as AntdLayout } from 'antd';
 import { ReactNode } from 'react';
 import NavDrawerLeft from '../site/navDrawer/NavDrawerLeft';
+import { Session } from 'next-auth';
 
 type AppLayoutProps = {
   children: ReactNode;
