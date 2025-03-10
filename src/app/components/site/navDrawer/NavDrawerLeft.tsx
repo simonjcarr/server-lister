@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import type { DrawerProps, RadioChangeEvent, MenuProps } from 'antd';
 import { Button, Drawer, Radio, Space, Menu } from 'antd';
 import Link from 'next/link';
-import { FaMap, FaProjectDiagram, FaRegListAlt, FaServer, FaTools, FaWindows } from 'react-icons/fa';
+import { FaMap, FaProjectDiagram, FaRegListAlt, FaRegObjectGroup, FaServer, FaTools, FaWindows } from 'react-icons/fa';
 import { MdAddBox, MdNetworkPing } from 'react-icons/md';
 import { useRouter } from 'next/navigation';
 import { IoIosBusiness } from 'react-icons/io';
@@ -71,6 +71,14 @@ const App: React.FC = () => {
               },
             }
           ]
+        },
+        {
+          key: 'server-groups',
+          label: 'Server Groups',
+          icon: <FaRegObjectGroup />,
+          onClick: () => {
+            router.push('/server/groups');
+          },
         }
 
       ],
