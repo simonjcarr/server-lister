@@ -73,11 +73,11 @@ const App: React.FC = () => {
           ]
         },
         {
-          key: 'server-groups',
-          label: 'Server Groups',
+          key: 'server-collections',
+          label: 'Server Collections',
           icon: <FaRegObjectGroup />,
           onClick: () => {
-            router.push('/server/groups');
+            router.push('/server/collections');
           },
         }
 

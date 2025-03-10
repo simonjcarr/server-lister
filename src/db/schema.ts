@@ -202,6 +202,20 @@ export const servers_collections = pgTable(
   ]
 )
 
+export const server_collection_subscriptions = pgTable(
+  "server_collection_subscriptions",
+  {
+    id: serial("id").primaryKey(),
+    userId: text("userId").notNull().references(() => users.id, { onDelete: "cascade" }),
+    collectionId: integer("collectionId").notNull().references(() => collections.id, { onDelete: "cascade" }),
+    createdAt: text("created_at").notNull()
+  },
+  (table) => [
+    index("server_collection_subscriptions_collectionId_idx").on(table.collectionId),
+    index("server_collection_subscriptions_userId_idx").on(table.userId)
+  ]
+)
+
 export const users_servers = pgTable(
   "users_servers",
   {
