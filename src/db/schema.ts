@@ -1,34 +1,32 @@
 import { sql } from "drizzle-orm";
-import { sqliteTable, text, integer, uniqueIndex,  index, primaryKey } from "drizzle-orm/sqlite-core";
+import { pgTable, text, integer, uniqueIndex, index, primaryKey, varchar, boolean, timestamp, serial } from "drizzle-orm/pg-core";
 import { createInsertSchema, createSelectSchema, createUpdateSchema } from "drizzle-zod";
 import type { AdapterAccountType } from "next-auth/adapters";
 import { z } from "zod";
 
-export const users = sqliteTable("user", {
+export const users = pgTable("user", {
   id: text("id")
     .primaryKey()
     .$defaultFn(() => crypto.randomUUID()),
   name: text("name"),
   email: text("email").unique(),
-  emailVerified: integer("emailVerified", { mode: "timestamp_ms" }),
+  emailVerified: timestamp("emailVerified"),
   image: text("image"),
 });
 
-export const verificationTokens = sqliteTable(
+export const verificationTokens = pgTable(
   "verificationToken",
   {
     identifier: text("identifier").notNull(),
     token: text("token").notNull(),
-    expires: integer("expires", { mode: "timestamp_ms" }).notNull(),
+    expires: timestamp("expires").notNull(),
   },
   (verificationToken) => ({
-    compositePk: primaryKey({
-      columns: [verificationToken.identifier, verificationToken.token],
-    }),
+    compositePk: primaryKey(verificationToken.identifier, verificationToken.token),
   })
 );
 
-export const accounts = sqliteTable(
+export const accounts = pgTable(
   "account",
   {
     userId: text("userId")
@@ -46,13 +44,11 @@ export const accounts = sqliteTable(
     session_state: text("session_state"),
   },
   (account) => ({
-    compoundKey: primaryKey({
-      columns: [account.provider, account.providerAccountId],
-    }),
+    compoundKey: primaryKey(account.provider, account.providerAccountId),
   })
 );
 
-export const authenticators = sqliteTable(
+export const authenticators = pgTable(
   "authenticator",
   {
     credentialID: text("credentialID").notNull(),
@@ -63,30 +59,26 @@ export const authenticators = sqliteTable(
     credentialPublicKey: text("credentialPublicKey").notNull(),
     counter: integer("counter").notNull(),
     credentialDeviceType: text("credentialDeviceType").notNull(),
-    credentialBackedUp: integer("credentialBackedUp", {
-      mode: "boolean",
-    }).notNull(),
+    credentialBackedUp: boolean("credentialBackedUp").notNull(),
     transports: text("transports"),
   },
   (authenticator) => ({
-    compositePK: primaryKey({
-      columns: [authenticator.userId, authenticator.credentialID],
-    }),
+    compositePK: primaryKey(authenticator.userId, authenticator.credentialID),
   })
 );
 
-export const sessions = sqliteTable("session", {
+export const sessions = pgTable("session", {
   sessionToken: text("sessionToken").primaryKey(),
   userId: text("userId")
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
-  expires: integer("expires", { mode: "timestamp_ms" }).notNull(),
+  expires: timestamp("expires").notNull(),
 });
 
-export const projects = sqliteTable(
+export const projects = pgTable(
   "projects",
   {
-    id: integer("id").primaryKey({ autoIncrement: true }),
+    id: serial("id").primaryKey(),
     name: text("name").notNull(),
     description: text("description"),
     business: integer("business"),
@@ -99,10 +91,10 @@ export const projects = sqliteTable(
   ]
 );
 
-export const business = sqliteTable(
+export const business = pgTable(
   "business",
   {
-    id: integer("id").primaryKey({ autoIncrement: true }),
+    id: serial("id").primaryKey(),
     name: text("name").notNull(),
     createdAt: text("created_at").notNull(),
     updatedAt: text("updated_at").notNull(),
@@ -112,10 +104,10 @@ export const business = sqliteTable(
   ]
 )
 
-export const patchingPolicyResponsibility = sqliteTable(
+export const patchingPolicyResponsibility = pgTable(
   "patching_policy_responsibility",
   {
-    id: integer("id").primaryKey({ autoIncrement: true }),
+    id: serial("id").primaryKey(),
     name: text("name").notNull(),
     createdAt: text("created_at").notNull(),
     updatedAt: text("updated_at").notNull(),
@@ -125,10 +117,10 @@ export const patchingPolicyResponsibility = sqliteTable(
   ]
 )
 
-export const patchingPolicy = sqliteTable(
+export const patchingPolicy = pgTable(
   "patching_policy",
   {
-    id: integer("id").primaryKey({ autoIncrement: true }),
+    id: serial("id").primaryKey(),
     name: text("name").notNull(),
     responsibility: integer("responsibility").notNull(),
     description: text("description"),
@@ -142,10 +134,10 @@ export const patchingPolicy = sqliteTable(
   ]
 )
 
-export const servers = sqliteTable(
+export const servers = pgTable(
   "servers",
   {
-    id: integer("id").primaryKey({ autoIncrement: true }),
+    id: serial("id").primaryKey(),
     projectId: integer("projectId")
       .notNull()
       .references(() => projects.id, { onDelete: "set null" }),
@@ -155,8 +147,8 @@ export const servers = sqliteTable(
     description: text("description"),
     docLink: text("docLink"),
     business: integer("business"),
-    itar: integer("itar").notNull(),
-    secureServer: integer("secureServer").notNull(),
+    itar: boolean("itar").notNull(),
+    secureServer: boolean("secureServer").notNull(),
     osId: integer("osId").references(() => os.id, { onDelete: "set null" }),
     locationId: integer("locationId").references(() => locations.id, {
       onDelete: "set null",
@@ -183,10 +175,10 @@ export type InsertServer = z.infer<typeof insertServerSchema>
 export type SelectServer = z.infer<typeof selectServerSchema>
 export type UpdateServer = z.infer<typeof updateServerSchema>
 
-export const collections = sqliteTable(
+export const collections = pgTable(
   "collections",
   {
-    id: integer("id").primaryKey({ autoIncrement: true }),
+    id: serial("id").primaryKey(),
     name: text("name").notNull(),
     description: text("description"),
     updatedAt: text("updated_at").notNull(),
@@ -197,140 +189,132 @@ export const collections = sqliteTable(
   ]
 )
 
-export const servers_collections = sqliteTable(
+export const servers_collections = pgTable(
   "servers_collections",
   {
-    id: integer("id").primaryKey({ autoIncrement: true }),
-    serverId: integer("serverId").notNull(),
-    collectionId: integer("collectionId").notNull(),
-    createdAt: text("created_at").notNull(),
-  }, (table) => [
-    uniqueIndex("servers_collection_server_id_collection_id_idx").on(table.serverId, table.collectionId),
-    index("servers_collection_server_id_idx").on(table.serverId),
-    index("servers_collection_collection_id_idx").on(table.collectionId)
+    id: serial("id").primaryKey(),
+    serverId: integer("serverId").notNull().references(() => servers.id, { onDelete: "cascade" }),
+    collectionId: integer("collectionId").notNull().references(() => collections.id, { onDelete: "cascade" }),
+    createdAt: text("created_at").notNull()
+  },
+  (table) => [
+    index("servers_collections_serverId_idx").on(table.serverId)
   ]
 )
 
-export const users_servers = sqliteTable(
+export const users_servers = pgTable(
   "users_servers",
   {
-    id: integer("id").primaryKey({ autoIncrement: true }),
+    id: serial("id").primaryKey(),
     userId: text("userId").notNull().references(() => users.id, { onDelete: "cascade" }),
     serverId: integer("serverId").notNull().references(() => servers.id, { onDelete: "cascade" }),
-    createdAt: text("created_at").notNull(),
-  }, (table) => [
-    uniqueIndex("users_server_user_id_server_id_idx").on(table.userId, table.serverId),
-    index("users_server_user_id_idx").on(table.userId),
-    index("users_server_server_id_idx").on(table.serverId)
+    createdAt: text("created_at").notNull()
+  },
+  (table) => [
+    index("users_servers_serverId_idx").on(table.serverId)
   ]
 )
 
-export const tags = sqliteTable(
+export const tags = pgTable(
   "tags",
   {
-    id: integer("id").primaryKey({ autoIncrement: true }),
+    id: serial("id").primaryKey(),
     name: text("name").notNull(),
     description: text("description"),
-    updatedAt: text("updated_at").notNull(),
     createdAt: text("created_at").notNull(),
+    updatedAt: text("updated_at").notNull()
   },
   (table) => [
     uniqueIndex("unique_tag_name_idx").on(table.name)
   ]
 )
 
-export const servers_tags = sqliteTable(
+export const servers_tags = pgTable(
   "servers_tags",
   {
-    id: integer("id").primaryKey({ autoIncrement: true }),
+    id: serial("id").primaryKey(),
     serverId: integer("serverId").notNull().references(() => servers.id, { onDelete: "cascade" }),
     tagId: integer("tagId").notNull().references(() => tags.id, { onDelete: "cascade" }),
-    createdAt: text("created_at").notNull(),
-  }, (table) => [
-    uniqueIndex("servers_tag_server_id_tag_id_idx").on(table.serverId, table.tagId),
-    index("servers_tag_server_id_idx").on(table.serverId),
-    index("servers_tag_tag_id_idx").on(table.tagId)
+    createdAt: text("created_at").notNull()
+  },
+  (table) => [
+    index("servers_tags_serverId_idx").on(table.serverId)
   ]
 )
 
-export const collections_tags = sqliteTable(
+export const collections_tags = pgTable(
   "collections_tags",
   {
-    id: integer("id").primaryKey({ autoIncrement: true }),
+    id: serial("id").primaryKey(),
     collectionId: integer("collectionId").notNull().references(() => collections.id, { onDelete: "cascade" }),
     tagId: integer("tagId").notNull().references(() => tags.id, { onDelete: "cascade" }),
-    createdAt: text("created_at").notNull(),
-  }, (table) => [
-    uniqueIndex("collections_tag_collection_id_tag_id_idx").on(table.collectionId, table.tagId),
-    index("collections_tag_collection_id_idx").on(table.collectionId),
-    index("collections_tag_tag_id_idx").on(table.tagId)
+    createdAt: text("created_at").notNull()
+  },
+  (table) => [
+    index("collections_tags_collectionId_idx").on(table.collectionId)
   ]
 )
 
-export const posts = sqliteTable(
+export const posts = pgTable(
   "posts",
   {
-    id: integer("id").primaryKey({ autoIncrement: true }),
-    title: text("title").notNull(),
-    content: text("content").notNull(),
-    authorId: text("authorId").notNull().references(() => users.id, { onDelete: "cascade" }),
+    id: serial("id").primaryKey(),
     serverId: integer("serverId").notNull().references(() => servers.id, { onDelete: "cascade" }),
-    created_at: text("created_at").notNull(),
-    updated_at: text("updated_at").notNull(),
-  }, (table) => [
-    index("post_author_id_idx").on(table.authorId),
-    index("post_server_id_idx").on(table.serverId)
+    content: text("content").notNull(),
+    slug: text("slug").notNull(),
+    createdAt: text("created_at").notNull(),
+    updatedAt: text("updated_at").notNull()
+  },
+  (table) => [
+    uniqueIndex("unique_post_slug_idx").on(table.slug),
+    index("post_serverId_idx").on(table.serverId)
   ]
 )
 
-export const applications = sqliteTable(
+export const applications = pgTable(
   "applications",
   {
-    id: integer("id").primaryKey({ autoIncrement: true }),
+    id: serial("id").primaryKey(),
     name: text("name").notNull(),
     description: text("description"),
-    docLink: text("docLink"),
-    updatedAt: text("updated_at").notNull(),
     createdAt: text("created_at").notNull(),
-  }, (table) => [
+    updatedAt: text("updated_at").notNull()
+  },
+  (table) => [
     uniqueIndex("unique_application_name_idx").on(table.name)
   ]
 )
 
-export const applications_servers = sqliteTable(
+export const applications_servers = pgTable(
   "applications_servers",
   {
-    id: integer("id").primaryKey({ autoIncrement: true }),
+    id: serial("id").primaryKey(),
     applicationId: integer("applicationId").notNull().references(() => applications.id, { onDelete: "cascade" }),
     serverId: integer("serverId").notNull().references(() => servers.id, { onDelete: "cascade" }),
-    createdAt: text("created_at").notNull(),
-  }, (table) => [
-    uniqueIndex("applications_server_application_id_server_id_idx").on(table.applicationId, table.serverId),
-    index("applications_server_application_id_idx").on(table.applicationId),
-    index("applications_server_server_id_idx").on(table.serverId)
+    createdAt: text("created_at").notNull()
+  },
+  (table) => [
+    index("applications_servers_applicationId_idx").on(table.applicationId)
   ]
 )
 
-export const locations = sqliteTable(
+export const locations = pgTable(
   "locations",
   {
-    id: integer("id").primaryKey({ autoIncrement: true }),
+    id: serial("id").primaryKey(),
     name: text("name").notNull(),
-    contactName: text("contactName"),
-    contactEmail: text("contactEmail"),
-    contactPhone: text("contactPhone"),
-    address: text("address"),
     description: text("description"),
+    address: text("address"),
     latitude: text("latitude"),
     longitude: text("longitude"),
-    updatedAt: text("updated_at").notNull(),
     createdAt: text("created_at").notNull(),
-  }, (table) => [
+    updatedAt: text("updated_at").notNull(),
+  },
+  (table) => [
     uniqueIndex("unique_location_name_idx").on(table.name)
   ]
 )
 
-// Location Schemas for Zod
 const insertLocationSchema = createInsertSchema(locations)
 const selectLocationSchema = createSelectSchema(locations)
 const updateLocationSchema = createUpdateSchema(locations)
@@ -338,29 +322,25 @@ export type InsertLocation = z.infer<typeof insertLocationSchema>
 export type SelectLocation = z.infer<typeof selectLocationSchema>
 export type UpdateLocation = z.infer<typeof updateLocationSchema>
 
-
-export const os = sqliteTable(
+export const os = pgTable(
   "os",
   {
-    id: integer("id").primaryKey({ autoIncrement: true }),
+    id: serial("id").primaryKey(),
     name: text("name").notNull(),
     version: text("version").notNull(),
     EOLDate: text("eol_date").notNull(),
     description: text("description"),
-    updatedAt: text("updated_at").notNull(),
     createdAt: text("created_at").notNull(),
-  }, (table) => [
+    updatedAt: text("updated_at").notNull(),
+  },
+  (table) => [
     uniqueIndex("unique_os_name_idx").on(table.name)
   ]
 )
 
-// OS Schemas for Zod
 const insertOSSchema = createInsertSchema(os)
 const selectOSSchema = createSelectSchema(os)
 const updateOSSchema = createUpdateSchema(os)
 export type InsertOS = z.infer<typeof insertOSSchema>
 export type SelectOS = z.infer<typeof selectOSSchema>
 export type UpdateOS = z.infer<typeof updateOSSchema>
-
-
-

@@ -2,7 +2,7 @@
 "use client";
 
 import { useState } from "react";
-import { Button, Card, Form, Input, notification, Typography } from "antd";
+import { Button, Card, Col, Form, Input, notification, Row, Typography } from "antd";
 import { addLocation } from "@/app/actions/location/crudActions";
 import type { InsertLocation } from "@/db/schema";
 
@@ -20,7 +20,7 @@ export default function FormAddLocation() {
       setLoading(true);
       // Submit to server action
       const result = await addLocation(values);
-      
+
       if (result.success) {
         messageApi.success({
           message: "Created",
@@ -48,8 +48,8 @@ export default function FormAddLocation() {
   }
 
   return (
-    <Card 
-      title="Add New Location" 
+    <Card
+      title="Add New Location"
       extra={<Text type="secondary" className="dark:text-gray-300">Create a new server location</Text>}
       className="dark:bg-gray-800 dark:border-gray-700"
       headStyle={{ color: 'inherit' }}
@@ -85,65 +85,55 @@ export default function FormAddLocation() {
           <Input placeholder="Enter location name" className="dark:bg-gray-700 dark:text-white dark:border-gray-600" />
         </Form.Item>
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
-          <Form.Item
-            name="contactName"
-            label="Contact Name"
-            rules={[
-              {
-                max: 100,
-                message: "Contact name must not exceed 100 characters",
-              },
-            ]}
-            className="dark:text-white"
-          >
-            <Input placeholder="Contact person" className="dark:bg-gray-700 dark:text-white dark:border-gray-600" />
-          </Form.Item>
-
-          <Form.Item
-            name="contactEmail"
-            label="Contact Email"
-            rules={[
-              {
-                type: "email",
-                message: "Please enter a valid email address",
-              },
-            ]}
-            className="dark:text-white"
-          >
-            <Input placeholder="contact@example.com" className="dark:bg-gray-700 dark:text-white dark:border-gray-600" />
-          </Form.Item>
-        </div>
-
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
-          <Form.Item
-            name="contactPhone"
-            label="Contact Phone"
-            rules={[
-              {
-                max: 20,
-                message: "Contact phone must not exceed 20 characters",
-              },
-            ]}
-            className="dark:text-white"
-          >
-            <Input placeholder="e.g. 07123456789" className="dark:bg-gray-700 dark:text-white dark:border-gray-600" />
-          </Form.Item>
-
-          <Form.Item
-            name="address"
-            label="Address"
-            rules={[
-              {
-                max: 200,
-                message: "Address must not exceed 200 characters",
-              },
-            ]}
-            className="dark:text-white"
-          >
-            <Input placeholder="Physical address" className="dark:bg-gray-700 dark:text-white dark:border-gray-600" />
-          </Form.Item>
-        </div>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <Form.Item
+              name="address"
+              label="Address"
+              rules={[
+                {
+                  max: 255,
+                  message: "Address must not exceed 255 characters",
+                },
+              ]}
+              className="dark:text-white"
+            >
+              <TextArea rows={4} placeholder="Enter location address" className="dark:bg-gray-700 dark:text-white dark:border-gray-600" />
+            </Form.Item>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Form.Item
+                name="latitude"
+                label="Latitude"
+                rules={[
+                    {
+                      max: 20,
+                      message: "Latitude must not exceed 20 characters",
+                    },
+                  ]}
+                  className="dark:text-white"
+                >
+                  <Input placeholder="Enter latitude" className="dark:bg-gray-700 dark:text-white dark:border-gray-600" />
+                </Form.Item>
+              </div>
+              <div>
+                <Form.Item
+                  name="longitude"
+                  label="Longitude"
+                  rules={[
+                    {
+                      max: 20,
+                      message: "Longitude must not exceed 20 characters",
+                    },
+                  ]}
+                  className="dark:text-white"
+                >
+                  <Input placeholder="Enter longitude" className="dark:bg-gray-700 dark:text-white dark:border-gray-600" />
+                </Form.Item>
+              </div>
+           </div>
+           </div>
 
         <Form.Item
           name="description"
@@ -156,43 +146,12 @@ export default function FormAddLocation() {
           ]}
           className="dark:text-white"
         >
-          <TextArea 
-            placeholder="Add details about this location" 
+          <TextArea
+            placeholder="Add details about this location"
             rows={4}
             className="dark:bg-gray-700 dark:text-white dark:border-gray-600"
           />
         </Form.Item>
-
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
-          <Form.Item
-            name="latitude"
-            label="Latitude"
-            rules={[
-              {
-                max: 20,
-                message: "Latitude must not exceed 20 characters",
-              },
-            ]}
-            className="dark:text-white"
-          >
-            <Input placeholder="e.g. 40.7128" className="dark:bg-gray-700 dark:text-white dark:border-gray-600" />
-          </Form.Item>
-
-          <Form.Item
-            name="longitude"
-            label="Longitude"
-            rules={[
-              {
-                max: 20,
-                message: "Longitude must not exceed 20 characters",
-              },
-            ]}
-            className="dark:text-white"
-          >
-            <Input placeholder="e.g. -74.0060" className="dark:bg-gray-700 dark:text-white dark:border-gray-600" />
-          </Form.Item>
-        </div>
-
         <Form.Item style={{ textAlign: "right" }}>
           <Button type="primary" htmlType="submit" loading={loading}>
             Create Location
