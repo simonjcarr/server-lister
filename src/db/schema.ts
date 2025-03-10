@@ -344,3 +344,27 @@ const updateOSSchema = createUpdateSchema(os)
 export type InsertOS = z.infer<typeof insertOSSchema>
 export type SelectOS = z.infer<typeof selectOSSchema>
 export type UpdateOS = z.infer<typeof updateOSSchema>
+
+
+export const serverGroups = pgTable(
+  "server_groups",
+  {
+    id: serial("id").primaryKey(),
+    name: text("name").notNull(),
+    description: text("description"),
+    ownerId: text("ownerId").notNull().references(() => users.id, { onDelete: "cascade" }),
+    createdAt: text("created_at").notNull(),
+    updatedAt: text("updated_at").notNull(),
+  },
+  (table) => [
+    uniqueIndex("unique_server_group_name_idx").on(table.name),
+    index("server_groups_ownerId_idx").on(table.ownerId)
+  ]
+)
+
+const insertServerGroupSchema = createInsertSchema(serverGroups)
+const selectServerGroupSchema = createSelectSchema(serverGroups)
+const updateServerGroupSchema = createUpdateSchema(serverGroups)
+export type InsertServerGroup = z.infer<typeof insertServerGroupSchema>
+export type SelectServerGroup = z.infer<typeof selectServerGroupSchema>
+export type UpdateServerGroup = z.infer<typeof updateServerGroupSchema>
