@@ -3,12 +3,9 @@ import { getServerCollections } from '@/app/actions/server/serverCollectionActio
 import React from 'react'
 
 async function ServerCollectionsPage() {
-  // Fetch collections data on the server
-  const collections = await getServerCollections()
-
   return (
     <div>
-      <ListServerCollections collections={collections} />
+      <ListServerCollections />
     </div>
   )
 }
