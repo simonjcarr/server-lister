@@ -20,7 +20,7 @@ interface DataType {
   name: string;
 }
 
-function ListServerCollections() {
+function ListCollections() {
   const queryClient = useQueryClient();
   const [collectionData, setCollectionData] = useState<ServerCollection[]>([]);
   
@@ -72,4 +72,4 @@ function ListServerCollections() {
   );
 }
 
-export default ListServerCollections;
+export default ListCollections;
