@@ -45,6 +45,16 @@ export type PaginationParams = {
   pageSize: number;
 };
 
+export async function getServer(serverId: number) {
+  try {
+    const server = await db.select().from(servers).where(eq(servers.id, serverId)).limit(1);
+    return server[0]
+  } catch (error) {
+    console.error("Error getting server:", error);
+    return null;
+  }
+}
+
 export async function getServers(
   filters: ServerFilter = {},
   sort: ServerSort = { field: 'hostname', direction: 'asc' },
