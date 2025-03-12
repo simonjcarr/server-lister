@@ -16,7 +16,7 @@ function CollectionServerList({ collectionId }: { collectionId: any }) {
     async function getServers() {
       const servers = await getServersInCollection(collectionId);
       const collection = await getServerCollection(collectionId);
-      setServers(servers);
+      setServers(servers.map(server => ({ ...server, key: server.id })));
       if (collection) {
         setCollection(collection[0]);
       }
@@ -43,7 +43,7 @@ function CollectionServerList({ collectionId }: { collectionId: any }) {
     await removeServerFromCollection(serverId, collection.id)
     const servers = await getServersInCollection(collectionId);
     
-    setServers(servers);
+    setServers(servers.map(server => ({ ...server, key: server.id })));
     // Notify that server has been removed
     api.success({
       message: 'Server Removed',

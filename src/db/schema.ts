@@ -1,4 +1,5 @@
 import { sql } from "drizzle-orm";
+import { unique } from "drizzle-orm/gel-core";
 import { pgTable, text, integer, uniqueIndex, index, primaryKey, varchar, boolean, timestamp, serial } from "drizzle-orm/pg-core";
 import { createInsertSchema, createSelectSchema, createUpdateSchema } from "drizzle-zod";
 import type { AdapterAccountType } from "next-auth/adapters";
@@ -226,6 +227,7 @@ export const server_collection_subscriptions = pgTable(
     createdAt: text("created_at").notNull()
   },
   (table) => [
+    uniqueIndex("unique_user_collection_idx").on(table.userId, table.collectionId),
     index("server_collection_subscriptions_collectionId_idx").on(table.collectionId),
     index("server_collection_subscriptions_userId_idx").on(table.userId)
   ]
