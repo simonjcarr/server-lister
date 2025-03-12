@@ -10,6 +10,7 @@ import {
 } from "@/db/schema";
 import { and, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
+import { auth } from '@/auth'
 
 export async function getServerCollections() {
   try {
@@ -36,7 +37,6 @@ export async function getServerCollection(collectionId: number) {
     return null;
   }
 }
-
 
 export async function addServerToCollection(
   serverId: number,
@@ -153,8 +153,54 @@ export async function getUsersInCollection(collectionId: number) {
   }
 }
 
-export async function subscribeUserToCollection(userId: string, collectionId: number) {
-  
+export async function subscribeUserToCollection(collectionId: number) {
+  const session = await auth()
+  const userId = session?.user?.id
+  if(!userId) {
+    return;
+  }
+  const result = await db.insert(server_collection_subscriptions).values({
+    collectionId,
+    userId,
+    createdAt: new Date().toISOString(),
+  });
+  return result;
 }
 
-export async function unsubscribeUserFromCollection(userId: string, collectionId: number) {}
+export async function unsubscribeUserFromCollection(collectionId: number) {
+  const session = await auth();
+  const userId = session?.user?.id
+  if(!userId) {
+    return;
+  }
+  const result = await db
+    .delete(server_collection_subscriptions)
+    .where(
+      and(
+        eq(server_collection_subscriptions.userId, userId),
+        eq(server_collection_subscriptions.collectionId, collectionId)
+      )
+    );
+  return result;
+}
+
+export async function isSubscribedToCollection(collectionId: number) {
+  const session = await auth();
+  if (!session) {
+    return false;
+  }
+  const userId = session.user?.id;
+  if(!userId) {
+    return false;
+  }
+  const result = await db
+    .select()
+    .from(server_collection_subscriptions)
+    .where(
+      and(
+        eq(server_collection_subscriptions.userId, userId),
+        eq(server_collection_subscriptions.collectionId, collectionId)
+      )
+    );
+  return result.length > 0;
+}

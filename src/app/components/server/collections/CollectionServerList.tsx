@@ -3,10 +3,11 @@ import { Button, Card, Space, Table, notification } from 'antd'
 import React from 'react'
 import { useEffect, useState } from 'react'
 import { getServerCollection, getServersInCollection, removeServerFromCollection } from '@/app/actions/server/serverCollectionActions';
-import { MdDelete, MdNotifications } from 'react-icons/md';
+import { MdDelete } from 'react-icons/md';
 import { ColumnsType } from 'antd/es/table';
 import type { SelectServerCollection, SelectCollection } from '@/db/schema';
 import { getServer } from '@/app/actions/server/crudActions';
+import SubscribeCollectionButton from './SubscribeCollectionSwitch';
 
 function CollectionServerList({ collectionId }: { collectionId: any }) {
   const [servers, setServers] = useState<any[]>([]);
@@ -79,10 +80,7 @@ function CollectionServerList({ collectionId }: { collectionId: any }) {
   return (
     <div className='flex flex-col gap-4'>
       {collection && (
-        <Card title={collection.name} extra={
-          <Button type="primary" size='small' onClick={() => { }} icon={<MdNotifications />}>
-            Subscribe
-          </Button>}>
+        <Card title={collection.name} extra={<SubscribeCollectionButton collectionId={collectionId} />}>
           <p className='text-gray-500 mb-4'>{collection.description}</p>
           <div className='flex flex-col gap-4'>
             <Card title="Servers">
