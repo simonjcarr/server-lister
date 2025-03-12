@@ -6,6 +6,7 @@ import { useQueryClient, useQuery } from '@tanstack/react-query';
 
 // Import the server action
 import { getServerCollections } from '@/app/actions/server/serverCollectionActions';
+import CollectionServerList from './CollectionServerList';
 
 interface ServerCollection {
   id: number;
@@ -23,7 +24,7 @@ interface DataType {
 function ListCollections() {
   const queryClient = useQueryClient();
   const [collectionData, setCollectionData] = useState<ServerCollection[]>([]);
-  
+  const [selectedCollectionId, setSelectedCollectionId] = useState<number | null>(null);
   // Call the server action directly via React Query
   const query = useQuery({
     queryKey: ['collections'],
@@ -35,11 +36,12 @@ function ListCollections() {
   });
   
   const dataSource = collectionData.map((collection: ServerCollection) => ({
+    ...collection,
     key: collection.id,
-    name: collection.name
   }));
 
   const handleRowClick = (record: DataType) => {
+    setSelectedCollectionId(record.key as number);
     console.log('Row clicked:', record)
   }
 
@@ -57,15 +59,19 @@ function ListCollections() {
   ];
 
   return (
-    <Card title="Server Groups">
+    <Card title="Collections">
       {query.isLoading ? (
         <div>Loading...</div>
       ) : query.isError ? (
         <div>Error loading collections</div>
       ) : (
-        <div>
-          <Table columns={columns} dataSource={dataSource} />
-          {collectionData.length > 0 && <div>{collectionData[0].name}</div>}
+        <div className='grid grid-cols-12 gap-4'>
+          <div className='col col-span-4'>
+            <Table columns={columns} dataSource={dataSource} size='small'/>
+          </div>
+          <div className='col col-span-8'>
+            {(selectedCollectionId || dataSource[0].key) && <CollectionServerList collectionId={selectedCollectionId || dataSource[0].key} />}
+          </div>
         </div>
       )}
     </Card>

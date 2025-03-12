@@ -189,6 +189,13 @@ export const collections = pgTable(
   ]
 )
 
+const insertCollectionSchema = createInsertSchema(collections)
+const selectCollectionSchema = createSelectSchema(collections)
+const updateCollectionSchema = createUpdateSchema(collections)
+export type InsertCollection = z.infer<typeof insertCollectionSchema>
+export type SelectCollection = z.infer<typeof selectCollectionSchema>
+export type UpdateCollection = z.infer<typeof updateCollectionSchema>
+
 export const servers_collections = pgTable(
   "servers_collections",
   {
@@ -198,16 +205,17 @@ export const servers_collections = pgTable(
     createdAt: text("created_at").notNull()
   },
   (table) => [
-    index("servers_collections_serverId_idx").on(table.serverId)
+    index("servers_collections_serverId_idx").on(table.serverId),
+    uniqueIndex("unique_server_collection_idx").on(table.serverId, table.collectionId)
   ]
 )
 
-const insertCollectionSchema = createInsertSchema(collections)
-const selectCollectionSchema = createSelectSchema(collections)
-const updateCollectionSchema = createUpdateSchema(collections)
-export type InsertCollection = z.infer<typeof insertCollectionSchema>
-export type SelectCollection = z.infer<typeof selectCollectionSchema>
-export type UpdateCollection = z.infer<typeof updateCollectionSchema>
+const insertServerCollectionSchema = createInsertSchema(collections)
+const selectServerCollectionSchema = createSelectSchema(collections)
+const updateServerCollectionSchema = createUpdateSchema(collections)
+export type InsertServerCollection = z.infer<typeof insertServerCollectionSchema>
+export type SelectServerCollection = z.infer<typeof selectServerCollectionSchema>
+export type UpdateServerCollection = z.infer<typeof updateServerCollectionSchema>
 
 export const server_collection_subscriptions = pgTable(
   "server_collection_subscriptions",
