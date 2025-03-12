@@ -16,17 +16,23 @@ function SubscribeCollectionSwitch({ collectionId }: { collectionId: number }) {
     checkSubscription();
   }, [collectionId]);
   return (
-    <Switch
-      checked={!!!isSubscribed}
-      onChange={async (checked) => {
-        console.log("I am here", checked)
-        if (checked) {
-          await subscribeUserToCollection(collectionId);
-        } else {
-          await unsubscribeUserFromCollection(collectionId);
-        }
-      }}
-    />
+    <>
+      <Switch
+        checkedChildren="Subscribed"
+        unCheckedChildren="Not Subscribed"
+        checked={isSubscribed===true}
+        value={true}
+        onChange={async (checked) => {
+          if (checked) {
+            await subscribeUserToCollection(collectionId);
+            setIsSubscribed(true);
+          } else {
+            await unsubscribeUserFromCollection(collectionId);
+            setIsSubscribed(false);
+          }
+        }}
+      />
+    </>
   )
 }
 
