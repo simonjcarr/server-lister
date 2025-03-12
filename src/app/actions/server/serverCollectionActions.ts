@@ -164,14 +164,14 @@ export async function subscribeUserToCollection(collectionId: number) {
     userId,
     createdAt: new Date().toISOString(),
   });
-  return result;
+  return true;
 }
 
 export async function unsubscribeUserFromCollection(collectionId: number) {
   const session = await auth();
   const userId = session?.user?.id
   if(!userId) {
-    return;
+    return false;
   }
   const result = await db
     .delete(server_collection_subscriptions)
@@ -181,7 +181,7 @@ export async function unsubscribeUserFromCollection(collectionId: number) {
         eq(server_collection_subscriptions.collectionId, collectionId)
       )
     );
-  return result;
+  return true;
 }
 
 export async function isSubscribedToCollection(collectionId: number) {
