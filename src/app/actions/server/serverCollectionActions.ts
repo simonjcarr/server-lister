@@ -152,3 +152,9 @@ export async function getUsersInCollection(collectionId: number) {
     return [];
   }
 }
+
+export async function subscribeUserToCollection(userId: string, collectionId: number) {
+  
+}
+
+export async function unsubscribeUserFromCollection(userId: string, collectionId: number) {}
