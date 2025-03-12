@@ -265,8 +265,8 @@ function ServerList() {
       responsive: ['lg' as Breakpoint],
       render: (_: any, record: ServerData) => (
         <Space>
-          {record.itar === 1 && <Tag color="red">ITAR</Tag>}
-          {record.secureServer === 1 && <Tag color="green">Secure</Tag>}
+          {record.itar === true && <Tag color="red">ITAR</Tag>}
+          {record.secureServer === true && <Tag color="green">Secure</Tag>}
         </Space>
       ),
     },
