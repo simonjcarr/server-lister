@@ -15,6 +15,13 @@ export const users = pgTable("user", {
   image: text("image"),
 });
 
+const insertUserSchema = createInsertSchema(users)
+const selectUserSchema = createSelectSchema(users)
+const updateUserSchema = createUpdateSchema(users)
+export type InsertUser = z.infer<typeof insertUserSchema>
+export type SelectUser = z.infer<typeof selectUserSchema>
+export type UpdateUser = z.infer<typeof updateUserSchema>
+
 export const verificationTokens = pgTable(
   "verificationToken",
   {
@@ -232,6 +239,13 @@ export const server_collection_subscriptions = pgTable(
     index("server_collection_subscriptions_userId_idx").on(table.userId)
   ]
 )
+
+const insertServerCollectionSubscriptionSchema = createInsertSchema(server_collection_subscriptions)
+const selectServerCollectionSubscriptionSchema = createSelectSchema(server_collection_subscriptions)
+const updateServerCollectionSubscriptionSchema = createUpdateSchema(server_collection_subscriptions)
+export type InsertServerCollectionSubscription = z.infer<typeof insertServerCollectionSubscriptionSchema>
+export type SelectServerCollectionSubscription = z.infer<typeof selectServerCollectionSubscriptionSchema>
+export type UpdateServerCollectionSubscription = z.infer<typeof updateServerCollectionSubscriptionSchema>
 
 export const users_servers = pgTable(
   "users_servers",

@@ -8,6 +8,7 @@ import { ColumnsType } from 'antd/es/table';
 import type { SelectServerCollection, SelectCollection } from '@/db/schema';
 import { getServer } from '@/app/actions/server/crudActions';
 import SubscribeCollectionSwitch from './SubscribeCollectionSwitch';
+import CollectionSubscribedUsers from './CollectionSubscribedUsers';
 
 function CollectionServerList({ collectionId }: { collectionId: any }) {
   const [servers, setServers] = useState<any[]>([]);
@@ -86,7 +87,7 @@ function CollectionServerList({ collectionId }: { collectionId: any }) {
             <Card title="Servers">
               <Table columns={columns} dataSource={servers} size='small' />
             </Card>
-            <Card title="Subscribed Users"></Card>
+            <CollectionSubscribedUsers collectionId={collectionId} />
           </div>
         </Card>
       )}
