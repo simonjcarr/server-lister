@@ -23,22 +23,21 @@ interface DataType {
 
 function ListCollections() {
   const queryClient = useQueryClient();
-  const [collectionData, setCollectionData] = useState<ServerCollection[]>([]);
+  // const [collectionData, setCollectionData] = useState<ServerCollection[]>([]);
   const [selectedCollectionId, setSelectedCollectionId] = useState<number | null>(null);
   // Call the server action directly via React Query
-  const query = useQuery({
+  const {isPending, error, data} = useQuery({
     queryKey: ['collections'],
     queryFn: async () => {
       const result = await getServerCollections();
-      setCollectionData(result);
       return result;
     }
   });
   
-  const dataSource = collectionData.map((collection: ServerCollection) => ({
-    ...collection,
-    key: collection.id,
-  }));
+  // const dataSource = collectionData.map((collection: ServerCollection) => ({
+  //   ...collection,
+  //   key: collection.id,
+  // }));
 
   const handleRowClick = (record: DataType) => {
     setSelectedCollectionId(record.key as number);
@@ -60,17 +59,17 @@ function ListCollections() {
 
   return (
     <Card title="Collections">
-      {query.isLoading ? (
+      {isPending ? (
         <div>Loading...</div>
-      ) : query.isError ? (
+      ) : error ? (
         <div>Error loading collections</div>
       ) : (
         <div className='grid grid-cols-12 gap-4'>
           <div className='col col-span-4'>
-            <Table columns={columns} dataSource={dataSource} size='small'/>
+            <Table columns={columns} dataSource={data?.map(collection => ({ ...collection, key: collection.id }))} size='small'/>
           </div>
           <div className='col col-span-8'>
-            {(selectedCollectionId || dataSource[0].key) && <CollectionServerList collectionId={selectedCollectionId || dataSource[0].key} />}
+            {selectedCollectionId && <CollectionServerList collectionId={selectedCollectionId} />}
           </div>
         </div>
       )}

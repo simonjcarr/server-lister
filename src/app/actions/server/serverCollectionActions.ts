@@ -46,7 +46,8 @@ export async function addServerToCollection(
     await db.insert(servers_collections).values({
       collectionId,
       serverId,
-      createdAt: new Date().toISOString(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
     });
     revalidatePath("/server/collections");
     return { success: true };
@@ -104,7 +105,8 @@ export async function createUserCollectionSubscription(
     await db.insert(server_collection_subscriptions).values({
       userId,
       collectionId,
-      createdAt: new Date().toISOString(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
     });
     revalidatePath("/server/collections");
     return { success: true };
@@ -162,7 +164,8 @@ export async function subscribeUserToCollection(collectionId: number) {
   const result = await db.insert(server_collection_subscriptions).values({
     collectionId,
     userId,
-    createdAt: new Date().toISOString(),
+    createdAt: new Date(),
+    updatedAt: new Date(),
   });
   return true;
 }

@@ -1,42 +1,42 @@
 'use client'
 import { Switch } from 'antd'
-import { MdNotifications } from 'react-icons/md'
-import { useEffect, useState } from 'react'
-import { useSession } from 'next-auth/react';
 import { isSubscribedToCollection, subscribeUserToCollection, unsubscribeUserFromCollection } from '@/app/actions/server/serverCollectionActions';
-import { useQueryClient } from '@tanstack/react-query'
+import { useQueryClient, useQuery } from '@tanstack/react-query'
 
 function SubscribeCollectionSwitch({ collectionId }: { collectionId: number }) {
-  const session = useSession()
-  const [isSubscribed, setIsSubscribed] = useState<boolean | null>(null);
   const queryClient = useQueryClient();
-  
-  useEffect(() => {
-    const checkSubscription = async () => {
-      const isSubscribed = await isSubscribedToCollection(collectionId);
-      setIsSubscribed(isSubscribed);
-    };
-    checkSubscription();
-  }, [collectionId]);
+  const {isPending, error, data: isSubscribed} = useQuery({
+    queryKey: ['isSubscribed', collectionId],
+    queryFn: async () => {
+      const result = await isSubscribedToCollection(collectionId);
+      return result;
+    }
+  })
   return (
     <>
-      <Switch
-        checkedChildren="Subscribed"
-        unCheckedChildren="Not Subscribed"
-        checked={isSubscribed===true}
-        value={true}
-        onChange={async (checked) => {
-          if (checked) {
-            await subscribeUserToCollection(collectionId);
-            setIsSubscribed(true);
-            queryClient.invalidateQueries({ queryKey: ['usersInCollection', collectionId] });
-          } else {
-            await unsubscribeUserFromCollection(collectionId);  
-            setIsSubscribed(false);
-            queryClient.invalidateQueries({ queryKey: ['usersInCollection', collectionId] });
-          }
-        }}
+      {isPending ? (
+        <div>Loading...</div>
+      ) : error ? (
+        <div>Error loading subscription status</div>
+      ) : (
+        <Switch
+          checkedChildren="Subscribed"
+          unCheckedChildren="Not Subscribed"
+          checked={isSubscribed}
+          value={true}
+          onChange={async (checked) => {
+            if (checked) {
+              await subscribeUserToCollection(collectionId);
+              queryClient.invalidateQueries({ queryKey: ['usersInCollection', collectionId] });
+              queryClient.invalidateQueries({ queryKey: ['isSubscribed', collectionId] });
+            } else {
+              await unsubscribeUserFromCollection(collectionId);  
+              queryClient.invalidateQueries({ queryKey: ['usersInCollection', collectionId] });
+              queryClient.invalidateQueries({ queryKey: ['isSubscribed', collectionId] });
+            }
+          }}
       />
+      )}
     </>
   )
 }
