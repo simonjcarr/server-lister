@@ -3,7 +3,7 @@ import type { DrawerProps, RadioChangeEvent, MenuProps } from 'antd';
 import { Button, Drawer, Radio, Space, Menu } from 'antd';
 import Link from 'next/link';
 import { FaMap, FaProjectDiagram, FaRegListAlt, FaRegObjectGroup, FaServer, FaTools, FaUsers, FaWindows } from 'react-icons/fa';
-import { MdAddBox, MdNetworkPing } from 'react-icons/md';
+import { MdAddBox, MdAdminPanelSettings, MdNetworkPing } from 'react-icons/md';
 import { useRouter } from 'next/navigation';
 import { IoIosBusiness } from 'react-icons/io';
 import { AiOutlineMenuUnfold } from 'react-icons/ai';
@@ -171,10 +171,10 @@ const App: React.FC = () => {
     }
   ]
   if(session?.user?.roles?.includes('admin')) {
-    items.push({
+    items.unshift({
       key: 'admin',
       label: 'Admin',
-      icon: <FaTools />,
+      icon: <MdAdminPanelSettings />,
       children: [
         {
           key: 'admin-projects',
