@@ -1,6 +1,8 @@
 import NextAuth from "next-auth";
 import { db } from "./db";
 import { CustomDrizzleAdapter } from "./lib/auth-adapter";
+import { eq } from "drizzle-orm";
+import { users } from "./db/schema";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   adapter: CustomDrizzleAdapter(db),
@@ -14,4 +16,23 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       clientSecret: process.env.AUTH_CLIENT_SECRET, // from the provider's dashboard
     },
   ],
+  callbacks: {
+    async session({ session, user }) {
+      if (session.user && user.id) {
+        // Query the database directly using the users table
+        const [dbUser] = await db
+          .select()
+          .from(users)
+          .where(eq(users.id, user.id));
+        
+        // Add the roles field to the session user object
+        if (dbUser) {
+          session.user.roles = dbUser.roles as any[] || [];
+        } else {
+          session.user.roles = [];
+        }
+      }
+      return session;
+    },
+  },
 });

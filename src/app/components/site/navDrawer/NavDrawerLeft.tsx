@@ -2,11 +2,13 @@ import React, { useState } from 'react';
 import type { DrawerProps, RadioChangeEvent, MenuProps } from 'antd';
 import { Button, Drawer, Radio, Space, Menu } from 'antd';
 import Link from 'next/link';
-import { FaMap, FaProjectDiagram, FaRegListAlt, FaRegObjectGroup, FaServer, FaTools, FaWindows } from 'react-icons/fa';
+import { FaMap, FaProjectDiagram, FaRegListAlt, FaRegObjectGroup, FaServer, FaTools, FaUsers, FaWindows } from 'react-icons/fa';
 import { MdAddBox, MdNetworkPing } from 'react-icons/md';
 import { useRouter } from 'next/navigation';
 import { IoIosBusiness } from 'react-icons/io';
 import { AiOutlineMenuUnfold } from 'react-icons/ai';
+import { useSession } from 'next-auth/react';
+
 
 
 // Create a NavContext to share the onClose function
@@ -24,7 +26,7 @@ export const NavLink: React.FC<{ href: string; children: React.ReactNode }> = ({
 };
 
 const App: React.FC = () => {
-
+  const { data: session } = useSession();
   const router = useRouter();
   type MenuItem = Required<MenuProps>['items'][number];
   const items: MenuItem[] = [
@@ -168,6 +170,55 @@ const App: React.FC = () => {
       ]
     }
   ]
+  if(session?.user?.roles?.includes('admin')) {
+    items.push({
+      key: 'admin',
+      label: 'Admin',
+      icon: <FaTools />,
+      children: [
+        {
+          key: 'admin-projects',
+          label: 'Projects',
+          icon: <FaProjectDiagram />,
+          onClick: () => {
+            router.push('/admin/projects');
+          },
+        },
+        {
+          key: 'admin-business',
+          label: 'Business',
+          icon: <IoIosBusiness />,
+          onClick: () => {
+            router.push('/admin/business');
+          },
+        },
+        {
+          key: 'admin-locations',
+          label: 'Locations',
+          icon: <FaMap />,
+          onClick: () => {
+            router.push('/admin/locations');
+          },
+        },
+        {
+          key: 'admin-servers',
+          label: 'Servers',
+          icon: <FaServer />,
+          onClick: () => {
+            router.push('/admin/servers');
+          },
+        },
+        {
+          key: 'admin-users',
+          label: 'Users',
+          icon: <FaUsers />,
+          onClick: () => {
+            router.push('/admin/users');
+          },
+        },
+      ],
+    })
+  }
   const [open, setOpen] = useState(false);
   const [placement, setPlacement] = useState<DrawerProps['placement']>('left');
 
