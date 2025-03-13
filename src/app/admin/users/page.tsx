@@ -1,10 +1,11 @@
-import AdminUsers from '@/app/components/admin/users/AdminUsers'
+
+import AdminUsersTable from '@/app/components/admin/users/AdminUsersTable'
 import { Col, Row } from 'antd'
 import React from 'react'
 
 function page() {
   return (
-    <div><AdminUsers /></div>
+    <div><AdminUsersTable /></div>
   )
 }
 
