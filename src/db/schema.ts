@@ -21,7 +21,7 @@ const insertUserSchema = createInsertSchema(users)
 const selectUserSchema = createSelectSchema(users)
 const updateUserSchema = createUpdateSchema(users)
 export type InsertUser = z.infer<typeof insertUserSchema>
-export type SelectUser = z.infer<typeof selectUserSchema>
+export type SelectUser = z.infer<typeof selectUserSchema> & { roles: string[] }
 export type UpdateUser = z.infer<typeof updateUserSchema>
 
 export const verificationTokens = pgTable(
