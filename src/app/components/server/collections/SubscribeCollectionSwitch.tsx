@@ -4,11 +4,13 @@ import { MdNotifications } from 'react-icons/md'
 import { useEffect, useState } from 'react'
 import { useSession } from 'next-auth/react';
 import { isSubscribedToCollection, subscribeUserToCollection, unsubscribeUserFromCollection } from '@/app/actions/server/serverCollectionActions';
-import { QueryClient } from '@tanstack/react-query'
-const queryClient = new QueryClient();
+import { useQueryClient } from '@tanstack/react-query'
+
 function SubscribeCollectionSwitch({ collectionId }: { collectionId: number }) {
   const session = useSession()
   const [isSubscribed, setIsSubscribed] = useState<boolean | null>(null);
+  const queryClient = useQueryClient();
+  
   useEffect(() => {
     const checkSubscription = async () => {
       const isSubscribed = await isSubscribedToCollection(collectionId);
@@ -29,7 +31,7 @@ function SubscribeCollectionSwitch({ collectionId }: { collectionId: number }) {
             setIsSubscribed(true);
             queryClient.invalidateQueries({ queryKey: ['usersInCollection', collectionId] });
           } else {
-            await unsubscribeUserFromCollection(collectionId);
+            await unsubscribeUserFromCollection(collectionId);  
             setIsSubscribed(false);
             queryClient.invalidateQueries({ queryKey: ['usersInCollection', collectionId] });
           }
