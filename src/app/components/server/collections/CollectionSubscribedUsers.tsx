@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import type { SelectUser } from '@/db/schema'
 import { getUsersInCollection } from '@/app/actions/server/serverCollectionActions'
 import { ColumnsType } from 'antd/es/table'
+import { useQuery } from '@tanstack/react-query'
 
 // Define a type that matches what getUsersInCollection returns plus the key property
 type CollectionUser = {
@@ -13,14 +14,12 @@ type CollectionUser = {
 }
 
 function CollectionSubscribedUsers({ collectionId }: { collectionId: number }) {
-  const [users, setUsers] = useState<CollectionUser[]>([])
-  useEffect(() => {
-    const getSubscribedUsers = async () => {
-      const userResult = await getUsersInCollection(collectionId)
-      setUsers(userResult.map(user => ({ ...user, key: user.id })))
-    }
-    getSubscribedUsers()
-  }, [collectionId])
+  const { isPending, error, data } = useQuery({
+    queryKey: ['usersInCollection', collectionId],
+    queryFn: () => getUsersInCollection(collectionId),
+    refetchInterval: 5000
+  })
+
   const columns: ColumnsType<CollectionUser> = [
     {
       title: 'Name',
@@ -39,7 +38,13 @@ function CollectionSubscribedUsers({ collectionId }: { collectionId: number }) {
   ]
   return (
     <Card title="Subscribed Users">
-      <Table columns={columns} dataSource={users} size='small' />
+      {isPending ? (
+        <div>Loading...</div>
+      ) : error ? (
+        <div>Error loading users</div>
+      ) : (
+        <Table columns={columns} dataSource={data?.map(user => ({ ...user, key: user.id }))} size='small' />
+      )}
     </Card>
   )
 }
