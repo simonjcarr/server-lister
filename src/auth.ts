@@ -1,9 +1,9 @@
 import NextAuth from "next-auth";
-import { DrizzleAdapter } from "@auth/drizzle-adapter";
 import { db } from "./db";
+import { CustomDrizzleAdapter } from "./lib/auth-adapter";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
-  adapter: DrizzleAdapter(db),
+  adapter: CustomDrizzleAdapter(db),
   providers: [
     {
       id: "dex", // signIn("my-provider") and will be part of the callback URL

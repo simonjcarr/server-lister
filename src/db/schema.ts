@@ -1,6 +1,5 @@
 import { sql } from "drizzle-orm";
-import { unique } from "drizzle-orm/gel-core";
-import { pgTable, text, integer, uniqueIndex, index, primaryKey, varchar, boolean, timestamp, serial } from "drizzle-orm/pg-core";
+import { pgTable, text, integer, uniqueIndex, index, primaryKey, varchar, boolean, timestamp, serial, json } from "drizzle-orm/pg-core";
 import { createInsertSchema, createSelectSchema, createUpdateSchema } from "drizzle-zod";
 import type { AdapterAccountType } from "next-auth/adapters";
 import { z } from "zod";
@@ -13,6 +12,9 @@ export const users = pgTable("user", {
   email: text("email").unique(),
   emailVerified: timestamp("emailVerified"),
   image: text("image"),
+  roles: json("roles").default([]),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
 });
 
 const insertUserSchema = createInsertSchema(users)
@@ -91,12 +93,10 @@ export const projects = pgTable(
     description: text("description"),
     business: integer("business"),
     code: text("code"),
-    createdAt: text("created_at").notNull(),
-    updatedAt: text("updated_at").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
   },
-  (table) => [
-    uniqueIndex("unique_project_name_idx").on(table.name)
-  ]
+  (table) => [uniqueIndex("unique_project_name_idx").on(table.name)]
 );
 
 export const business = pgTable(
@@ -104,26 +104,22 @@ export const business = pgTable(
   {
     id: serial("id").primaryKey(),
     name: text("name").notNull(),
-    createdAt: text("created_at").notNull(),
-    updatedAt: text("updated_at").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
   },
-  (table) => [
-    uniqueIndex("unique_business_name_idx").on(table.name)
-  ]
-)
+  (table) => [uniqueIndex("unique_business_name_idx").on(table.name)]
+);
 
 export const patchingPolicyResponsibility = pgTable(
   "patching_policy_responsibility",
   {
     id: serial("id").primaryKey(),
     name: text("name").notNull(),
-    createdAt: text("created_at").notNull(),
-    updatedAt: text("updated_at").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
   },
-  (table) => [
-    uniqueIndex("unique_responsibility_name_idx").on(table.name)
-  ]
-)
+  (table) => [uniqueIndex("unique_responsibility_name_idx").on(table.name)]
+);
 
 export const patchingPolicy = pgTable(
   "patching_policy",
@@ -134,13 +130,14 @@ export const patchingPolicy = pgTable(
     description: text("description"),
     dayOfWeek: text("dayOfWeek"),
     weekOfMonth: integer("weekOfMonth"),
-    createdAt: text("created_at").notNull(),
-    updatedAt: text("updated_at").notNull()
-  }, (table) => [
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
+  },
+  (table) => [
     index("patching_policy_name_idx").on(table.name),
-    index("patching_policy_responsibility_idx").on(table.responsibility)
+    index("patching_policy_responsibility_idx").on(table.responsibility),
   ]
-)
+);
 
 export const servers = pgTable(
   "servers",
@@ -161,8 +158,7 @@ export const servers = pgTable(
     locationId: integer("locationId").references(() => locations.id, {
       onDelete: "set null",
     }),
-    updatedAt: text("updated_at").notNull(),
-    createdAt: text("created_at").notNull(),
+    // Add timestamps
   },
   (table) => [
     uniqueIndex("unique_server_hostname_idx").on(table.hostname),
@@ -189,13 +185,11 @@ export const collections = pgTable(
     id: serial("id").primaryKey(),
     name: text("name").notNull(),
     description: text("description"),
-    updatedAt: text("updated_at").notNull(),
-    createdAt: text("created_at").notNull()
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
   },
-  (table) => [
-    uniqueIndex("unique_collection_name_idx").on(table.name)
-  ]
-)
+  (table) => [uniqueIndex("unique_collection_name_idx").on(table.name)]
+);
 
 const insertCollectionSchema = createInsertSchema(collections)
 const selectCollectionSchema = createSelectSchema(collections)
@@ -208,15 +202,23 @@ export const servers_collections = pgTable(
   "servers_collections",
   {
     id: serial("id").primaryKey(),
-    serverId: integer("serverId").notNull().references(() => servers.id, { onDelete: "cascade" }),
-    collectionId: integer("collectionId").notNull().references(() => collections.id, { onDelete: "cascade" }),
-    createdAt: text("created_at").notNull()
+    serverId: integer("serverId")
+      .notNull()
+      .references(() => servers.id, { onDelete: "cascade" }),
+    collectionId: integer("collectionId")
+      .notNull()
+      .references(() => collections.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
   },
   (table) => [
     index("servers_collections_serverId_idx").on(table.serverId),
-    uniqueIndex("unique_server_collection_idx").on(table.serverId, table.collectionId)
+    uniqueIndex("unique_server_collection_idx").on(
+      table.serverId,
+      table.collectionId
+    ),
   ]
-)
+);
 
 const insertServerCollectionSchema = createInsertSchema(collections)
 const selectServerCollectionSchema = createSelectSchema(collections)
@@ -229,16 +231,26 @@ export const server_collection_subscriptions = pgTable(
   "server_collection_subscriptions",
   {
     id: serial("id").primaryKey(),
-    userId: text("userId").notNull().references(() => users.id, { onDelete: "cascade" }),
-    collectionId: integer("collectionId").notNull().references(() => collections.id, { onDelete: "cascade" }),
-    createdAt: text("created_at").notNull()
+    userId: text("userId")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    collectionId: integer("collectionId")
+      .notNull()
+      .references(() => collections.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
   },
   (table) => [
-    uniqueIndex("unique_user_collection_idx").on(table.userId, table.collectionId),
-    index("server_collection_subscriptions_collectionId_idx").on(table.collectionId),
-    index("server_collection_subscriptions_userId_idx").on(table.userId)
+    uniqueIndex("unique_user_collection_idx").on(
+      table.userId,
+      table.collectionId
+    ),
+    index("server_collection_subscriptions_collectionId_idx").on(
+      table.collectionId
+    ),
+    index("server_collection_subscriptions_userId_idx").on(table.userId),
   ]
-)
+);
 
 const insertServerCollectionSubscriptionSchema = createInsertSchema(server_collection_subscriptions)
 const selectServerCollectionSubscriptionSchema = createSelectSchema(server_collection_subscriptions)
@@ -251,14 +263,17 @@ export const users_servers = pgTable(
   "users_servers",
   {
     id: serial("id").primaryKey(),
-    userId: text("userId").notNull().references(() => users.id, { onDelete: "cascade" }),
-    serverId: integer("serverId").notNull().references(() => servers.id, { onDelete: "cascade" }),
-    createdAt: text("created_at").notNull()
+    userId: text("userId")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    serverId: integer("serverId")
+      .notNull()
+      .references(() => servers.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
   },
-  (table) => [
-    index("users_servers_serverId_idx").on(table.serverId)
-  ]
-)
+  (table) => [index("users_servers_serverId_idx").on(table.serverId)]
+);
 
 export const tags = pgTable(
   "tags",
@@ -266,55 +281,61 @@ export const tags = pgTable(
     id: serial("id").primaryKey(),
     name: text("name").notNull(),
     description: text("description"),
-    createdAt: text("created_at").notNull(),
-    updatedAt: text("updated_at").notNull()
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
   },
-  (table) => [
-    uniqueIndex("unique_tag_name_idx").on(table.name)
-  ]
-)
+  (table) => [uniqueIndex("unique_tag_name_idx").on(table.name)]
+);
 
 export const servers_tags = pgTable(
   "servers_tags",
   {
     id: serial("id").primaryKey(),
-    serverId: integer("serverId").notNull().references(() => servers.id, { onDelete: "cascade" }),
-    tagId: integer("tagId").notNull().references(() => tags.id, { onDelete: "cascade" }),
-    createdAt: text("created_at").notNull()
+    serverId: integer("serverId")
+      .notNull()
+      .references(() => servers.id, { onDelete: "cascade" }),
+    tagId: integer("tagId")
+      .notNull()
+      .references(() => tags.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
   },
-  (table) => [
-    index("servers_tags_serverId_idx").on(table.serverId)
-  ]
-)
+  (table) => [index("servers_tags_serverId_idx").on(table.serverId)]
+);
 
 export const collections_tags = pgTable(
   "collections_tags",
   {
     id: serial("id").primaryKey(),
-    collectionId: integer("collectionId").notNull().references(() => collections.id, { onDelete: "cascade" }),
-    tagId: integer("tagId").notNull().references(() => tags.id, { onDelete: "cascade" }),
-    createdAt: text("created_at").notNull()
+    collectionId: integer("collectionId")
+      .notNull()
+      .references(() => collections.id, { onDelete: "cascade" }),
+    tagId: integer("tagId")
+      .notNull()
+      .references(() => tags.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
   },
-  (table) => [
-    index("collections_tags_collectionId_idx").on(table.collectionId)
-  ]
-)
+  (table) => [index("collections_tags_collectionId_idx").on(table.collectionId)]
+);
 
 export const posts = pgTable(
   "posts",
   {
     id: serial("id").primaryKey(),
-    serverId: integer("serverId").notNull().references(() => servers.id, { onDelete: "cascade" }),
+    serverId: integer("serverId")
+      .notNull()
+      .references(() => servers.id, { onDelete: "cascade" }),
     content: text("content").notNull(),
     slug: text("slug").notNull(),
-    createdAt: text("created_at").notNull(),
-    updatedAt: text("updated_at").notNull()
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
   },
   (table) => [
     uniqueIndex("unique_post_slug_idx").on(table.slug),
-    index("post_serverId_idx").on(table.serverId)
+    index("post_serverId_idx").on(table.serverId),
   ]
-)
+);
 
 export const applications = pgTable(
   "applications",
@@ -322,26 +343,29 @@ export const applications = pgTable(
     id: serial("id").primaryKey(),
     name: text("name").notNull(),
     description: text("description"),
-    createdAt: text("created_at").notNull(),
-    updatedAt: text("updated_at").notNull()
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
   },
-  (table) => [
-    uniqueIndex("unique_application_name_idx").on(table.name)
-  ]
-)
+  (table) => [uniqueIndex("unique_application_name_idx").on(table.name)]
+);
 
 export const applications_servers = pgTable(
   "applications_servers",
   {
     id: serial("id").primaryKey(),
-    applicationId: integer("applicationId").notNull().references(() => applications.id, { onDelete: "cascade" }),
-    serverId: integer("serverId").notNull().references(() => servers.id, { onDelete: "cascade" }),
-    createdAt: text("created_at").notNull()
+    applicationId: integer("applicationId")
+      .notNull()
+      .references(() => applications.id, { onDelete: "cascade" }),
+    serverId: integer("serverId")
+      .notNull()
+      .references(() => servers.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
   },
   (table) => [
-    index("applications_servers_applicationId_idx").on(table.applicationId)
+    index("applications_servers_applicationId_idx").on(table.applicationId),
   ]
-)
+);
 
 export const locations = pgTable(
   "locations",
@@ -352,13 +376,11 @@ export const locations = pgTable(
     address: text("address"),
     latitude: text("latitude"),
     longitude: text("longitude"),
-    createdAt: text("created_at").notNull(),
-    updatedAt: text("updated_at").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
   },
-  (table) => [
-    uniqueIndex("unique_location_name_idx").on(table.name)
-  ]
-)
+  (table) => [uniqueIndex("unique_location_name_idx").on(table.name)]
+);
 
 const insertLocationSchema = createInsertSchema(locations)
 const selectLocationSchema = createSelectSchema(locations)
@@ -375,13 +397,11 @@ export const os = pgTable(
     version: text("version").notNull(),
     EOLDate: text("eol_date").notNull(),
     description: text("description"),
-    createdAt: text("created_at").notNull(),
-    updatedAt: text("updated_at").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
   },
-  (table) => [
-    uniqueIndex("unique_os_name_idx").on(table.name)
-  ]
-)
+  (table) => [uniqueIndex("unique_os_name_idx").on(table.name)]
+);
 
 const insertOSSchema = createInsertSchema(os)
 const selectOSSchema = createSelectSchema(os)
@@ -397,15 +417,17 @@ export const serverGroups = pgTable(
     id: serial("id").primaryKey(),
     name: text("name").notNull(),
     description: text("description"),
-    ownerId: text("ownerId").notNull().references(() => users.id, { onDelete: "cascade" }),
-    createdAt: text("created_at").notNull(),
-    updatedAt: text("updated_at").notNull(),
+    ownerId: text("ownerId")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
   },
   (table) => [
     uniqueIndex("unique_server_group_name_idx").on(table.name),
-    index("server_groups_ownerId_idx").on(table.ownerId)
+    index("server_groups_ownerId_idx").on(table.ownerId),
   ]
-)
+);
 
 const insertServerGroupSchema = createInsertSchema(serverGroups)
 const selectServerGroupSchema = createSelectSchema(serverGroups)
