@@ -9,12 +9,14 @@ import type { ColumnsType } from 'antd/es/table'
 import type { TablePaginationConfig } from 'antd/es/table'
 import type { FilterValue, SorterResult, TableCurrentDataSource } from 'antd/es/table/interface'
 import type { Breakpoint } from 'antd/es/_util/responsiveObserver'
+import { useRouter } from 'next/navigation'
 
 const { Title } = Typography
 
 type ServerData = Awaited<ReturnType<typeof getServers>>['data'][number] & { key: number }
 
 function ServerList() {
+  const router = useRouter()
   // State for server data and loading status
   const [loading, setLoading] = useState(true)
   const [data, setData] = useState<ServerData[]>([])
@@ -33,7 +35,7 @@ function ServerList() {
   // State for active filters
   const [filters, setFilters] = useState<ServerFilter>({})
   const [searchText, setSearchText] = useState('')
-  
+
   // State for sorting
   const [sort, setSort] = useState<ServerSort>({
     field: 'hostname',
@@ -52,45 +54,45 @@ function ServerList() {
         getOSOptions(),
         getLocationOptions(),
       ])
-      
+
       setBusinessOptions(business)
       setProjectOptions(projects)
       setOSOptions(osystems)
       setLocationOptions(locations)
     }
-    
+
     loadFilterOptions()
   }, [])
 
   // Load server data based on filters, sorting, and pagination
   const loadData = useCallback(async () => {
     if (!shouldLoadData) return
-    
+
     setLoading(true)
     setShouldLoadData(false)
-    
+
     // Apply search filter if provided
     const currentFilters: ServerFilter = {
       ...filters,
     }
-    
+
     if (searchText) {
       currentFilters.search = searchText
     }
-    
+
     const result = await getServers(currentFilters, sort, pagination)
-    
+
     setData(result.data.map(server => ({ ...server, key: server.id })))
     setTotal(result.pagination.total)
     // Update pagination only if page or pageSize changed from the server
-    if (pagination.page !== result.pagination.current || 
-        pagination.pageSize !== result.pagination.pageSize) {
+    if (pagination.page !== result.pagination.current ||
+      pagination.pageSize !== result.pagination.pageSize) {
       setPagination({
         page: result.pagination.current,
         pageSize: result.pagination.pageSize,
       })
     }
-    
+
     setLoading(false)
   }, [filters, sort, pagination, searchText, shouldLoadData])
 
@@ -125,7 +127,7 @@ function ServerList() {
       'osId': 'osId',
       'locationId': 'locationId'
     }
-    
+
     return fieldMap[field] || 'hostname' // Default to hostname if unknown
   }
 
@@ -137,7 +139,7 @@ function ServerList() {
     _extra: TableCurrentDataSource<ServerData>
   ) => {
     console.log('Sort changed:', sorter)
-    
+
     // Update pagination
     if (paginationConfig.current && paginationConfig.pageSize) {
       setPagination({
@@ -145,12 +147,12 @@ function ServerList() {
         pageSize: paginationConfig.pageSize,
       })
     }
-    
+
     // Update sorting
     if (!Array.isArray(sorter) && sorter.field && sorter.order) {
       const fieldName = sorter.field.toString()
       const sortField = mapFieldToSortField(fieldName)
-      
+
       setSort({
         field: sortField as any,
         direction: sorter.order === 'ascend' ? 'asc' : 'desc',
@@ -164,7 +166,7 @@ function ServerList() {
       ...prev,
       [key]: value,
     }))
-    
+
     // Reset to first page when filter changes
     setPagination(prev => ({
       ...prev,
@@ -282,7 +284,7 @@ function ServerList() {
   return (
     <Card>
       <Title level={4}>Server List</Title>
-      
+
       {/* Filter and search controls */}
       <Space wrap style={{ marginBottom: 16 }}>
         <Input
@@ -295,7 +297,7 @@ function ServerList() {
             <Button type="text" icon={<SearchOutlined />} onClick={handleSearch} />
           }
         />
-        
+
         <Select
           placeholder="Business"
           style={{ width: 150 }}
@@ -304,7 +306,7 @@ function ServerList() {
           onChange={value => handleFilterChange('businessId', value)}
           options={businessOptions.map(b => ({ value: b.id, label: b.name }))}
         />
-        
+
         <Select
           placeholder="Project"
           style={{ width: 150 }}
@@ -313,7 +315,7 @@ function ServerList() {
           onChange={value => handleFilterChange('projectId', value)}
           options={projectOptions.map(p => ({ value: p.id, label: p.name }))}
         />
-        
+
         <Select
           placeholder="OS"
           style={{ width: 150 }}
@@ -322,7 +324,7 @@ function ServerList() {
           onChange={value => handleFilterChange('osId', value)}
           options={osOptions.map(o => ({ value: o.id, label: o.name }))}
         />
-        
+
         <Select
           placeholder="Location"
           style={{ width: 150 }}
@@ -331,21 +333,24 @@ function ServerList() {
           onChange={value => handleFilterChange('locationId', value)}
           options={locationOptions.map(l => ({ value: l.id, label: l.name }))}
         />
-        
+
         <Button
           icon={<ReloadOutlined />}
           onClick={() => setShouldLoadData(true)}
         >
           Refresh
         </Button>
-        
+
         <Button onClick={handleClearFilters}>
           Clear Filters
         </Button>
       </Space>
-      
+
       {/* Server data table */}
       <Table
+        onRow={(record)=> {return { onClick: () => {
+          router.push(`/server/view/${record.id}`)
+        }}}}
         columns={columns}
         dataSource={data}
         loading={loading}
