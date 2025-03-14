@@ -49,7 +49,7 @@ export async function getBusinessById(id: number) {
  */
 export async function createBusiness(formData: BusinessFormData) {
   try {
-    const now = new Date().toISOString();
+    const now = new Date();
     
     const result = await db.insert(businessTable).values({
       name: formData.name,
@@ -73,7 +73,7 @@ export async function createBusiness(formData: BusinessFormData) {
  */
 export async function updateBusiness(id: number, formData: Partial<BusinessFormData>) {
   try {
-    const now = new Date().toISOString();
+    const now = new Date();
     
     const result = await db.update(businessTable)
       .set({

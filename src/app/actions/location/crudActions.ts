@@ -23,8 +23,8 @@ export async function addLocation(data: InsertLocation) {
   try {
     await db.insert(locations).values({
       ...data,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
     });
     return { success: true };
   } catch (error) {
@@ -39,7 +39,7 @@ export async function updateLocation(id: number, data: UpdateLocation) {
       .update(locations)
       .set({
         ...data,
-        updatedAt: new Date().toISOString(),
+        updatedAt: new Date(),
       })
       .where(eq(locations.id, id));
     return { success: true };

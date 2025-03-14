@@ -16,23 +16,43 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       clientSecret: process.env.AUTH_CLIENT_SECRET, // from the provider's dashboard
     },
   ],
+  session: {
+    strategy: "jwt",
+    maxAge: 30 * 24 * 60 * 60, // 30 days
+  },
   callbacks: {
-    async session({ session, user }) {
-      if (session.user && user.id) {
-        // Query the database directly using the users table
+    async jwt({ token, user, trigger, session }) {
+      // Add roles to the token when it's first created
+      if (user?.id) {
         const [dbUser] = await db
           .select()
           .from(users)
           .where(eq(users.id, user.id));
         
-        // Add the roles field to the session user object
         if (dbUser) {
-          session.user.roles = dbUser.roles as any[] || [];
-        } else {
-          session.user.roles = [];
+          token.roles = dbUser.roles as string[] || [];
         }
       }
+      
+      // For session updates
+      if (trigger === "update" && session?.user) {
+        // Allow updating user roles via session update
+        if (session.user.roles) {
+          token.roles = session.user.roles;
+        }
+      }
+      
+      return token;
+    },
+    async session({ session, token }) {
+      
+      if (session.user) {
+        // Add the roles from the token to the session
+        session.user.roles = token.roles as string[] || [];
+      }
+      
       return session;
     },
   },
+  debug: true,
 });

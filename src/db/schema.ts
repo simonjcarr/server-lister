@@ -158,7 +158,8 @@ export const servers = pgTable(
     locationId: integer("locationId").references(() => locations.id, {
       onDelete: "set null",
     }),
-    // Add timestamps
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
   },
   (table) => [
     uniqueIndex("unique_server_hostname_idx").on(table.hostname),
@@ -395,7 +396,7 @@ export const os = pgTable(
     id: serial("id").primaryKey(),
     name: text("name").notNull(),
     version: text("version").notNull(),
-    EOLDate: text("eol_date").notNull(),
+    EOLDate: timestamp("eol_date", { withTimezone: true }).notNull(),
     description: text("description"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),

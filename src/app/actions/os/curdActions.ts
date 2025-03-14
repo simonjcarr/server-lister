@@ -19,9 +19,9 @@ export async function addOS(data: InsertOS) {
   try {
     await db.insert(os).values({
       ...data,
-      EOLDate: new Date(data.EOLDate).toISOString(),
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      EOLDate: new Date(data.EOLDate),
+      createdAt: new Date(),
+      updatedAt: new Date(),
     });
     return { success: true };
   } catch (error) {
@@ -36,7 +36,7 @@ export async function updateOS(id: number, data: UpdateOS) {
       .update(os)
       .set({
         ...data,
-        updatedAt: new Date().toISOString(),
+        updatedAt: new Date(),
       })
       .where(eq(os.id, id));
     return { success: true };
