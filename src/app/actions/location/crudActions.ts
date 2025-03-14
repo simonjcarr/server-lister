@@ -19,6 +19,16 @@ export async function getLocations() {
   }
 }
 
+export async function getLocationById(id: number) {
+  try {
+    const locationResult: SelectLocation[] = await db.select().from(locations).where(eq(locations.id, id)).limit(1);
+    return locationResult[0];
+  } catch (error) {
+    console.error("Error getting location by ID:", error);
+    throw new Error("Failed to get location by ID");
+  }
+}
+
 export async function addLocation(data: InsertLocation) {
   try {
     await db.insert(locations).values({
