@@ -45,7 +45,7 @@ export type PaginationParams = {
   pageSize: number;
 };
 
-export async function getServer(serverId: number) {
+export async function getServerById(serverId: number) {
   try {
     const server = await db.select().from(servers).where(eq(servers.id, serverId)).limit(1);
     return server[0]
