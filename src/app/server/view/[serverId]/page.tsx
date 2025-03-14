@@ -7,7 +7,7 @@ function page() {
   const params = useParams<{serverId: string}>()
   return (
     <Row gutter={[16, 16]}>
-      <Col span={8}>
+      <Col span={24}>
         <ViewServerDetails serverId={+params.serverId} />
       </Col>
     </Row>
