@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, integer, uniqueIndex, index, primaryKey, varchar, boolean, timestamp, serial, json } from "drizzle-orm/pg-core";
+import { pgTable, text, integer, uniqueIndex, index, primaryKey, varchar, boolean, timestamp, serial, json, pgEnum } from "drizzle-orm/pg-core";
 import { createInsertSchema, createSelectSchema, createUpdateSchema } from "drizzle-zod";
 import type { AdapterAccountType } from "next-auth/adapters";
 import { z } from "zod";
@@ -139,6 +139,8 @@ export const patchingPolicy = pgTable(
   ]
 );
 
+export const serverTypeEnum = pgEnum("serverTypeEnum", ["Physical", "Virtual"])
+export type ServerType = (typeof serverTypeEnum.enumValues)[number];
 export const servers = pgTable(
   "servers",
   {
@@ -158,6 +160,14 @@ export const servers = pgTable(
     locationId: integer("locationId").references(() => locations.id, {
       onDelete: "set null",
     }),
+    serverType: serverTypeEnum("serverType"),
+    cores: integer("cores"),
+    ram: integer("ram"),
+    diskSpace: integer("diskSpace"),
+    rack: text("rack"),
+    position: text("position"),
+    serial: text("serial"),
+    assetTag: text("assetTag"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
   },
