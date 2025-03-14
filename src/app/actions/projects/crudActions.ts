@@ -17,15 +17,13 @@ export interface ProjectFormData {
  */
 export async function createProject(formData: ProjectFormData) {
   try {
-    const now = new Date().toISOString();
-    
     const result = await db.insert(projects).values({
       name: formData.name,
       description: formData.description,
       business: formData.business,
       code: formData.code,
-      createdAt: now,
-      updatedAt: now,
+      createdAt: new Date(),
+      updatedAt: new Date(),
     }).returning();
     
     revalidatePath('/project/list');
@@ -79,12 +77,10 @@ export async function getProjectById(id: number) {
  */
 export async function updateProject(id: number, formData: Partial<ProjectFormData>) {
   try {
-    const now = new Date().toISOString();
-    
     const result = await db.update(projects)
       .set({
         ...formData,
-        updatedAt: now,
+        updatedAt: new Date(),
       })
       .where(eq(projects.id, id))
       .returning();
