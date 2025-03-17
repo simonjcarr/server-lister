@@ -43,13 +43,10 @@ export async function createProject(formData: ProjectFormData) {
 export async function getProjects() {
   try {
     const allProjects = await db.select().from(projects).orderBy(projects.name);
-    return { success: true, data: allProjects };
+    return allProjects
   } catch (error: any) {
     console.error('Error fetching projects:', error);
-    return { 
-      success: false, 
-      error: error.message || 'Failed to fetch projects' 
-    };
+    throw new Error(error.message || 'Failed to fetch projects');
   }
 }
 
