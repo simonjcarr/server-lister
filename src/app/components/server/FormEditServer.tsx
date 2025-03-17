@@ -1,4 +1,4 @@
-import { Form, Input, Button, Spin, Alert, Card } from 'antd'
+import { Form, Input, Button, Spin, Alert, Card, Select } from 'antd'
 import { useQuery } from "@tanstack/react-query"
 import { getServerById, updateServer } from "@/app/actions/server/crudActions"
 import FormInputSelectLocation from '../location/FormInputSelectLocation'
@@ -6,6 +6,7 @@ import { UpdateServer } from '@/db/schema'
 import { useRouter } from 'next/navigation'
 import FormInputSelectBusiness from '../business/FormInputSelectBusiness'
 import FormInputSelectProject from '../project/FormInputSelectProject'
+import FormInputSelectOS from '../os/FormInputSelectOS'
 
 const FormEditServer = ({ serverId }: { serverId: number }) => {
   const router = useRouter()
@@ -54,10 +55,16 @@ const FormEditServer = ({ serverId }: { serverId: number }) => {
               <FormInputSelectBusiness />
             </Form.Item>
             <Form.Item label="OS" name="osId">
-              <Input />
+              <FormInputSelectOS />
             </Form.Item>
             <Form.Item label="ITAR" name="itar">
-              <Input />
+              <Select
+                value={serverData.itar}
+                options={[
+                  { value: false, label: 'No' },
+                  { value: true, label: 'Yes' },
+                ]}
+              />
             </Form.Item>
             <Form.Item>
               <Button type="primary" htmlType="submit">Update</Button>

@@ -1,5 +1,5 @@
 'use client'
-import { addOS } from '@/app/actions/os/curdActions';
+import { addOS } from '@/app/actions/os/crudActions';
 import { InsertOS } from '@/db/schema';
 import { Card, Form, Input, Button, notification, Typography } from 'antd'
 import { useState } from 'react';
@@ -17,7 +17,7 @@ function FormAddOS() {
       setLoading(true);
       // Submit to server action
       const result = await addOS(values);
-      
+
       if (result.success) {
         messageApi.success({
           message: "Created",
@@ -45,8 +45,8 @@ function FormAddOS() {
   }
 
   return (
-    <Card 
-      title="Add OS" 
+    <Card
+      title="Add OS"
       extra={<Text type="secondary" className="dark:text-gray-300">Create a new server OS</Text>}
       className="dark:bg-gray-800 dark:border-gray-700"
     >
@@ -84,9 +84,9 @@ function FormAddOS() {
         >
           <Input className="dark:bg-gray-700 dark:text-white dark:border-gray-600" />
         </Form.Item>
-        <Form.Item 
-          name="version" 
-          label="Version" 
+        <Form.Item
+          name="version"
+          label="Version"
           rules={[
             {
               required: true,
@@ -98,9 +98,9 @@ function FormAddOS() {
           <Input className="dark:bg-gray-700 dark:text-white dark:border-gray-600" />
         </Form.Item>
 
-        <Form.Item 
-          name="EOLDate" 
-          label="End of Life Date" 
+        <Form.Item
+          name="EOLDate"
+          label="End of Life Date"
           rules={[
             {
               required: true,
@@ -112,7 +112,7 @@ function FormAddOS() {
           <Input type="date" className="dark:bg-gray-700 dark:text-white dark:border-gray-600" />
         </Form.Item>
 
-        
+
         <Form.Item
           name="description"
           label="Description"
