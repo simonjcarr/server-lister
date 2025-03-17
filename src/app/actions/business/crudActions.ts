@@ -30,17 +30,14 @@ export async function getBusinesses() {
  */
 export async function getBusinessById(id: number) {
   try {
-    const businessData = await db.select().from(businessTable).where(eq(businessTable.id, id));
+    const businessData = await db.select().from(businessTable).where(eq(businessTable.id, id)).limit(1);
     if (businessData.length === 0) {
-      return { success: false, error: 'Business not found' };
+      throw new Error('Business not found');
     }
-    return { success: true, data: businessData[0] };
+    return businessData[0];
   } catch (error: any) {
     console.error(`Error fetching business with ID ${id}:`, error);
-    return { 
-      success: false, 
-      error: error.message || 'Failed to fetch business' 
-    };
+    throw new Error('Failed to fetch business');
   }
 }
 
