@@ -74,7 +74,6 @@ export async function getServers(
   pagination: PaginationParams = { page: 1, pageSize: 10 }
 ) {
   try {
-    console.log('Sort received:', sort);
     const whereConditions = [];
     
     if (filters.businessId !== undefined) {
