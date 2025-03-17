@@ -5,6 +5,7 @@ import FormInputSelectLocation from '../location/FormInputSelectLocation'
 import { UpdateServer } from '@/db/schema'
 import { useRouter } from 'next/navigation'
 import FormInputSelectBusiness from '../business/FormInputSelectBusiness'
+import FormInputSelectProject from '../project/FormInputSelectProject'
 
 const FormEditServer = ({ serverId }: { serverId: number }) => {
   const router = useRouter()
@@ -44,7 +45,7 @@ const FormEditServer = ({ serverId }: { serverId: number }) => {
               <Input />
             </Form.Item>
             <Form.Item label="Project" name="projectId">
-              <Input />
+              <FormInputSelectProject />
             </Form.Item>
             <Form.Item label="Location" name="locationId">
               <FormInputSelectLocation />
