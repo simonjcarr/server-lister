@@ -28,7 +28,6 @@ function page() {
             <Col span={12}>
               {serverData.projectId && <ViewProject projectId={+serverData.projectId} />}
             </Col>
-            
             <Col span={8}>
               {serverData.locationId && <ViewLocation locationId={+serverData.locationId} />}
             </Col>
