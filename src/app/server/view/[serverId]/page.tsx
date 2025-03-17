@@ -22,19 +22,20 @@ function page() {
       {serverData && (
         <Card title={`Server: ${serverData.hostname}`} extra={<Button type="primary" onClick={() => {}}>Edit</Button>}>
           <Row gutter={[16, 16]}>
-            <Col>
+            <Col span={12}>
               <ViewServerDetails serverId={+params.serverId} />
             </Col>
-            <Col>
-              {serverData.locationId && <ViewLocation locationId={+serverData.locationId} />}
-            </Col>
-            <Col>
-              {serverData.business && <ViewBusiness businessId={+serverData.business} />}
-            </Col>
-            <Col>
+            <Col span={12}>
               {serverData.projectId && <ViewProject projectId={+serverData.projectId} />}
             </Col>
-            <Col>
+            
+            <Col span={8}>
+              {serverData.locationId && <ViewLocation locationId={+serverData.locationId} />}
+            </Col>
+            <Col span={8}>
+              {serverData.business && <ViewBusiness businessId={+serverData.business} />}
+            </Col>
+            <Col span={8}>
               {serverData.osId && <ViewOS osId={+serverData.osId} />}
             </Col>
           </Row>
