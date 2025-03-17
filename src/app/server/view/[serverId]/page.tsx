@@ -6,6 +6,7 @@ import { useQuery } from '@tanstack/react-query'
 import { getServerById } from '@/app/actions/server/crudActions'
 import ViewLocation from '@/app/components/location/ViewLocation'
 import ViewBusiness from '@/app/components/business/ViewBusiness'
+import ViewProject from '@/app/components/project/ViewProject'
 
 function page() {
   const params = useParams<{serverId: string}>()
@@ -29,6 +30,8 @@ function page() {
             <Col>
               {serverData.business && <ViewBusiness businessId={+serverData.business} />}
             </Col>
+            <Col>
+              {serverData.projectId && <ViewProject projectId={+serverData.projectId} />}</Col>
           </Row>
         </Card>
       )}
