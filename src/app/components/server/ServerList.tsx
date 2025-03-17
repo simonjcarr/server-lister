@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import { Table, Input, Select, Card, Space, Button, Tag, Typography, Tooltip } from 'antd'
-import { SearchOutlined, ReloadOutlined, LinkOutlined } from '@ant-design/icons'
+import { SearchOutlined, ReloadOutlined, LinkOutlined, CopyOutlined } from '@ant-design/icons'
 import { PaginationParams, ServerFilter, ServerSort, getBusinessOptions, getLocationOptions, getOSOptions, getProjectOptions, getServers } from '@/app/actions/server/crudActions'
 import type { SelectServer } from '@/db/schema'
 import type { ColumnsType } from 'antd/es/table'
@@ -10,6 +10,7 @@ import type { TablePaginationConfig } from 'antd/es/table'
 import type { FilterValue, SorterResult, TableCurrentDataSource } from 'antd/es/table/interface'
 import type { Breakpoint } from 'antd/es/_util/responsiveObserver'
 import { useRouter } from 'next/navigation'
+import ClickToCopy from '../utils/ClickToCopy';
 
 const { Title } = Typography
 
@@ -193,6 +194,16 @@ function ServerList() {
     })
   }
 
+  const handleCopy = async (text: string | null) => {
+    if (!text) return;
+    try {
+      await navigator.clipboard.writeText(text);
+      // Add toast or visual feedback here if desired
+    } catch (err) {
+      console.error('Failed to copy text: ', err);
+    }
+  };
+
   // Table columns configuration
   const columns: ColumnsType<ServerData> = [
     {
@@ -202,16 +213,7 @@ function ServerList() {
       sorter: true,
       sortOrder: sort.field === 'hostname' ? (sort.direction === 'asc' ? 'ascend' : 'descend') : undefined,
       render: (text: string, record: ServerData) => (
-        <Space>
-          {text}
-          {record.docLink && (
-            <Tooltip title="Documentation">
-              <a href={record.docLink} target="_blank" rel="noopener noreferrer">
-                <LinkOutlined />
-              </a>
-            </Tooltip>
-          )}
-        </Space>
+        <ClickToCopy text={record.hostname ?? ''} />
       ),
     },
     {
@@ -220,6 +222,9 @@ function ServerList() {
       key: 'ipv4',
       sorter: true,
       sortOrder: sort.field === 'ipv4' ? (sort.direction === 'asc' ? 'ascend' : 'descend') : undefined,
+      render: (text: string, record: ServerData) => (
+        <ClickToCopy text={record.ipv4 ?? ''} />
+      ),
     },
     {
       title: 'IPv6',
@@ -228,6 +233,9 @@ function ServerList() {
       sorter: true,
       sortOrder: sort.field === 'ipv6' ? (sort.direction === 'asc' ? 'ascend' : 'descend') : undefined,
       responsive: ['lg' as Breakpoint],
+      render: (text: string, record: ServerData) => (
+        <ClickToCopy text={record.ipv6 ?? ''} />
+      ),
     },
     {
       title: 'Business',
