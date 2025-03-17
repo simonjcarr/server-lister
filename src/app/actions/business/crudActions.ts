@@ -15,13 +15,10 @@ export interface BusinessFormData {
 export async function getBusinesses() {
   try {
     const allBusinesses = await db.select().from(businessTable).orderBy(businessTable.name);
-    return { success: true, data: allBusinesses };
+    return allBusinesses
   } catch (error: any) {
     console.error('Error fetching businesses:', error);
-    return { 
-      success: false, 
-      error: error.message || 'Failed to fetch businesses' 
-    };
+    throw new Error('Failed to fetch businesses');
   }
 }
 

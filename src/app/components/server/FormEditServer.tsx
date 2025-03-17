@@ -4,6 +4,7 @@ import { getServerById, updateServer } from "@/app/actions/server/crudActions"
 import FormInputSelectLocation from '../location/FormInputSelectLocation'
 import { UpdateServer } from '@/db/schema'
 import { useRouter } from 'next/navigation'
+import FormInputSelectBusiness from '../business/FormInputSelectBusiness'
 
 const FormEditServer = ({ serverId }: { serverId: number }) => {
   const router = useRouter()
@@ -49,7 +50,7 @@ const FormEditServer = ({ serverId }: { serverId: number }) => {
               <FormInputSelectLocation />
             </Form.Item>
             <Form.Item label="Business" name="business">
-              <Input />
+              <FormInputSelectBusiness />
             </Form.Item>
             <Form.Item label="OS" name="osId">
               <Input />
