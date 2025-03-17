@@ -1,7 +1,7 @@
 'use server';
 
 import { db } from "@/db";
-import { InsertServer, SelectServer, business, locations, os, projects, servers } from "@/db/schema";
+import { InsertServer, SelectServer, UpdateServer, business, locations, os, projects, servers } from "@/db/schema";
 import { and, asc, count, desc, eq, ilike, isNotNull, isNull, or, sql } from "drizzle-orm";
 import { SQLWrapper } from "drizzle-orm/sql";
 
@@ -19,6 +19,19 @@ export async function addServer(data: InsertServer) {
     return { success: true };
   } catch (error) {
     console.error("Error adding server:", error);
+    return { success: false };
+  }
+}
+
+export async function updateServer(data: UpdateServer, id: number) {
+  try {
+    await db.update(servers).set({
+      ...data,
+      updatedAt: new Date(),
+    }).where(eq(servers.id, id));
+    return { success: true };
+  } catch (error) {
+    console.error("Error updating server:", error);
     return { success: false };
   }
 }
