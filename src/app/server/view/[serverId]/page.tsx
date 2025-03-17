@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation'
 import { useQuery } from '@tanstack/react-query'
 import { getServerById } from '@/app/actions/server/crudActions'
 import ViewLocation from '@/app/components/location/ViewLocation'
+import ViewBusiness from '@/app/components/business/ViewBusiness'
 
 function page() {
   const params = useParams<{serverId: string}>()
@@ -24,6 +25,9 @@ function page() {
             </Col>
             <Col>
               {serverData.locationId && <ViewLocation locationId={+serverData.locationId} />}
+            </Col>
+            <Col>
+              {serverData.business && <ViewBusiness businessId={+serverData.business} />}
             </Col>
           </Row>
         </Card>
