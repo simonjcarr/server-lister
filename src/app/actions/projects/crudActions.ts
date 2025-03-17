@@ -58,17 +58,14 @@ export async function getProjects() {
  */
 export async function getProjectById(id: number) {
   try {
-    const projectData = await db.select().from(projects).where(eq(projects.id, id));
+    const projectData = await db.select().from(projects).where(eq(projects.id, id)).limit(1);
     if (projectData.length === 0) {
-      return { success: false, error: 'Project not found' };
+      throw new Error('Project not found');
     }
-    return { success: true, data: projectData[0] };
+    return projectData[0]
   } catch (error: any) {
     console.error(`Error fetching project with ID ${id}:`, error);
-    return { 
-      success: false, 
-      error: error.message || 'Failed to fetch project' 
-    };
+    throw new Error(error.message || 'Failed to fetch project');
   }
 }
 
