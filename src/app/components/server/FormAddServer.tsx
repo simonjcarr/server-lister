@@ -2,7 +2,7 @@
 
 import { Card, Form, Input, Button, Typography, Select, Switch, Row, Col, App } from 'antd'
 import React, { useEffect, useState } from 'react'
-import { getOS } from '@/app/actions/os/curdActions';
+import { getOS } from '@/app/actions/os/crudActions';
 import { InsertLocation, InsertOS } from '@/db/schema';
 const { TextArea } = Input;
 const { Text } = Typography;

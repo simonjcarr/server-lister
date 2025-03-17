@@ -7,7 +7,7 @@ import type { SelectOS, InsertOS, UpdateOS } from "@/db/schema";
 
 export async function getOS() {
   try {
-    const osResult: SelectOS[] = await db.select().from(os);
+    const osResult = await db.select().from(os);
     return osResult;
   } catch (error) {
     console.error("Error getting OS:", error);

@@ -1,6 +1,6 @@
 import { Card } from "antd"
 import { useQuery } from "@tanstack/react-query"
-import { getOSById } from "@/app/actions/os/curdActions"
+import { getOSById } from "@/app/actions/os/crudActions"
 const ViewOS = ({ osId }: { osId: number }) => {
   const { data, error, isLoading } = useQuery({
     queryKey: ["os", osId],
