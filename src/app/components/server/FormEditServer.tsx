@@ -7,11 +7,13 @@ import { useRouter } from 'next/navigation'
 import FormInputSelectBusiness from '../business/FormInputSelectBusiness'
 import FormInputSelectProject from '../project/FormInputSelectProject'
 import FormInputSelectOS from '../os/FormInputSelectOS'
+import { getIP } from '@/app/actions/utils/getIP';
 
 const { Text } = Typography;
 
 const FormEditServer = ({ serverId }: { serverId: number }) => {
   const router = useRouter()
+  const [form] = Form.useForm();
   const { data: serverData, isLoading, error } = useQuery({
     queryKey: ["server", serverId],
     queryFn: () => getServerById(serverId),
@@ -20,6 +22,23 @@ const FormEditServer = ({ serverId }: { serverId: number }) => {
   const onFinish = async (values: UpdateServer) => {
     await updateServer(values, serverId);
     router.push(`/server/view/${serverId}`);
+  };
+
+  const handleHostnameChange = async (value: string) => {
+    try {
+      const result = await getIP(value);
+      if (result?.ip) {
+        form.setFieldsValue({
+          ipv4: result.ip
+        });
+      } else {
+        form.setFieldsValue({
+          ipv4: ""
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching IP:", error);
+    }
   };
 
   return (
@@ -35,6 +54,7 @@ const FormEditServer = ({ serverId }: { serverId: number }) => {
       {error && <Alert message="Error" description={error instanceof Error ? error.message : 'An error occurred'} type="error" />}
       {serverData && (
         <Form 
+          form={form}
           initialValues={serverData}
           onFinish={onFinish}
           layout="vertical"
@@ -43,7 +63,10 @@ const FormEditServer = ({ serverId }: { serverId: number }) => {
           <Row gutter={[16, 16]}>
             <Col span={24}>
               <Form.Item label="Hostname" name="hostname">
-                <Input className="dark:bg-gray-700 dark:text-white dark:border-gray-600" />
+                <Input 
+                  className="dark:bg-gray-700 dark:text-white dark:border-gray-600"
+                  onChange={(e) => handleHostnameChange(e.target.value)}
+                />
               </Form.Item>
             </Col>
             <Col span={12}>

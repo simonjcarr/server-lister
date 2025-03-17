@@ -50,18 +50,18 @@ function FormAddServer() {
     };
     const fetchBusinesses = async () => {
       const result = await getBusinesses();
-      if (result.success && result.data) {
-        setBusinessList(result.data as Business[]);
+      if (result) {
+        setBusinessList(result);
       } else {
-        console.error('Error fetching businesses:', result.error);
+        console.error('Error fetching businesses:');
       }
     };
     const fetchProjects = async () => {
       const result = await getProjects();
-      if (result.success && result.data) {
-        setProjectList(result.data as Project[]);
+      if (result) {
+        setProjectList(result);
       } else {
-        console.error('Error fetching projects:', result.error);
+        console.error('Error fetching projects:');
       }
     };
     fetchOS();
