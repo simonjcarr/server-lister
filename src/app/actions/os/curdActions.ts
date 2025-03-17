@@ -55,3 +55,16 @@ export async function deleteOS(id: number) {
     throw new Error("Failed to delete OS");
   }
 }
+
+export async function getOSById(id: number) {
+  try {
+    const osData = await db.select().from(os).where(eq(os.id, id)).limit(1);
+    if (osData.length === 0) {
+      throw new Error('OS not found');
+    } 
+    return osData[0];
+  } catch (error) {
+    console.error("Error getting OS by ID:", error);
+    throw new Error("Failed to get OS by ID");
+  }
+}
