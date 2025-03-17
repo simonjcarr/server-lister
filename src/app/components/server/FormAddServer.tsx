@@ -24,7 +24,7 @@ interface Project {
   name: string;
   description?: string;
   business?: number;
-  code?: string;
+  code: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -51,7 +51,12 @@ function FormAddServer() {
     const fetchBusinesses = async () => {
       const result = await getBusinesses();
       if (result) {
-        setBusinessList(result);
+        const data = result.map(item => ({
+          ...item,
+          createdAt: item.createdAt.toISOString(),
+          updatedAt: item.updatedAt.toISOString()
+        }));
+        setBusinessList(data);
       } else {
         console.error('Error fetching businesses:');
       }
@@ -59,7 +64,14 @@ function FormAddServer() {
     const fetchProjects = async () => {
       const result = await getProjects();
       if (result) {
-        setProjectList(result);
+        const projectsResult = result.map(project => ({
+          ...project,
+          description: project.description === null ? undefined : project.description,
+          business: project.business === null ? undefined : project.business,
+          createdAt: project.createdAt.toISOString(),
+          updatedAt: project.updatedAt.toISOString()
+        }));
+        setProjectList(projectsResult);
       } else {
         console.error('Error fetching projects:');
       }
