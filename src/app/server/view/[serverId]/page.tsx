@@ -8,9 +8,11 @@ import ViewLocation from '@/app/components/location/ViewLocation'
 import ViewBusiness from '@/app/components/business/ViewBusiness'
 import ViewProject from '@/app/components/project/ViewProject'
 import ViewOS from '@/app/components/os/ViewOS'
+import { useRouter } from 'next/navigation'
 
 function page() {
   const params = useParams<{serverId: string}>()
+  const router = useRouter()
   const { data: serverData, isLoading, error } = useQuery({
     queryKey: ["server", params.serverId],
     queryFn: () => getServerById(+params.serverId),
@@ -20,7 +22,7 @@ function page() {
       {isLoading && <Spin />}
       {error && <Alert message="Error" description={error instanceof Error ? error.message : 'An error occurred'} type="error" />}
       {serverData && (
-        <Card title={`Server: ${serverData.hostname}`} extra={<Button type="primary" onClick={() => {}}>Edit</Button>}>
+        <Card title={`Server: ${serverData.hostname}`} extra={<Button type="primary" onClick={() => {router.push(`/server/edit/${params.serverId}`)}}>Edit</Button>}>
           <Row gutter={[16, 16]}>
             <Col span={12}>
               <ViewServerDetails serverId={+params.serverId} />
