@@ -7,6 +7,7 @@ import { getServerById } from '@/app/actions/server/crudActions'
 import ViewLocation from '@/app/components/location/ViewLocation'
 import ViewBusiness from '@/app/components/business/ViewBusiness'
 import ViewProject from '@/app/components/project/ViewProject'
+import ViewOS from '@/app/components/os/ViewOS'
 
 function page() {
   const params = useParams<{serverId: string}>()
@@ -31,7 +32,11 @@ function page() {
               {serverData.business && <ViewBusiness businessId={+serverData.business} />}
             </Col>
             <Col>
-              {serverData.projectId && <ViewProject projectId={+serverData.projectId} />}</Col>
+              {serverData.projectId && <ViewProject projectId={+serverData.projectId} />}
+            </Col>
+            <Col>
+              {serverData.osId && <ViewOS osId={+serverData.osId} />}
+            </Col>
           </Row>
         </Card>
       )}
