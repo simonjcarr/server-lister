@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<testsuites errors="1"
+            failures="0"
+            tests="0">
+
+  <testsuite name="basic.test" id="basic.test"
+    errors="1" failures="0" hostname="" id="" package="basic.test" skipped="1"
+    tests="0" time="0.000" timestamp="">
+  
+
+  
+    <system-err>
+       An error occurred while creating a new ChromeDriver session: [Error] spawn /Users/simoncarr/dev/server-lister/node_modules/@nightwatch/selenium-server/lib/selenium-server-4.20.0.jar EACCES
+  Verify if ChromeDriver is configured correctly; using:
+  {
+     start_process: true,
+     server_path: &#39;/Users/simoncarr/dev/server-lister/node_modules/@nightwatch/selenium-server/lib/selenium-server-4.20.0.jar&#39;,
+     port: 9515,
+     host: &#39;localhost&#39;,
+     ssl: false,
+     default_path_prefix: &#39;&#39;,
+     proxy: undefined,
+     cli_args: [ &#39;--verbose&#39; ]
+  }
+
+ 
+  More info might be available in the log file: /Users/simoncarr/dev/server-lister/logs/basic.test_chromedriver.log
+    </system-err>
+  
+
+    
+    <error message="An error occurred while creating a new ChromeDriver session: [Error] spawn /Users/simoncarr/dev/server-lister/node_modules/@nightwatch/selenium-server/lib/selenium-server-4.20.0.jar EACCES"><![CDATA[
+      Error: An error occurred while creating a new ChromeDriver session: [Error] spawn /Users/simoncarr/dev/server-lister/node_modules/@nightwatch/selenium-server/lib/selenium-server-4.20.0.jar EACCES
+    at /Users/simoncarr/dev/server-lister/node_modules/selenium-webdriver/remote/index.js:256:70
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+      ]]></error>  
+
+  
+    
+    <testcase
+      name="Verifies that 1 equals 1" classname="basic.test">
+      <skipped />
+    </testcase>
+    
+  
+  </testsuite>
+</testsuites>
