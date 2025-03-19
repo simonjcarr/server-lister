@@ -6,18 +6,18 @@ import ViewServerTabs from './ViewServerTabs'
 function ViewServerDetails({ serverId }: { serverId: number }) {
   return (
 
-    <Splitter>
-      <Splitter.Panel>
+    <Splitter className='max-h-[80vh]'>
+      <Splitter.Panel className='h-full'>
         <div className='px-4'>
 
-        <ViewServerTabs serverId={serverId} />
+          <ViewServerTabs serverId={serverId} />
         </div>
       </Splitter.Panel>
-      <Splitter.Panel>
+      <Splitter.Panel className='h-full'>
         <div className='px-4'>Chat</div>
       </Splitter.Panel>
     </Splitter>
-    
+
   )
 }
 

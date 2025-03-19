@@ -11,13 +11,13 @@ import ViewServerDetails from '@/app/components/server/view/ViewServerDetails'
 
 function Page() {
   const router = useRouter()
-  const params = useParams<{serverId: string}>()
+  const params = useParams<{ serverId: string }>()
   const { data: serverData, isLoading, error } = useQuery({
     queryKey: ["server", params.serverId],
     queryFn: () => getServerById(+params.serverId),
   });
   return (
-    <Card className="h-full w-full" title={
+    <Card className="min-h-[90vh] w-full" title={
       <div className='flex gap-4'>
         Server Details
         {isLoading && <Spin />}
