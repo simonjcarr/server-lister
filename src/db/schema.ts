@@ -191,6 +191,41 @@ export type InsertServer = z.infer<typeof insertServerSchema>
 export type SelectServer = z.infer<typeof selectServerSchema>
 export type UpdateServer = z.infer<typeof updateServerSchema>
 
+export const notes = pgTable("notes", {
+  id: serial("id").primaryKey(),
+  note: text("note").notNull(),
+  userId: text("userId").notNull().references(() => users.id, { onDelete: "set null" }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
+}, (table) => [
+  index("user_id_idx").on(table.userId),
+])
+
+const insertNoteSchema = createInsertSchema(notes)
+const selectNoteSchema = createSelectSchema(notes)
+const updateNoteSchema = createUpdateSchema(notes)
+export type InsertNote = z.infer<typeof insertNoteSchema>
+export type SelectNote = z.infer<typeof selectNoteSchema>
+export type UpdateNote = z.infer<typeof updateNoteSchema>
+
+export const serverNotes = pgTable("server_notes", {
+  id: serial("id").primaryKey(),
+  serverId: integer("serverId").notNull().references(() => servers.id, { onDelete: "cascade" }),
+  noteId: integer("noteId").notNull().references(() => notes.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
+}, (table) => [
+  index("server_id_idx").on(table.serverId),
+  index("note_id_idx").on(table.noteId),
+])
+
+const insertServerNoteSchema = createInsertSchema(serverNotes)
+const selectServerNoteSchema = createSelectSchema(serverNotes)
+const updateServerNoteSchema = createUpdateSchema(serverNotes)
+export type InsertServerNote = z.infer<typeof insertServerNoteSchema>
+export type SelectServerNote = z.infer<typeof selectServerNoteSchema>
+export type UpdateServerNote = z.infer<typeof updateServerNoteSchema>
+
 export const collections = pgTable(
   "collections",
   {
