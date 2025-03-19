@@ -28,7 +28,7 @@ const ViewServerTabs = ({ serverId }: { serverId: number }) => {
       {error && <p>Error: {error.message}</p>}
       {data && (
         <>
-          <Tabs tabPosition="left" items={items} />
+          <Tabs className="max-h-[90vh]" tabPosition="left" items={items} />
         </>
       )}
     </>
