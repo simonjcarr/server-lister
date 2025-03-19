@@ -1,11 +1,10 @@
 'use client';
 
-import { Card, Form, Input, Button, Typography, Select, Switch, Row, Col, App } from 'antd'
+import { Card, Form, Input, Button, Select, Switch, Row, Col, App } from 'antd'
 import React, { useEffect, useState } from 'react'
 import { getOS } from '@/app/actions/os/crudActions';
-import { InsertLocation, InsertOS } from '@/db/schema';
+import { InsertLocation, InsertOS, InsertServer } from '@/db/schema';
 const { TextArea } = Input;
-const { Text } = Typography;
 import { addServer } from '@/app/actions/server/crudActions';
 import { getIP } from '@/app/actions/utils/getIP';
 import { getLocations } from '@/app/actions/location/crudActions';
@@ -99,15 +98,11 @@ function FormAddServer() {
     }
   }, [formSubmitStatus, notification]);
 
-  const onFinish = async (values: any) => {
+  const onFinish = async (values: InsertServer) => {
     try {
       setLoading(true);
       // Convert boolean values to 0 or 1
-      const formattedValues = {
-        ...values,
-        itar: values.itar ? 1 : 0,
-        secureServer: values.secureServer ? 1 : 0
-      };
+      const formattedValues = {...values};
 
       // Submit to server action
       const result = await addServer(formattedValues);
