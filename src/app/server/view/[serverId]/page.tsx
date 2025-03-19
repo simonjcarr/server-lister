@@ -1,49 +1,40 @@
 'use client'
-import ViewServerDetails from '@/app/components/server/view/ViewServerDetails'
-import { Alert, Button, Card, Col, Row, Spin, } from 'antd'
+
+import { Alert, Button, Card, Spin, } from 'antd'
 import { useParams } from 'next/navigation'
 import { useQuery } from '@tanstack/react-query'
 import { getServerById } from '@/app/actions/server/crudActions'
-import ViewLocation from '@/app/components/location/ViewLocation'
-import ViewBusiness from '@/app/components/business/ViewBusiness'
-import ViewProject from '@/app/components/project/ViewProject'
-import ViewOS from '@/app/components/os/ViewOS'
-import { useRouter } from 'next/navigation'
 
-function page() {
+import ClickToCopy from '@/app/components/utils/ClickToCopy'
+import router from 'next/router'
+import ViewServerDetails from '@/app/components/server/view/ViewServerDetails'
+
+function Page() {
   const params = useParams<{serverId: string}>()
-  const router = useRouter()
   const { data: serverData, isLoading, error } = useQuery({
     queryKey: ["server", params.serverId],
     queryFn: () => getServerById(+params.serverId),
   });
   return (
-    <>
-      {isLoading && <Spin />}
-      {error && <Alert message="Error" description={error instanceof Error ? error.message : 'An error occurred'} type="error" />}
-      {serverData && (
-        <Card title={`Server: ${serverData.hostname}`} extra={<Button type="primary" onClick={() => {router.push(`/server/edit/${params.serverId}`)}}>Edit</Button>}>
-          <Row gutter={[16, 16]}>
-            <Col span={12}>
-              <ViewServerDetails serverId={+params.serverId} />
-            </Col>
-            <Col span={12}>
-              {serverData.projectId && <ViewProject projectId={+serverData.projectId} />}
-            </Col>
-            <Col span={8}>
-              {serverData.locationId && <ViewLocation locationId={+serverData.locationId} />}
-            </Col>
-            <Col span={8}>
-              {serverData.business && <ViewBusiness businessId={+serverData.business} />}
-            </Col>
-            <Col span={8}>
-              {serverData.osId && <ViewOS osId={+serverData.osId} />}
-            </Col>
-          </Row>
-        </Card>
-      )}
-    </>
+    <Card title={
+      <div className='flex gap-4'>
+        Server Details
+        {isLoading && <Spin />}
+        {error && <Alert message="Error" description={error instanceof Error ? error.message : 'An error occurred'} type="error" />}
+        {serverData && (
+          <div className='flex gap-4 text-gray-400'>
+            <div className='flex gap-2'>Hostname: <ClickToCopy text={serverData.hostname ?? ''} /></div>
+            <div className='flex gap-2'>IPV4: <ClickToCopy text={serverData.ipv4 ?? ''} /></div>
+            <div className='flex gap-2'>IPV6: <ClickToCopy text={serverData.ipv6 ?? ''} /></div>
+          </div>
+        )}
+      </div>
+    } extra={
+      <Button type="primary" onClick={() => { router.push(`/server/edit/${params.serverId}`) }}>Edit</Button>
+    }>
+      <ViewServerDetails serverId={+params.serverId} />
+    </Card>
   )
 }
 
-export default page
+export default Page
