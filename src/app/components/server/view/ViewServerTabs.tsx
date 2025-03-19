@@ -20,7 +20,6 @@ const ViewServerTabs = ({ serverId }: { serverId: number }) => {
     { key: 'users', label: 'Users', children: <div>Users</div> },
     { key: 'software', label: 'Software', children: <div>Software</div> },
     { key: 'notes', label: 'Notes', children: <div>Notes</div> },
-    
   ]
   return (
     <>
