@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query"
 import { getServerById } from "@/app/actions/server/crudActions"
 import HardwareTabData from "./HardwareTabData"
 import NetworkTabData from "./NetworkTabData"
+import ViewServerNotes from "./notes/ViewServerNotes"
 
 const ViewServerTabs = ({ serverId }: { serverId: number }) => {
   const { data, error, isLoading } = useQuery({
@@ -19,7 +20,7 @@ const ViewServerTabs = ({ serverId }: { serverId: number }) => {
     { key: 'services', label: 'Services', children: <div>Services</div> },
     { key: 'users', label: 'Users', children: <div>Users</div> },
     { key: 'software', label: 'Software', children: <div>Software</div> },
-    { key: 'notes', label: 'Notes', children: <div>Notes</div> },
+    { key: 'notes', label: 'Notes', children: <ViewServerNotes /> },
   ]
   return (
     <>
