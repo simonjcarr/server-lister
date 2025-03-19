@@ -13,12 +13,47 @@ const notes = [
     userId: "1",
     createdAt: new Date(),
     updatedAt: new Date()
+  },
+  {
+    id: 3,
+    note: "lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
+    userId: "1",
+    createdAt: new Date(),
+    updatedAt: new Date()
+  },
+  {
+    id: 4,
+    note: "lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
+    userId: "1",
+    createdAt: new Date(),
+    updatedAt: new Date()
+  },
+  {
+    id: 5,
+    note: "lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
+    userId: "1",
+    createdAt: new Date(),
+    updatedAt: new Date()
+  },
+  {
+    id: 6,
+    note: "lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
+    userId: "1",
+    createdAt: new Date(),
+    updatedAt: new Date() 
+  },
+  {
+    id: 7,
+    note: "lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
+    userId: "1",
+    createdAt: new Date(),
+    updatedAt: new Date() 
   }
 ]
 const ViewServerNotes = () => {
  
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col max-h-[80vh]">
       {/* Server notes list grows to take up remaining space */}
       <div className="flex-1 grow overflow-auto">
         {notes.map((note) => (
