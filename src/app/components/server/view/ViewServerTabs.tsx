@@ -2,6 +2,8 @@ import { Tabs } from "antd"
 import ViewOS from "../../os/ViewOS"
 import { useQuery } from "@tanstack/react-query"
 import { getServerById } from "@/app/actions/server/crudActions"
+import HardwareTabData from "./HardwareTabData"
+import NetworkTabData from "./NetworkTabData"
 
 const ViewServerTabs = ({ serverId }: { serverId: number }) => {
   const { data, error, isLoading } = useQuery({
@@ -10,8 +12,8 @@ const ViewServerTabs = ({ serverId }: { serverId: number }) => {
     enabled: !!serverId,
   })
   const items = [
-    { key: 'hardware', label: 'Hardware', children: <div>Hardware {serverId}</div> },
-    { key: 'network', label: 'Network', children: <div>Network</div> },
+    { key: 'hardware', label: 'Hardware', children: <HardwareTabData serverId={serverId} /> },
+    { key: 'network', label: 'Network', children: <NetworkTabData serverId={serverId} /> },
     { key: 'storage', label: 'Storage', children: <div>Storage</div> },
     { key: 'os', label: 'OS', children: <ViewOS osId={data?.osId ?? 0} /> },
     { key: 'services', label: 'Services', children: <div>Services</div> },

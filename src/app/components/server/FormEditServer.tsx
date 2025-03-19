@@ -40,8 +40,8 @@ const FormEditServer = ({ serverId }: { serverId: number }) => {
   };
 
   return (
-    <Card 
-      title={`Server: ${serverData?.hostname || 'Loading...'}`} 
+    <Card
+      title={`Server: ${serverData?.hostname || 'Loading...'}`}
       className="dark:bg-gray-800 dark:border-gray-700"
       styles={{
         header: { color: 'inherit' },
@@ -51,7 +51,7 @@ const FormEditServer = ({ serverId }: { serverId: number }) => {
       {isLoading && <Spin />}
       {error && <Alert message="Error" description={error instanceof Error ? error.message : 'An error occurred'} type="error" />}
       {serverData && (
-        <Form 
+        <Form
           form={form}
           initialValues={serverData}
           onFinish={onFinish}
@@ -61,7 +61,7 @@ const FormEditServer = ({ serverId }: { serverId: number }) => {
           <Row gutter={[16, 16]}>
             <Col span={24}>
               <Form.Item label="Hostname" name="hostname">
-                <Input 
+                <Input
                   className="dark:bg-gray-700 dark:text-white dark:border-gray-600"
                   onChange={(e) => handleHostnameChange(e.target.value)}
                 />
@@ -75,6 +75,21 @@ const FormEditServer = ({ serverId }: { serverId: number }) => {
             <Col span={12}>
               <Form.Item label="IPV6" name="ipv6">
                 <Input className="dark:bg-gray-700 dark:text-white dark:border-gray-600" />
+              </Form.Item>
+            </Col>
+            <Col span={8}>
+              <Form.Item label="Cores" name="cores">
+                <Input type='number' className="dark:bg-gray-700 dark:text-white dark:border-gray-600" />
+              </Form.Item>
+            </Col>
+            <Col span={8}>
+              <Form.Item label="Ram" name="ram">
+                <Input type='number' className="dark:bg-gray-700 dark:text-white dark:border-gray-600" />
+              </Form.Item>
+            </Col>
+            <Col span={8}>
+              <Form.Item label="Disk Space" name="diskSpace">
+                <Input type='number' className="dark:bg-gray-700 dark:text-white dark:border-gray-600" />
               </Form.Item>
             </Col>
             <Col span={24}>
@@ -102,6 +117,9 @@ const FormEditServer = ({ serverId }: { serverId: number }) => {
                 <FormInputSelectOS />
               </Form.Item>
             </Col>
+
+            
+
             <Col span={12}>
               <Form.Item label="ITAR" name="itar">
                 <Select
