@@ -13,7 +13,7 @@ const ViewServerTabs = ({ serverId }: { serverId: number }) => {
     { key: 'hardware', label: 'Hardware', children: <div>Hardware {serverId}</div> },
     { key: 'network', label: 'Network', children: <div>Network</div> },
     { key: 'storage', label: 'Storage', children: <div>Storage</div> },
-    { key: 'os', label: 'OS', children: <ViewOS osId={data?.osId} /> },
+    { key: 'os', label: 'OS', children: <ViewOS osId={data?.osId ?? 0} /> },
     { key: 'services', label: 'Services', children: <div>Services</div> },
     { key: 'users', label: 'Users', children: <div>Users</div> },
     { key: 'software', label: 'Software', children: <div>Software</div> },
@@ -21,7 +21,15 @@ const ViewServerTabs = ({ serverId }: { serverId: number }) => {
     
   ]
   return (
-    <Tabs tabPosition="left" items={items} />
+    <>
+      {isLoading && <p>Loading...</p>}
+      {error && <p>Error: {error.message}</p>}
+      {data && (
+        <>
+          <Tabs tabPosition="left" items={items} />
+        </>
+      )}
+    </>
   )
 }
 
