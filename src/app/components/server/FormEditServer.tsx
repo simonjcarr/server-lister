@@ -1,4 +1,4 @@
-import { Form, Input, Button, Spin, Alert, Card, Select, Row, Col, Typography } from 'antd'
+import { Form, Input, Button, Spin, Alert, Card, Select, Row, Col } from 'antd'
 import { useQuery } from "@tanstack/react-query"
 import { getServerById, updateServer } from "@/app/actions/server/crudActions"
 import FormInputSelectLocation from '../location/FormInputSelectLocation'
@@ -8,8 +8,6 @@ import FormInputSelectBusiness from '../business/FormInputSelectBusiness'
 import FormInputSelectProject from '../project/FormInputSelectProject'
 import FormInputSelectOS from '../os/FormInputSelectOS'
 import { getIP } from '@/app/actions/utils/getIP';
-
-const { Text } = Typography;
 
 const FormEditServer = ({ serverId }: { serverId: number }) => {
   const router = useRouter()
