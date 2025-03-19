@@ -17,7 +17,7 @@ function Page() {
     queryFn: () => getServerById(+params.serverId),
   });
   return (
-    <Card title={
+    <Card className="h-full w-full" title={
       <div className='flex gap-4'>
         Server Details
         {isLoading && <Spin />}
