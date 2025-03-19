@@ -1,14 +1,38 @@
 import TextArea from "antd/es/input/TextArea"
 
+const notes = [
+  {
+    id: 1,
+    note: "lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
+    userId: "1",
+    createdAt: new Date(),
+    updatedAt: new Date()
+  },{
+    id: 2,
+    note: "lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
+    userId: "1",
+    createdAt: new Date(),
+    updatedAt: new Date()
+  }
+]
 const ViewServerNotes = () => {
+ 
   return (
-    <div className="flex flex-col h-full w-full">
+    <div className="flex flex-col h-full">
       {/* Server notes list grows to take up remaining space */}
-      <div className="flex-grow overflow-auto">
-        Server Notes list goes here
+      <div className="flex-1 grow overflow-auto">
+        {notes.map((note) => (
+          <div key={note.id} className="mb-4">
+            <div className="flex justify-between">
+              <p>{note.userId}</p>
+              <p>{note.createdAt.toLocaleDateString()}</p>
+            </div>
+            <p className="mt-2 text-gray-200">{note.note}</p>
+          </div>
+        ))}
       </div>
       {/* TextArea remains at the bottom */}
-      <div className="w-full">
+      <div className="mt-auto">
         <TextArea rows={5} placeholder="Add a note" />
       </div>
     </div>
