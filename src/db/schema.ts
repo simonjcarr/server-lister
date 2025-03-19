@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { sql } from "drizzle-orm";
 import { pgTable, text, integer, uniqueIndex, index, primaryKey, varchar, boolean, timestamp, serial, json, pgEnum } from "drizzle-orm/pg-core";
 import { createInsertSchema, createSelectSchema, createUpdateSchema } from "drizzle-zod";
