@@ -1,13 +1,12 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
-import { Table, Input, Select, Card, Space, Button, Tag, Typography, Tooltip } from 'antd'
-import { SearchOutlined, ReloadOutlined, LinkOutlined, CopyOutlined } from '@ant-design/icons'
+import { Table, Input, Select, Card, Space, Button, Tag, Typography } from 'antd'
+import { SearchOutlined, ReloadOutlined } from '@ant-design/icons'
 import { PaginationParams, ServerFilter, ServerSort, getBusinessOptions, getLocationOptions, getOSOptions, getProjectOptions, getServers } from '@/app/actions/server/crudActions'
-import type { SelectServer } from '@/db/schema'
 import type { ColumnsType } from 'antd/es/table'
 import type { TablePaginationConfig } from 'antd/es/table'
-import type { FilterValue, SorterResult, TableCurrentDataSource } from 'antd/es/table/interface'
+import type { FilterValue, SorterResult } from 'antd/es/table/interface'
 import type { Breakpoint } from 'antd/es/_util/responsiveObserver'
 import { useRouter } from 'next/navigation'
 import ClickToCopy from '../utils/ClickToCopy';
@@ -137,7 +136,6 @@ function ServerList() {
     paginationConfig: TablePaginationConfig,
     _filters: Record<string, FilterValue | null>,
     sorter: SorterResult<ServerData> | SorterResult<ServerData>[],
-    _extra: TableCurrentDataSource<ServerData>
   ) => {
     console.log('Sort changed:', sorter)
 
@@ -155,6 +153,7 @@ function ServerList() {
       const sortField = mapFieldToSortField(fieldName)
 
       setSort({
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         field: sortField as any,
         direction: sorter.order === 'ascend' ? 'asc' : 'desc',
       })
@@ -193,16 +192,6 @@ function ServerList() {
       pageSize: 10,
     })
   }
-
-  const handleCopy = async (text: string | null) => {
-    if (!text) return;
-    try {
-      await navigator.clipboard.writeText(text);
-      // Add toast or visual feedback here if desired
-    } catch (err) {
-      console.error('Failed to copy text: ', err);
-    }
-  };
 
   // Table columns configuration
   const columns: ColumnsType<ServerData> = [
@@ -273,7 +262,7 @@ function ServerList() {
       title: 'Security',
       key: 'security',
       responsive: ['lg' as Breakpoint],
-      render: (_: any, record: ServerData) => (
+      render: (_, record: ServerData) => (
         <Space>
           {record.itar === true && <Tag color="red">ITAR</Tag>}
           {record.secureServer === true && <Tag color="green">Secure</Tag>}
