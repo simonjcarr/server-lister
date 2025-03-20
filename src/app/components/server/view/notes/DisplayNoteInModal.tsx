@@ -1,6 +1,5 @@
 'use client'
-import { Button, Modal} from "antd"
-import { FullscreenOutlined } from "@ant-design/icons"
+import {  Modal} from "antd"
 import { useQuery } from "@tanstack/react-query"
 import { getNoteById } from "@/app/actions/server/notes/crudServerNoteActions"
 import DistanceToNow from "@/app/components/utils/DistanceToNow"
@@ -30,9 +29,9 @@ const DisplayNoteInModal = ({ noteId }: { noteId: number }) => {
   
   return (
     <>
-      <Button size="small" type="primary" onClick={showModal}>
-        <FullscreenOutlined />
-      </Button>
+      <div className="size" onClick={showModal}>
+        View
+      </div>
       <Modal title={note && (
         <div className="flex justify-between font-semibold">
           <div>{note?.userName}</div>
