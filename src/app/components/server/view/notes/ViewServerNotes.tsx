@@ -33,8 +33,8 @@ const ViewServerNotes = ({ serverId }: { serverId: number }) => {
     <div className="flex flex-col max-h-[80vh]">
       <div className="flex-1 grow overflow-auto">
         {notes.map((note) => (
-          <div key={note.id} className="mb-4">
-            <div className="flex justify-between">
+          <div key={note.id} className="mb-4 border-b pb-4 hover:bg-gray-800 cursor-pointer">
+            <div className="flex justify-between font-semibold">
               <p>{note.userName}</p>
               <p><DistanceToNow date={note.createdAt} /></p>
             </div>
