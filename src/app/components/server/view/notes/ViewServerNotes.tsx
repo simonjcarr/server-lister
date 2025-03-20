@@ -1,57 +1,18 @@
+'use client'
 import TextArea from "antd/es/input/TextArea"
+import { useQuery } from "@tanstack/react-query"
+import { getServerNotes } from "@/app/actions/server/notes/crudServerNoteActions"
 
-const notes = [
-  {
-    id: 1,
-    note: "lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
-    userId: "1",
-    createdAt: new Date(),
-    updatedAt: new Date()
-  },{
-    id: 2,
-    note: "lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
-    userId: "1",
-    createdAt: new Date(),
-    updatedAt: new Date()
-  },
-  {
-    id: 3,
-    note: "lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
-    userId: "1",
-    createdAt: new Date(),
-    updatedAt: new Date()
-  },
-  {
-    id: 4,
-    note: "lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
-    userId: "1",
-    createdAt: new Date(),
-    updatedAt: new Date()
-  },
-  {
-    id: 5,
-    note: "lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
-    userId: "1",
-    createdAt: new Date(),
-    updatedAt: new Date()
-  },
-  {
-    id: 6,
-    note: "lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
-    userId: "1",
-    createdAt: new Date(),
-    updatedAt: new Date() 
-  },
-  {
-    id: 7,
-    note: "lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
-    userId: "1",
-    createdAt: new Date(),
-    updatedAt: new Date() 
-  }
-]
-const ViewServerNotes = () => {
- 
+
+const ViewServerNotes = ({ serverId }: { serverId: number }) => {
+  const { data: notes, isLoading, error } = useQuery({
+    queryKey: ["serverNotes", serverId],
+    queryFn: () => getServerNotes(serverId),
+    enabled: !!serverId
+  })
+  if (isLoading) return <p>Loading...</p>
+  if (error) return <p>Error: {error.message}</p>
+  if (!notes) return <p>No notes found</p>
   return (
     <div className="flex flex-col max-h-[80vh]">
       {/* Server notes list grows to take up remaining space */}
