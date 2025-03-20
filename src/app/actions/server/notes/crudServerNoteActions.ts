@@ -1,6 +1,8 @@
+'use server'
 import { db } from "@/db";
 import { notes, serverNotes, users } from "@/db/schema";
 import { eq } from "drizzle-orm";
+import { auth } from "@/auth";
 
 export async function getServerNotes(serverId: number) {
   try {
@@ -13,7 +15,7 @@ export async function getServerNotes(serverId: number) {
         userId: users.id,
         userName: users.name,
         userEmail: users.email,
-        serverId: serverNotes.serverId
+        serverId: serverNotes.serverId,
       })
       .from(serverNotes)
       .where(eq(serverNotes.serverId, serverId))
@@ -37,7 +39,7 @@ export async function getNoteById(noteId: number) {
         userId: users.id,
         userName: users.name,
         userEmail: users.email,
-        serverId: serverNotes.serverId
+        serverId: serverNotes.serverId,
       })
       .from(notes)
       .where(eq(notes.id, noteId))
@@ -51,27 +53,39 @@ export async function getNoteById(noteId: number) {
   }
 }
 
-export async function addServerNote(note: string, userId: string, serverId: number) {
+export async function addServerNote(
+  note: string,
+  serverId: number
+) {
   try {
+    const session = await auth();
+    console.log(session)
+    const userId = session?.user.id;
+    if (!userId) {
+      throw new Error("Unauthorized");
+    }
     // Create the note
-    const noteResult = await db.insert(notes).values({
-      userId,
-      note,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    }).returning();
-    
+    const noteResult = await db
+      .insert(notes)
+      .values({
+        userId,
+        note,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .returning();
+
     // Create the server note
     await db.insert(serverNotes).values({
       noteId: noteResult[0].id,
       serverId,
       createdAt: new Date(),
-      updatedAt: new Date()
+      updatedAt: new Date(),
     });
 
     // Return the created note
     const createdNote = await getNoteById(noteResult[0].id);
-    return createdNote
+    return createdNote;
   } catch (error) {
     console.error("Error adding server note:", error);
     throw new Error("Failed to create server note: " + error);
@@ -80,10 +94,13 @@ export async function addServerNote(note: string, userId: string, serverId: numb
 
 export async function updateServerNote(noteId: number, note: string) {
   try {
-    await db.update(notes).set({
-      note,
-      updatedAt: new Date()
-    }).where(eq(notes.id, noteId));
+    await db
+      .update(notes)
+      .set({
+        note,
+        updatedAt: new Date(),
+      })
+      .where(eq(notes.id, noteId));
     return await getNoteById(noteId);
   } catch (error) {
     console.error("Error updating server note:", error);
@@ -94,7 +111,7 @@ export async function updateServerNote(noteId: number, note: string) {
 export async function deleteServerNote(noteId: number) {
   try {
     await db.delete(notes).where(eq(notes.id, noteId));
-    return { success: true }
+    return { success: true };
   } catch (error) {
     console.error("Error deleting server note:", error);
     throw new Error("Failed to delete server note: " + error);

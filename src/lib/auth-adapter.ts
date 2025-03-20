@@ -1,7 +1,6 @@
 import { Adapter } from "next-auth/adapters";
 import { DrizzleAdapter } from "@auth/drizzle-adapter";
 import * as schema from "../db/schema";
-import { and, eq } from "drizzle-orm";
 
 // Create a custom adapter that extends the functionality of DrizzleAdapter
 export function CustomDrizzleAdapter(db: any): Adapter {
