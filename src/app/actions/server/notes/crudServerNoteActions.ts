@@ -1,7 +1,7 @@
 'use server'
 import { db } from "@/db";
 import { notes, serverNotes, users } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, desc, and } from "drizzle-orm";
 import { auth } from "@/auth";
 
 export async function getServerNotes(serverId: number) {
@@ -20,7 +20,8 @@ export async function getServerNotes(serverId: number) {
       .from(serverNotes)
       .where(eq(serverNotes.serverId, serverId))
       .leftJoin(notes, eq(serverNotes.noteId, notes.id))
-      .leftJoin(users, eq(notes.userId, users.id));
+      .leftJoin(users, eq(notes.userId, users.id))
+      .orderBy(desc(notes.createdAt));
     return notesResult;
   } catch (error) {
     console.error("Error getting server notes:", error);
@@ -109,8 +110,16 @@ export async function updateServerNote(noteId: number, note: string) {
 }
 
 export async function deleteServerNote(noteId: number) {
+  const session = await auth();
+  if (!session) {
+    throw new Error("Unauthorized");
+  }
+  const userId = session.user.id;
+  if (!userId) {
+    throw new Error("Unauthorized");
+  }
   try {
-    await db.delete(notes).where(eq(notes.id, noteId));
+    await db.delete(notes).where(and(eq(notes.id, noteId), eq(notes.userId, userId)));
     return { success: true };
   } catch (error) {
     console.error("Error deleting server note:", error);
