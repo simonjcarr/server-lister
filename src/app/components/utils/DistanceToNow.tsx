@@ -1,4 +1,5 @@
 'use client'
+import { Popover } from "antd"
 import { formatDistanceToNow } from "date-fns"
 import { useEffect, useState } from "react"
 
@@ -14,7 +15,7 @@ const DistanceToNow = ({ date }: { date: Date }) => {
     return () => clearInterval(interval)
   }, [date, time])
   return (
-    <div>{time}</div>
+    <div><Popover content={date.toLocaleDateString() + " " + date.toLocaleTimeString()}>{time}</Popover></div>
   )
 }
 
