@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { addServerNote, getServerNotes } from "@/app/actions/server/notes/crudServerNoteActions"
 import { useState } from "react"
 import { Button } from "antd"
+import DistanceToNow from "@/app/components/utils/DistanceToNow"
 
 
 const ViewServerNotes = ({ serverId }: { serverId: number }) => {
@@ -34,8 +35,8 @@ const ViewServerNotes = ({ serverId }: { serverId: number }) => {
         {notes.map((note) => (
           <div key={note.id} className="mb-4">
             <div className="flex justify-between">
-              <p>{note.userId}</p>
-              <p>{note.createdAt.toLocaleDateString()}</p>
+              <p>{note.userName}</p>
+              <p><DistanceToNow date={note.createdAt} /></p>
             </div>
             <p className="mt-2 text-gray-200">{note.note}</p>
           </div>
