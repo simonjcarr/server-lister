@@ -1,11 +1,11 @@
 'use client'
 import RequestServerCertificate from '../../certificates/RequestServerCertificate'
 
-const CertificateTabData = () => {
+const CertificateTabData = ({ serverId }: { serverId: number }) => {
   return (
     <>
       <h1>Certificate Tab Data</h1>
-      <RequestServerCertificate />
+      <RequestServerCertificate serverId={serverId} />
     </>
   )
 }

@@ -16,7 +16,7 @@ const ViewServerTabs = ({ serverId }: { serverId: number }) => {
   const items = [
     { key: 'hardware', label: 'Hardware', children: <HardwareTabData serverId={serverId} /> },
     { key: 'network', label: 'Network', children: <NetworkTabData serverId={serverId} /> },
-    { key: 'certs', label: 'Certificates', children: <CertificateTabData /> },
+    { key: 'certs', label: 'Certificates', children: <CertificateTabData serverId={serverId} /> },
     { key: 'storage', label: 'Storage', children: <div>Storage</div> },
     { key: 'os', label: 'OS', children: <ViewOS osId={data?.osId ?? 0} /> },
     { key: 'services', label: 'Services', children: <div>Services</div> },
