@@ -232,12 +232,12 @@ export const certs = pgTable("certs", {
   name: text("name").notNull(),
   description: text("description"),
   expiresAt: timestamp("expires_at", { withTimezone: true }),
-  requestedBy: text("requested_by").notNull().references(() => users.id, { onDelete: "set null" }),
   requestId: text("request_id"),
   requestedById: text("requested_by_id").references(() => users.id, { onDelete: "set null" }),
   csr: text("csr"),
   cert: text("cert"),
   key: text("key"),
+  serverId: integer("serverId").notNull().references(() => servers.id, { onDelete: "set null" }),
   primaryDomain: text("primary_domain").notNull(),
   otherDomains: jsonb("other_domains"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
@@ -259,26 +259,9 @@ export type CertRequest = {
   name: string,
   description?: string | null | undefined,
   primaryDomain: string,
-  otherDomains?: { domain: string }[] | null | undefined
+  otherDomains?: { domain: string }[] | null | undefined,
+  serverId: number
 }
-
-export const serverCerts = pgTable("server_certs", {
-  id: serial("id").primaryKey(),
-  serverId: integer("serverId").notNull().references(() => servers.id, { onDelete: "cascade" }),
-  certId: integer("certId").notNull().references(() => certs.id, { onDelete: "cascade" }),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
-  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
-}, (table) => [
-  index("server_id_idx").on(table.serverId),
-  index("cert_id_idx").on(table.certId),
-])
-
-const insertServerCertSchema = createInsertSchema(serverCerts)
-const selectServerCertSchema = createSelectSchema(serverCerts)
-const updateServerCertSchema = createUpdateSchema(serverCerts)
-export type InsertServerCert = z.infer<typeof insertServerCertSchema>
-export type SelectServerCert = z.infer<typeof selectServerCertSchema>
-export type UpdateServerCert = z.infer<typeof updateServerCertSchema>
 
 export const collections = pgTable(
   "collections",

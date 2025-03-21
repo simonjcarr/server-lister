@@ -13,13 +13,29 @@ type CertFormData = Omit<InsertCert, 'otherDomains'> & {
   otherDomains?: string[];
 }
 
+// Define the response type from the server action
+type CertRequestResponse = {
+  success: boolean;
+  error?: string;
+}
+
 const RequestServerCertificate = ({ serverId }: { serverId: number }) => {
   const [messageApi, contextHolder] = message.useMessage()
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [form] = Form.useForm<CertFormData>()
   const queryClient = useQueryClient()
-  const mutation = useMutation({
-    mutationFn: (cert: CertRequest) => createCertRequest(cert),
+  const mutation = useMutation<CertRequestResponse, Error, CertRequest>({
+    mutationFn: async (cert: CertRequest) => {
+      const certWithServerId = {
+        ...cert,
+        serverId
+      }
+      const response = await createCertRequest(certWithServerId)
+      if (!response.success) {
+        throw new Error(response.error || 'Unknown error')
+      }
+      return response
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["certs", serverId] })
       messageApi.success("Certificate requested successfully", 5)
@@ -102,6 +118,8 @@ const RequestServerCertificate = ({ serverId }: { serverId: number }) => {
             rules={[
               {
                 validator: async (_, value) => {
+                  if (!value || value.length === 0) return Promise.resolve()
+                  
                   const results = await Promise.all(value.map(async (host: string) => {
                     const isValid = await isValidHostname(host)
                     if (!isValid) {

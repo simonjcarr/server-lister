@@ -1,0 +1,1 @@
+ALTER TABLE "certs" ALTER COLUMN "serverId" SET DEFAULT 6;

@@ -1,0 +1,2 @@
+ALTER TABLE "certs" ADD COLUMN "serverId" integer NOT NULL;--> statement-breakpoint
+ALTER TABLE "certs" ADD CONSTRAINT "certs_serverId_servers_id_fk" FOREIGN KEY ("serverId") REFERENCES "public"."servers"("id") ON DELETE set null ON UPDATE no action;
