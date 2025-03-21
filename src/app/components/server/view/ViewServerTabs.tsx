@@ -5,6 +5,7 @@ import { getServerById } from "@/app/actions/server/crudActions"
 import HardwareTabData from "./HardwareTabData"
 import NetworkTabData from "./NetworkTabData"
 import ViewServerNotes from "./notes/ViewServerNotes"
+import CertificateTabData from "./certificates/CertificateTabData"
 
 const ViewServerTabs = ({ serverId }: { serverId: number }) => {
   const { data, error, isLoading } = useQuery({
@@ -15,7 +16,7 @@ const ViewServerTabs = ({ serverId }: { serverId: number }) => {
   const items = [
     { key: 'hardware', label: 'Hardware', children: <HardwareTabData serverId={serverId} /> },
     { key: 'network', label: 'Network', children: <NetworkTabData serverId={serverId} /> },
-    { key: 'certs', label: 'Certificates', children: <div>Certificates</div> },
+    { key: 'certs', label: 'Certificates', children: <CertificateTabData /> },
     { key: 'storage', label: 'Storage', children: <div>Storage</div> },
     { key: 'os', label: 'OS', children: <ViewOS osId={data?.osId ?? 0} /> },
     { key: 'services', label: 'Services', children: <div>Services</div> },
