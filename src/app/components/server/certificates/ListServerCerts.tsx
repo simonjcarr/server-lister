@@ -3,11 +3,7 @@ import { Table } from 'antd'
 import { useQuery } from '@tanstack/react-query'
 import { getServerCerts } from '@/app/actions/certs/crudActions'
 import ClickToCopy from '../../utils/ClickToCopy'
-
-
-const CertStatus = ({ cert }: { cert: "Pending" | "Ordered" | "Ready" }) => {
-  return <span className={`${cert === "Pending" ? "text-yellow-500" : cert === "Ordered" ? "text-blue-500" : "text-green-500"} capitalize`}>{cert}</span>
-}
+import CertStatus from '@/app/components/certs/CertStatus'
 
 const ClickToCopyDomain = ({ domain }: { domain: string }) => {
   return <ClickToCopy text={domain} />

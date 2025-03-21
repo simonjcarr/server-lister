@@ -1,6 +1,6 @@
 'use server'
 import { db } from "@/db"
-import { certs, CertRequest } from "@/db/schema"
+import { certs, CertRequest, servers, users } from "@/db/schema"
 import { auth } from "@/auth"
 import { eq } from "drizzle-orm"
 
@@ -41,6 +41,37 @@ export async function getServerCerts(serverId: number) {
       .select()
       .from(certs)
       .where(eq(certs.serverId, serverId))
+    return results;
+  } catch (error) {
+    console.error("Error fetching certificates:", error);
+    throw error;
+  }
+}
+
+export async function getAllCertificates() {
+  const session = await auth()
+  if (!session?.user?.id) {
+    throw new Error("Unauthorized");
+  }
+  try {
+    const results = await db
+      .select({
+        id: certs.id,
+        status: certs.status,
+        primaryDomain: certs.primaryDomain,
+        otherDomains: certs.otherDomains,
+        server: {
+          id: servers.id,
+          name: servers.hostname
+        },
+        requestedBy: {
+          id: users.id,
+          name: users.name
+        }
+      })
+      .from(certs)
+      .leftJoin(servers, eq(certs.serverId, servers.id))
+      .leftJoin(users, eq(certs.requestedById, users.id))
     return results;
   } catch (error) {
     console.error("Error fetching certificates:", error);
