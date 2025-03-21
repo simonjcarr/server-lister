@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import type { DrawerProps, RadioChangeEvent, MenuProps } from 'antd';
-import { Button, Drawer, Radio, Space, Menu } from 'antd';
+import type { DrawerProps, MenuProps } from 'antd';
+import { Button, Drawer, Space, Menu } from 'antd';
 import Link from 'next/link';
-import { FaMap, FaProjectDiagram, FaRegListAlt, FaRegObjectGroup, FaServer, FaTools, FaUsers, FaWindows } from 'react-icons/fa';
+import { FaCertificate, FaMap, FaProjectDiagram, FaRegListAlt, FaRegObjectGroup, FaServer, FaTools, FaUsers, FaWindows } from 'react-icons/fa';
 import { MdAddBox, MdAdminPanelSettings, MdNetworkPing } from 'react-icons/md';
 import { useRouter } from 'next/navigation';
 import { IoIosBusiness } from 'react-icons/io';
@@ -168,6 +168,21 @@ const App: React.FC = () => {
           }
         }
       ]
+    },
+    {
+      key: 'certs',
+      label: 'Certificates',
+      icon: <FaCertificate />,
+      children: [
+        {
+          key: 'certs-list',
+          label: 'Manage Certificates',
+          icon: <FaRegListAlt />,
+          onClick: () => {
+            router.push('/certs');
+          },
+        }
+      ]
     }
   ]
   if(session?.user?.roles?.includes('admin')) {
@@ -219,8 +234,8 @@ const App: React.FC = () => {
       ],
     })
   }
-  const [open, setOpen] = useState(false);
-  const [placement, setPlacement] = useState<DrawerProps['placement']>('left');
+  const [ open, setOpen] = useState(false);
+  const [ placement ] = useState<DrawerProps['placement']>('left');
 
   const showDrawer = () => {
     setOpen(true);
@@ -228,10 +243,6 @@ const App: React.FC = () => {
 
   const onClose = () => {
     setOpen(false);
-  };
-
-  const onChange = (e: RadioChangeEvent) => {
-    setPlacement(e.target.value);
   };
 
   return (
