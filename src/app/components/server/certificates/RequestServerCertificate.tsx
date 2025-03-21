@@ -55,6 +55,7 @@ const RequestServerCertificate = ({ serverId }: { serverId: number }) => {
         otherDomains: formValues.otherDomains ? 
           formValues.otherDomains.map((domain: string) => ({ domain })) : 
           undefined,
+        status: "Pending" as "Pending" | "Ordered" | "Ready",
       }
       
       mutation.mutate(cert)
