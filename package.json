@@ -14,6 +14,7 @@
   "dependencies": {
     "@ant-design/cssinjs": "^1.23.0",
     "@auth/drizzle-adapter": "^1.8.0",
+    "@tanstack/react-form": "^1.1.2",
     "@tanstack/react-query": "^5.67.2",
     "@types/styled-components": "^5.1.34",
     "antd": "^5.24.3",
