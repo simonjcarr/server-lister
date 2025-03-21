@@ -227,6 +227,7 @@ export type SelectServerNote = z.infer<typeof selectServerNoteSchema>
 export type UpdateServerNote = z.infer<typeof updateServerNoteSchema>
 
 
+export const CertStatus = pgEnum("status", ["Pending", "Ordered", "Ready"])
 export const certs = pgTable("certs", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
@@ -240,6 +241,7 @@ export const certs = pgTable("certs", {
   serverId: integer("serverId").notNull().references(() => servers.id, { onDelete: "set null" }),
   primaryDomain: text("primary_domain").notNull(),
   otherDomains: jsonb("other_domains"),
+  status: CertStatus().notNull().default("Pending"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
 }, (table) => [
@@ -261,6 +263,7 @@ export type CertRequest = {
   primaryDomain: string,
   otherDomains?: { domain: string }[] | null | undefined,
   serverId: number
+  status: "Pending" | "Ordered" | "Ready"
 }
 
 export const collections = pgTable(

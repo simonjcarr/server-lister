@@ -50,6 +50,13 @@
       "when": 1742572465130,
       "tag": "0006_icy_retro_girl",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1742573533147,
+      "tag": "0007_brown_cerise",
+      "breakpoints": true
     }
   ]
 }

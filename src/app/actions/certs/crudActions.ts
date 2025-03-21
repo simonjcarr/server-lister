@@ -2,6 +2,7 @@
 import { db } from "@/db"
 import { certs, CertRequest } from "@/db/schema"
 import { auth } from "@/auth"
+import { eq } from "drizzle-orm"
 
 export async function createCertRequest(cert: CertRequest) {
   const session = await auth();
@@ -14,6 +15,7 @@ export async function createCertRequest(cert: CertRequest) {
   const certData = {
     ...cert,
     requestedById: userId,
+    status: "Pending" as "Pending" | "Ordered" | "Ready",
     createdAt: new Date(),
     updatedAt: new Date(),
   };
@@ -26,5 +28,22 @@ export async function createCertRequest(cert: CertRequest) {
   } catch (error) {
     console.error("Error creating certificate request:", error);
     return { success: false, error: error instanceof Error ? error.message : String(error) };
+  }
+}
+
+export async function getServerCerts(serverId: number) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    throw new Error("Unauthorized");
+  }
+  try {
+    const results = await db
+      .select()
+      .from(certs)
+      .where(eq(certs.serverId, serverId))
+    return results;
+  } catch (error) {
+    console.error("Error fetching certificates:", error);
+    throw error;
   }
 }
