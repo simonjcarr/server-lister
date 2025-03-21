@@ -27,7 +27,7 @@ const NoteDropDownMenu = ({ children, noteId, serverId }: { children: React.Reac
     },
     {
       key: '2',
-      label: 'Delete',
+      label: (<span className="text-red-300">Delete</span>),
       disabled: !note || (note.userId !== userId && !session?.data?.user.roles?.includes("admin") ),
       onClick: () => {
         if (window.confirm('Are you sure you want to delete this note?')) {
