@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { sql } from "drizzle-orm";
-import { pgTable, text, integer, uniqueIndex, index, primaryKey, varchar, boolean, timestamp, serial, json, pgEnum } from "drizzle-orm/pg-core";
+import { pgTable, text, integer, uniqueIndex, index, primaryKey, varchar, boolean, timestamp, serial, json, pgEnum, jsonb } from "drizzle-orm/pg-core";
 import { createInsertSchema, createSelectSchema, createUpdateSchema } from "drizzle-zod";
 import type { AdapterAccountType } from "next-auth/adapters";
 import { z } from "zod";
@@ -215,8 +215,8 @@ export const serverNotes = pgTable("server_notes", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
 }, (table) => [
-  index("server_id_idx").on(table.serverId),
-  index("note_id_idx").on(table.noteId),
+  index("server_notes_server_id_idx").on(table.serverId),
+  index("server_notes_note_id_idx").on(table.noteId),
 ])
 
 const insertServerNoteSchema = createInsertSchema(serverNotes)
@@ -225,6 +225,53 @@ const updateServerNoteSchema = createUpdateSchema(serverNotes)
 export type InsertServerNote = z.infer<typeof insertServerNoteSchema>
 export type SelectServerNote = z.infer<typeof selectServerNoteSchema>
 export type UpdateServerNote = z.infer<typeof updateServerNoteSchema>
+
+
+export const certs = pgTable("certs", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  description: text("description"),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  requestedBy: text("requested_by").notNull().references(() => users.id, { onDelete: "set null" }),
+  requestId: text("request_id"),
+  requestedById: text("requested_by_id").references(() => users.id, { onDelete: "set null" }),
+  csr: text("csr").notNull(),
+  cert: text("cert").notNull(),
+  key: text("key").notNull(),
+  primaryDomain: text("primary_domain").notNull(),
+  otherDomains: jsonb("other_domains"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
+}, (table) => [
+  index("requested_by_idx").on(table.requestedById),
+  index("request_id_idx").on(table.requestId),
+  index("expires_at_idx").on(table.expiresAt),
+])
+
+const insertCertSchema = createInsertSchema(certs)
+const selectCertSchema = createSelectSchema(certs)
+const updateCertSchema = createUpdateSchema(certs)
+export type InsertCert = z.infer<typeof insertCertSchema>
+export type SelectCert = z.infer<typeof selectCertSchema>
+export type UpdateCert = z.infer<typeof updateCertSchema>
+
+export const serverCerts = pgTable("server_certs", {
+  id: serial("id").primaryKey(),
+  serverId: integer("serverId").notNull().references(() => servers.id, { onDelete: "cascade" }),
+  certId: integer("certId").notNull().references(() => certs.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
+}, (table) => [
+  index("server_id_idx").on(table.serverId),
+  index("cert_id_idx").on(table.certId),
+])
+
+const insertServerCertSchema = createInsertSchema(serverCerts)
+const selectServerCertSchema = createSelectSchema(serverCerts)
+const updateServerCertSchema = createUpdateSchema(serverCerts)
+export type InsertServerCert = z.infer<typeof insertServerCertSchema>
+export type SelectServerCert = z.infer<typeof selectServerCertSchema>
+export type UpdateServerCert = z.infer<typeof updateServerCertSchema>
 
 export const collections = pgTable(
   "collections",
