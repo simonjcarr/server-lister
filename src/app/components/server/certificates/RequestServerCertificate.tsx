@@ -1,84 +1,126 @@
 'use client'
-import { Button, Modal, Form, Input } from "antd"
+import { Button, Form, Input, Modal, Select, message } from "antd"
 import { PlusOutlined } from "@ant-design/icons"
 import { useState } from "react"
-import { z } from "zod"
+import type { CertRequest, InsertCert } from "@/db/schema"
+import TextArea from "antd/es/input/TextArea"
+import { isValidHostname } from "@/app/utils/hostname"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { createCertRequest } from "@/app/actions/certs/crudActions"
 
-const serverCertificateSchema = z.object({
-  name: z.string().min(1, "Name is required"),
-  description: z.string().optional(),
-  primaryDomain: z.string().min(1, "Primary domain is required"),
-  otherDomains: z.array(z.string()).optional().default([])
-})
+// Define a type for the form data with otherDomains as string[]  
+type CertFormData = Omit<InsertCert, 'otherDomains'> & {
+  otherDomains?: string[];
+}
 
-type ServerCertificateFormValues = z.infer<typeof serverCertificateSchema>
-
-const RequestServerCertificate = () => {
+const RequestServerCertificate = ({ serverId }: { serverId: number }) => {
+  const [messageApi, contextHolder] = message.useMessage()
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [form] = Form.useForm<ServerCertificateFormValues>()
-
-  const handleSubmit = async (values: ServerCertificateFormValues) => {
+  const [form] = Form.useForm<CertFormData>()
+  const queryClient = useQueryClient()
+  const mutation = useMutation({
+    mutationFn: (cert: CertRequest) => createCertRequest(cert),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["certs", serverId] })
+      messageApi.success("Certificate requested successfully", 5)
+    },
+    onError: (error) => {
+      messageApi.error("Failed to request certificate: " + error.message, 5)
+    }
+  })
+  const handleOK = async () => {
     try {
-      // Validate with zod schema
-      const validatedData = serverCertificateSchema.parse(values)
-      console.log(validatedData)
-      setIsModalOpen(false)
+      await form.validateFields()
+      const formValues = form.getFieldsValue()
+      console.log(formValues)
+      // Transform otherDomains from string[] to {domain: string}[] if it exists
+      const cert: CertRequest = {
+        ...formValues,
+        otherDomains: formValues.otherDomains ? 
+          formValues.otherDomains.map((domain: string) => ({ domain })) : 
+          undefined,
+      }
+      
+      mutation.mutate(cert)
       form.resetFields()
-    } catch (error) {
-      console.error("Validation error:", error)
+      setIsModalOpen(false)
+    } catch {
+      messageApi.error("Please correct the form errors", 5)
     }
   }
 
   return (
     <>
-      <Button 
-        type="primary" 
-        icon={<PlusOutlined />} 
+      {contextHolder}
+      <Button
+        type="primary"
+        icon={<PlusOutlined />}
         onClick={() => setIsModalOpen(true)}
       >
         Request Certificate
       </Button>
-      
-      <Modal 
-        title="Request Server Certificate" 
+
+      <Modal
+        title="Request Server Certificate"
         open={isModalOpen}
         onCancel={() => setIsModalOpen(false)}
-        onOk={() => form.submit()}
+        onOk={handleOK}
+        
       >
         <Form
           form={form}
           layout="vertical"
-          onFinish={handleSubmit}
-          initialValues={{
-            name: "",
-            description: "",
-            primaryDomain: "",
-            otherDomains: []
-          }}
+          size="small"
         >
-          <Form.Item 
-            name="name" 
-            label="Name"
-            rules={[{ required: true, message: "Please enter a name" }]}
-          >
+          <Form.Item name="name" label="Name" rules={[{ required: true }, { min: 5, message: "Name must be at least 5 characters" }]}>
             <Input />
           </Form.Item>
-          
-          <Form.Item 
-            name="description" 
-            label="Description"
-          >
-            <Input />
+          <Form.Item name="description" label="Description" >
+            <TextArea />
           </Form.Item>
-          
-          <Form.Item 
-            name="primaryDomain" 
+          <Form.Item
+            name="primaryDomain"
             label="Primary Domain"
-            rules={[{ required: true, message: "Please enter a primary domain" }]}
-          >
+            rules={[
+              { required: true },
+              {
+                validator: async (_, value) => {
+                  if (!value) return Promise.reject()
+                  const isValid = await isValidHostname(value)
+                  if (!isValid) {
+                    return Promise.reject("Invalid hostname")
+                  }
+                  return Promise.resolve()
+                }
+              }
+            ]}>
             <Input />
           </Form.Item>
+          <Form.Item
+            name="otherDomains"
+            label="Other Domains"
+            rules={[
+              {
+                validator: async (_, value) => {
+                  const results = await Promise.all(value.map(async (host: string) => {
+                    const isValid = await isValidHostname(host)
+                    if (!isValid) {
+                      return Promise.reject("Invalid hostname")
+                    }
+                    return Promise.resolve()
+                  }))
+                  if (results.some((result) => result instanceof Error)) {
+                    return Promise.reject("Invalid hostname")
+                  }
+                  return Promise.resolve()
+                }
+              }
+            ]}>
+            <Select mode="tags" />
+          </Form.Item>
+
         </Form>
+
       </Modal>
     </>
   )

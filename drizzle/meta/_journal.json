@@ -8,6 +8,13 @@
       "when": 1742547759963,
       "tag": "0000_abandoned_synch",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1742570700106,
+      "tag": "0001_powerful_alex_power",
+      "breakpoints": true
     }
   ]
 }
