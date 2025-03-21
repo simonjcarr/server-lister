@@ -2,16 +2,23 @@ import React from 'react'
 import { Table } from 'antd'
 import { useQuery } from '@tanstack/react-query'
 import { getServerCerts } from '@/app/actions/certs/crudActions'
+import ClickToCopy from '../../utils/ClickToCopy'
 
 
-const CertStatus = ({ cert }: { cert: string | null }) => {
-  return <span>{cert || "Pending"}</span>
+const CertStatus = ({ cert }: { cert: "Pending" | "Ordered" | "Ready" }) => {
+  return <span className={`${cert === "Pending" ? "text-yellow-500" : cert === "Ordered" ? "text-blue-500" : "text-green-500"} capitalize`}>{cert}</span>
+}
+
+const ClickToCopyDomain = ({ domain }: { domain: string }) => {
+  return <ClickToCopy text={domain} />
 }
 
 const ListServerCerts = ({ serverId }: { serverId: number }) => {
   const { data, isLoading, error } = useQuery({
     queryKey: ["certs", serverId],
     queryFn: () => getServerCerts(serverId),
+    refetchInterval: 5000,
+    enabled: !!serverId,
   })
   return (
     <div>
@@ -20,16 +27,27 @@ const ListServerCerts = ({ serverId }: { serverId: number }) => {
       {data && (
         <Table
           columns={[
-            { title: "Name", dataIndex: "name" },
-            { title: "Description", dataIndex: "description" },
-            { title: "Primary Domain", dataIndex: "primaryDomain" },
-          { title: "Other Domains", dataIndex: "otherDomains" },
-          { title: "Status", render: (text, record) => <CertStatus cert={record.cert} /> }
-        ]}
-        dataSource={data}
-        loading={isLoading}
-        size="small"
-      />
+            { 
+              title: "Name", 
+              dataIndex: "name", 
+              sorter: (a, b) => (a.name && b.name) ? a.name.localeCompare(b.name) : 0, sortDirections: ['ascend', 'descend'], defaultSortOrder: 'ascend' 
+            },
+            { 
+              title: "Primary Domain", 
+              dataIndex: "primaryDomain", 
+              sorter: (a, b) => (a.primaryDomain && b.primaryDomain) ? a.primaryDomain.localeCompare(b.primaryDomain) : 0, sortDirections: ['ascend', 'descend'], defaultSortOrder: 'ascend' ,
+              render: (text, record) => <ClickToCopyDomain domain={record.primaryDomain} />
+            },
+            { 
+              title: "Status", 
+              render: (text, record) => <CertStatus cert={record.status} />, 
+              sorter: (a, b) => (a.status && b.status) ? a.status.localeCompare(b.status) : 0, sortDirections: ['ascend', 'descend'], defaultSortOrder: 'ascend' 
+            }
+          ]}
+          dataSource={data.map(cert => ({ ...cert, key: cert.id }))}
+          loading={isLoading}
+          size="small"
+        />
       )}
     </div>
   )
