@@ -4,8 +4,10 @@ import RequestServerCertificate from '../../certificates/RequestServerCertificat
 const CertificateTabData = ({ serverId }: { serverId: number }) => {
   return (
     <>
+    <div className='flex justify-between items-center'>
       <h1>Certificate Tab Data</h1>
       <RequestServerCertificate serverId={serverId} />
+    </div>
     </>
   )
 }

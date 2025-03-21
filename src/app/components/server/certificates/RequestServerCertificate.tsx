@@ -72,6 +72,7 @@ const RequestServerCertificate = ({ serverId }: { serverId: number }) => {
         type="primary"
         icon={<PlusOutlined />}
         onClick={() => setIsModalOpen(true)}
+        size="small"
       >
         Request Certificate
       </Button>
