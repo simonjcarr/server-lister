@@ -32,6 +32,9 @@ const ViewCertificateModal = ({ certId }: { certId: number }) => {
   const { data: session } = useSession()
   // Only create form instance when modal is visible
   const [isModalVisible, setIsModalVisible] = React.useState(false)
+  // Check if user has required roles
+  const hasRequiredRoles = session && userHasAtLeastOneRole(session.user?.roles, ['admin', 'certs'])
+  // Always call Form.useForm() to follow React Rules of Hooks
   const [form] = Form.useForm()
   const [requestId, setRequestId] = React.useState<string>('')
   const [status, setStatus] = React.useState<Certificate['status']>('Pending')
@@ -66,14 +69,14 @@ const ViewCertificateModal = ({ certId }: { certId: number }) => {
   
   // When modal becomes visible, initialize the form
   React.useEffect(() => {
-    if (isModalVisible && cert) {
+    if (isModalVisible && cert && hasRequiredRoles) {
       form.setFieldsValue({
         requestId: cert.requestId || '',
         status: cert.status,
         storagePath: cert.storagePath || '',
       })
     }
-  }, [isModalVisible, cert, form])
+  }, [isModalVisible, cert, form, hasRequiredRoles])
   
   const statusOptions = [
     { value: 'Pending', label: 'Pending' },
@@ -85,36 +88,46 @@ const ViewCertificateModal = ({ certId }: { certId: number }) => {
   const handleRequestIdChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value
     setRequestId(value)
-    form.setFieldsValue({ requestId: value })
-    form.validateFields(['requestId', 'status'])
+    if (hasRequiredRoles) {
+      form.setFieldsValue({ requestId: value })
+      form.validateFields(['requestId', 'status'])
+    }
   }
   
   const handleStoragePathChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value
     setStoragePath(value)
-    form.setFieldsValue({ storagePath: value })
-    form.validateFields(['storagePath', 'status'])
+    if (hasRequiredRoles) {
+      form.setFieldsValue({ storagePath: value })
+      form.validateFields(['storagePath', 'status'])
+    }
   }
   
   const handleStatusChange = (value: string) => {
     const newStatus = value as Certificate['status']
     setStatus(newStatus)
-    form.setFieldsValue({ status: newStatus })
-    form.validateFields(['requestId', 'storagePath', 'status'])
+    if (hasRequiredRoles) {
+      form.setFieldsValue({ status: newStatus })
+      form.validateFields(['requestId', 'storagePath', 'status'])
+    }
   }
   
   const handleOk = () => {
-    form.validateFields().then(values => {
-      // Handle form submission here
-      console.log('Form values:', values)
-      mutate.mutate({
-        id: certId,
-        ...values
+    if (hasRequiredRoles) {
+      form.validateFields().then((values: Record<string, unknown>) => {
+        // Handle form submission here
+        console.log('Form values:', values)
+        mutate.mutate({
+          id: certId,
+          ...values
+        })
+        setIsModalVisible(false)
+      }).catch((info: unknown) => {
+        console.log('Validation failed:', info)
       })
+    } else {
       setIsModalVisible(false)
-    }).catch(info => {
-      console.log('Validation failed:', info)
-    })
+    }
   }
   
   return (
@@ -156,7 +169,7 @@ const ViewCertificateModal = ({ certId }: { certId: number }) => {
                       )) : 'None'}
                     </div>
                   </div>
-                  {session && userHasAtLeastOneRole(session.user?.roles, ['admin', 'certs']) && (
+                  {hasRequiredRoles && (
                     <div className='mt-4 px-2'>
                       <Form
                         form={form}
