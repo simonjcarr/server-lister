@@ -1,6 +1,6 @@
 'use server'
 import { db } from "@/db"
-import { certs, CertRequest, servers, users } from "@/db/schema"
+import { certs, CertRequest, servers, users, UpdateCert } from "@/db/schema"
 import { auth } from "@/auth"
 import { eq } from "drizzle-orm"
 
@@ -112,5 +112,33 @@ export async function getCertificateById(certId: number) {
   } catch (error) {
     console.error("Error fetching certificate:", error);
     throw error;
+  }
+}
+
+export async function updateCertificate(cert: UpdateCert) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    throw new Error("Unauthorized");
+  }
+  
+  // Make sure we're dealing with plain objects that can be serialized
+  const certData = {
+    ...cert,
+    updatedAt: new Date(),
+  };
+  
+  // Return only a simplified serializable response
+  try {
+    // Add a check to ensure id exists
+    if (!certData.id) {
+      throw new Error("Certificate ID is required for update");
+    }
+    
+    const result = await db.update(certs).set(certData).where(eq(certs.id, certData.id)).returning();
+    // Only return a simple success object, not the database result
+    return result;
+  } catch (error) {
+    console.error("Error updating certificate:", error);
+    return { success: false, error: error instanceof Error ? error.message : String(error) };
   }
 }
