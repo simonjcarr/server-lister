@@ -75,7 +75,6 @@ const ListAllCertificates = () => {
         ]}
         dataSource={data.filter(cert => cert.primaryDomain.includes(searchText) || (cert.otherDomains as {domain: string}[]).some(domain => domain.domain.includes(searchText)) || cert.status.includes(searchText) || cert.server?.name.includes(searchText) || (cert.requestedBy?.name || '').includes(searchText)).map(cert => ({ ...cert, key: cert.id }))}
         loading={isLoading}
-        size="small"
       />
     )}
     </div>
