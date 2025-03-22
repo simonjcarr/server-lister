@@ -1,5 +1,5 @@
 'use client'
-import { Col, Form, Input, Modal, Row, Select, Tag } from 'antd'
+import { Col, Input, Modal, Row, Select, Tag } from 'antd'
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { getCertificateById, updateCertificate } from '@/app/actions/certs/crudActions'
 import { useSession } from 'next-auth/react'
@@ -28,112 +28,139 @@ interface Certificate {
   } | null;
 }
 
-const ViewCertificateModal = ({ certId }: { certId: number }) => {
+// Create a separate inner modal component to allow unmounting the entire modal content
+const CertificateModalContent = ({ 
+  certId, 
+  isVisible, 
+  onClose, 
+  onSuccess,
+}: { 
+  certId: number, 
+  isVisible: boolean, 
+  onClose: () => void, 
+  onSuccess: () => void,
+}) => {
   const { data: session } = useSession()
-  // Only create form instance when modal is visible
-  const [isModalVisible, setIsModalVisible] = React.useState(false)
-  // Check if user has required roles
   const hasRequiredRoles = session && userHasAtLeastOneRole(session.user?.roles, ['admin', 'certs'])
-  // Always call Form.useForm() to follow React Rules of Hooks
-  const [form] = Form.useForm()
-  const [requestId, setRequestId] = React.useState<string>('')
+  
+  // Form state
+  const [requestId, setRequestId] = React.useState('')
   const [status, setStatus] = React.useState<Certificate['status']>('Pending')
-  const [storagePath, setStoragePath] = React.useState<string | null>(null)
-  const queryClient = useQueryClient()
+  const [originalStatus, setOriginalStatus] = React.useState<Certificate['status']>('Pending')
+  const [storagePath, setStoragePath] = React.useState('')
+  const [confirmModalVisible, setConfirmModalVisible] = React.useState(false)
   
-  const { data: cert, isLoading, error } = useQuery({ 
-    queryKey: ['cert', certId],
-    queryFn: async () => {
-      const queryResult = await getCertificateById(certId) as unknown as Certificate
-
-      if(queryResult) {
-        const reqId = queryResult.requestId || ''
-        const storPath = queryResult.storagePath || ''
-        
-        setRequestId(reqId)
-        setStatus(queryResult.status)
-        setStoragePath(storPath)
-      }
-      return queryResult
-    }
-  })
+  // Form validation state
+  const [formError, setFormError] = React.useState('')
   
-  const mutate = useMutation({
-    mutationFn: updateCertificate,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['cert', certId] })
-      queryClient.invalidateQueries({ queryKey: ['certs'] })
-      setIsModalVisible(false)
-    }
-  })
-  
-  // When modal becomes visible, initialize the form
-  React.useEffect(() => {
-    if (isModalVisible && cert && hasRequiredRoles) {
-      form.setFieldsValue({
-        requestId: cert.requestId || '',
-        status: cert.status,
-        storagePath: cert.storagePath || '',
-      })
-    }
-  }, [isModalVisible, cert, form, hasRequiredRoles])
-  
+  // Status options for the dropdown
   const statusOptions = [
     { value: 'Pending', label: 'Pending' },
     { value: 'Ordered', label: 'Ordered' },
     { value: 'Ready', label: 'Ready' },
   ]
   
-  // Handle input changes
-  const handleRequestIdChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value
-    setRequestId(value)
-    if (hasRequiredRoles) {
-      form.setFieldsValue({ requestId: value })
-      form.validateFields(['requestId', 'status'])
-    }
-  }
+  const { data: cert, isLoading, error } = useQuery({ 
+    queryKey: ['cert', certId],
+    queryFn: async () => {
+      try {
+        const queryResult = await getCertificateById(certId) as unknown as Certificate
+
+        if(queryResult) {
+          // Initialize the form state from the certificate data
+          setRequestId(queryResult.requestId || '')
+          setStatus(queryResult.status)
+          setOriginalStatus(queryResult.status)
+          setStoragePath(queryResult.storagePath || '')
+        }
+        return queryResult
+      } catch (error) {
+        console.error('Error fetching certificate:', error)
+        throw error
+      }
+    },
+    enabled: isVisible, // Only fetch when modal is visible
+  })
   
-  const handleStoragePathChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value
-    setStoragePath(value)
-    if (hasRequiredRoles) {
-      form.setFieldsValue({ storagePath: value })
-      form.validateFields(['storagePath', 'status'])
+  const mutate = useMutation({
+    mutationFn: updateCertificate,
+    onSuccess: () => {
+      // Signal success to parent component
+      onSuccess()
+    },
+    onError: (error) => {
+      console.error('Error updating certificate:', error)
+      setFormError(`Error: ${error instanceof Error ? error.message : String(error)}`)
     }
-  }
+  })
   
-  const handleStatusChange = (value: string) => {
-    const newStatus = value as Certificate['status']
-    setStatus(newStatus)
-    if (hasRequiredRoles) {
-      form.setFieldsValue({ status: newStatus })
-      form.validateFields(['requestId', 'storagePath', 'status'])
-    }
-  }
-  
-  const handleOk = () => {
-    if (hasRequiredRoles) {
-      form.validateFields().then((values: Record<string, unknown>) => {
-        // Handle form submission here
-        console.log('Form values:', values)
-        mutate.mutate({
-          id: certId,
-          ...values
-        })
-        setIsModalVisible(false)
-      }).catch((info: unknown) => {
-        console.log('Validation failed:', info)
-      })
+  // Handle status change with confirmation for Ready status
+  const handleStatusChange = (value: Certificate['status']) => {
+    // If changing from Ready to something else, show confirmation
+    if (originalStatus === 'Ready' && value !== 'Ready') {
+      // Store the desired new status for confirmation
+      setStatus(value)
+      // Show confirmation modal
+      setConfirmModalVisible(true)
     } else {
-      setIsModalVisible(false)
+      // For other status changes, just update the status
+      setStatus(value)
+    }
+  }
+  
+  // Handle confirmation of status change
+  const handleConfirmStatusChange = () => {
+    // Close confirmation modal
+    setConfirmModalVisible(false)
+    // Status has already been updated in state
+  }
+  
+  // Cancel status change
+  const handleCancelStatusChange = () => {
+    // Reset to original status
+    setStatus(originalStatus)
+    // Close confirmation modal
+    setConfirmModalVisible(false)
+  }
+  
+  // Validate the form based on the current state
+  const validateForm = (): boolean => {
+    if (status !== 'Pending' && (!requestId || !storagePath)) {
+      setFormError('Request ID and Storage Path must be set for Ordered or Ready status')
+      return false
+    }
+    
+    if (status === 'Pending' && (requestId || storagePath)) {
+      setFormError('Request ID and Storage Path must be cleared for Pending status')
+      return false
+    }
+    
+    setFormError('')
+    return true
+  }
+  
+  // Handler for the submit button
+  const handleSubmit = () => {
+    if (validateForm()) {
+      mutate.mutate({
+        id: certId,
+        requestId,
+        status,
+        storagePath,
+      })
     }
   }
   
   return (
     <>
-      <div className="cursor-pointer" onClick={() => setIsModalVisible(true)}>View</div>
-      <Modal title="Certificate Details" open={isModalVisible} onOk={handleOk} onCancel={() => setIsModalVisible(false)}>
+      {/* Main Modal */}
+      <Modal 
+        title="Certificate Details" 
+        open={isVisible} 
+        onOk={handleSubmit} 
+        onCancel={onClose}
+        destroyOnClose={true} // Important: destroy component when closed
+      >
         {isLoading ? (
           <div>Loading...</div>
         ) : (
@@ -171,69 +198,39 @@ const ViewCertificateModal = ({ certId }: { certId: number }) => {
                   </div>
                   {hasRequiredRoles && (
                     <div className='mt-4 px-2'>
-                      <Form
-                        form={form}
-                      >
+                      {formError && (
+                        <div className="text-red-500 mb-2">{formError}</div>
+                      )}
                       <Row className='mb-2'>
-                      <Col span={12}>Request ID</Col>
-                      <Col span={12}>
-                      <Form.Item 
-                        name="requestId" 
-                        initialValue={requestId}
-                        rules={[{ validator: async (_, value) => {
-                          if (status !== 'Pending' && !value) {
-                            throw new Error('Request ID is required');
-                          }
-                        }}]}
-                      >
-                        <Input onChange={handleRequestIdChange} />
-                      </Form.Item>
-                      </Col>
-                    </Row>
-                    <Row className='mb-2'>
-                      <Col span={12}>Storage Path</Col>
-                      <Col span={12}>
-                      <Form.Item 
-                        name="storagePath" 
-                        initialValue={storagePath || ''}
-                        rules={[{ validator: async (_, value) => {
-                          if (status !== 'Pending' && !value) {
-                            throw new Error('Storage Path is required');
-                          }
-                        }}]}
-                      >
-                        <Input onChange={handleStoragePathChange} />
-                      </Form.Item>
-                      </Col>
-                    </Row>
-                    <Row className='mb-2'>
-                      <Col span={12}>Status: </Col>
-                      <Col span={12}>
-                      {/* status can only change from Pending if requestId and storagePath are set */}
-                      <Form.Item 
-                        name="status" 
-                        initialValue={status}
-                        rules={[{ required: true }, 
-                        { validator: async (_, value) => {
-                          const formValues = form.getFieldsValue();
-                          const currentRequestId = formValues.requestId;
-                          const currentStoragePath = formValues.storagePath;
-                          
-                          if (value !== 'Pending' && (!currentRequestId || !currentStoragePath)) {
-                            throw new Error('Request ID and Storage Path must be set to change status to Ordered or Ready');
-                          }
-                          
-                          if (value === 'Pending' && (currentRequestId || currentStoragePath)) {
-                            throw new Error('Request ID and Storage Path must be cleared to change status to Pending');
-                          }
-                        }}]}
-                      >
-                        <Select className='w-full' onChange={(value) => handleStatusChange(value)} options={statusOptions} />
-                      </Form.Item>
-                      </Col>
-                    </Row>
-                    </Form>
-                  </div>
+                        <Col span={12}>Status: </Col>
+                        <Col span={12}>
+                          <Select 
+                            className='w-full'
+                            value={status}
+                            onChange={handleStatusChange}
+                            options={statusOptions}
+                          />
+                        </Col>
+                      </Row>
+                      <Row className='mb-2'>
+                        <Col span={12}>Request ID</Col>
+                        <Col span={12}>
+                          <Input 
+                            value={requestId}
+                            onChange={(e) => setRequestId(e.target.value)}
+                          />
+                        </Col>
+                      </Row>
+                      <Row className='mb-2'>
+                        <Col span={12}>Storage Path</Col>
+                        <Col span={12}>
+                          <Input 
+                            value={storagePath}
+                            onChange={(e) => setStoragePath(e.target.value)}
+                          />
+                        </Col>
+                      </Row>
+                    </div>
                   )}
                 </>
               )}
@@ -241,6 +238,54 @@ const ViewCertificateModal = ({ certId }: { certId: number }) => {
           )
         )}
       </Modal>
+      
+      {/* Confirmation Modal for status change from Ready */}
+      <Modal
+        title="Confirm Status Change"
+        open={confirmModalVisible}
+        onOk={handleConfirmStatusChange}
+        onCancel={handleCancelStatusChange}
+        destroyOnClose={true}
+      >
+        <p>Are you sure you want to change the status from Ready to {status}?</p>
+      </Modal>
+    </>
+  )
+}
+
+const ViewCertificateModal = ({ certId }: { certId: number }) => {
+  const [isModalVisible, setIsModalVisible] = React.useState(false)
+  const [wasSubmitted, setWasSubmitted] = React.useState(false)
+  const queryClient = useQueryClient()
+  
+  // Handle successful submission
+  const handleSuccess = () => {
+    // Mark as submitted first
+    setWasSubmitted(true)
+    // Close the modal
+    setIsModalVisible(false)
+    // Update queries after a timeout
+    setTimeout(() => {
+      queryClient.invalidateQueries({ queryKey: ['cert', certId] })
+      queryClient.invalidateQueries({ queryKey: ['certs'] })
+      // Reset submission state after data is refreshed
+      setWasSubmitted(false)
+    }, 200)
+  }
+  
+  return (
+    <>
+      <div className="cursor-pointer" onClick={() => setIsModalVisible(true)}>View</div>
+      
+      {/* Only render the modal content when it's visible and wasn't just submitted */}
+      {isModalVisible && !wasSubmitted && (
+        <CertificateModalContent 
+          certId={certId}
+          isVisible={isModalVisible}
+          onClose={() => setIsModalVisible(false)}
+          onSuccess={handleSuccess}
+        />
+      )}
     </>
   )
 }
