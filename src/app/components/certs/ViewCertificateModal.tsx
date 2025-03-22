@@ -1,5 +1,5 @@
 'use client'
-import { Col, Input, Modal, Row, Select, Tag } from 'antd'
+import { Col, Form, Input, Modal, Row, Select, Tag } from 'antd'
 import { useQuery } from "@tanstack/react-query"
 import { getCertificateById } from '@/app/actions/certs/crudActions'
 
@@ -28,35 +28,83 @@ interface Certificate {
 }
 
 const ViewCertificateModal = ({ certId }: { certId: number }) => {
+  // Only create form instance when modal is visible
+  const [isModalVisible, setIsModalVisible] = React.useState(false)
+  const [form] = Form.useForm()
   const [requestId, setRequestId] = React.useState<string>('')
   const [status, setStatus] = React.useState<Certificate['status']>('Pending')
   const [storagePath, setStoragePath] = React.useState<string | null>(null)
+  
   const { data: cert, isLoading, error } = useQuery({ 
     queryKey: ['cert', certId],
     queryFn: async () => {
       const queryResult = await getCertificateById(certId) as unknown as Certificate
 
       if(queryResult) {
-        setRequestId(queryResult.requestId || '')
+        const reqId = queryResult.requestId || ''
+        const storPath = queryResult.storagePath || ''
+        
+        setRequestId(reqId)
         setStatus(queryResult.status)
-        setStoragePath(queryResult.storagePath)
+        setStoragePath(storPath)
       }
       return queryResult
     }
   })
-  const [isModalVisible, setIsModalVisible] = React.useState(false)
-  const handleStatusChange = (value: string) => {
-    setStatus(value as Certificate['status'])
-  }
+  
+  // When modal becomes visible, initialize the form
+  React.useEffect(() => {
+    if (isModalVisible && cert) {
+      form.setFieldsValue({
+        requestId: cert.requestId || '',
+        status: cert.status,
+        storagePath: cert.storagePath || '',
+      })
+    }
+  }, [isModalVisible, cert, form])
+  
   const statusOptions = [
     { value: 'Pending', label: 'Pending' },
     { value: 'Ordered', label: 'Ordered' },
     { value: 'Ready', label: 'Ready' },
   ]
+  
+  // Handle input changes
+  const handleRequestIdChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value
+    setRequestId(value)
+    form.setFieldsValue({ requestId: value })
+    form.validateFields(['requestId', 'status'])
+  }
+  
+  const handleStoragePathChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value
+    setStoragePath(value)
+    form.setFieldsValue({ storagePath: value })
+    form.validateFields(['storagePath', 'status'])
+  }
+  
+  const handleStatusChange = (value: string) => {
+    const newStatus = value as Certificate['status']
+    setStatus(newStatus)
+    form.setFieldsValue({ status: newStatus })
+    form.validateFields(['requestId', 'storagePath', 'status'])
+  }
+  
+  const handleOk = () => {
+    form.validateFields().then(values => {
+      // Handle form submission here
+      console.log('Form values:', values)
+      setIsModalVisible(false)
+    }).catch(info => {
+      console.log('Validation failed:', info)
+    })
+  }
+  
   return (
     <>
       <div className="cursor-pointer" onClick={() => setIsModalVisible(true)}>View</div>
-      <Modal title="Certificate Details" open={isModalVisible} onOk={() => setIsModalVisible(false)} onCancel={() => setIsModalVisible(false)}>
+      <Modal title="Certificate Details" open={isModalVisible} onOk={handleOk} onCancel={() => setIsModalVisible(false)}>
         {isLoading ? (
           <div>Loading...</div>
         ) : (
@@ -93,18 +141,68 @@ const ViewCertificateModal = ({ certId }: { certId: number }) => {
                     </div>
                   </div>
                   <div className='mt-4 px-2'>
+                    <Form
+                      form={form}
+                    >
                     <Row className='mb-2'>
                       <Col span={12}>Request ID</Col>
-                      <Col span={12}><Input value={requestId} onChange={(e) => setRequestId(e.target.value)} /></Col>
+                      <Col span={12}>
+                      <Form.Item 
+                        name="requestId" 
+                        initialValue={requestId}
+                        rules={[{ validator: async (_, value) => {
+                          if (status !== 'Pending' && !value) {
+                            throw new Error('Request ID is required');
+                          }
+                        }}]}
+                      >
+                        <Input onChange={handleRequestIdChange} />
+                      </Form.Item>
+                      </Col>
                     </Row>
                     <Row className='mb-2'>
                       <Col span={12}>Storage Path</Col>
-                      <Col span={12}><Input value={storagePath || ''} onChange={(e) => setStoragePath(e.target.value)} /></Col>
+                      <Col span={12}>
+                      <Form.Item 
+                        name="storagePath" 
+                        initialValue={storagePath || ''}
+                        rules={[{ validator: async (_, value) => {
+                          if (status !== 'Pending' && !value) {
+                            throw new Error('Storage Path is required');
+                          }
+                        }}]}
+                      >
+                        <Input onChange={handleStoragePathChange} />
+                      </Form.Item>
+                      </Col>
                     </Row>
                     <Row className='mb-2'>
                       <Col span={12}>Status: </Col>
-                      <Col span={12}><Select className='w-full' value={status} onChange={(value) => handleStatusChange(value)} options={statusOptions} /></Col>
+                      <Col span={12}>
+                      {/* status can only change from Pending if requestId and storagePath are set */}
+                      <Form.Item 
+                        name="status" 
+                        initialValue={status}
+                        rules={[{ required: true }, 
+                        { validator: async (_, value) => {
+                          const formValues = form.getFieldsValue();
+                          const currentRequestId = formValues.requestId;
+                          const currentStoragePath = formValues.storagePath;
+                          
+                          if (value !== 'Pending' && (!currentRequestId || !currentStoragePath)) {
+                            throw new Error('Request ID and Storage Path must be set to change status to Ordered or Ready');
+                          }
+                          
+                          if (value === 'Pending' && (currentRequestId || currentStoragePath)) {
+                            throw new Error('Request ID and Storage Path must be cleared to change status to Pending');
+                          }
+                        }}]}
+                      >
+                        <Select className='w-full' onChange={(value) => handleStatusChange(value)} options={statusOptions} />
+                      </Form.Item>
+                      </Col>
                     </Row>
+                    </Form>
                   </div>
                 </>
               )}
