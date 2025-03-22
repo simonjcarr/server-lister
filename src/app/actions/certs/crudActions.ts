@@ -4,6 +4,8 @@ import { certs, CertRequest, servers, users, UpdateCert } from "@/db/schema"
 import { auth } from "@/auth"
 import { eq } from "drizzle-orm"
 import { requireAtLeastOneRole } from "@/lib/role-utils";
+//import bullMQ worker
+import { jobQueue } from "@/lib/queue";
 
 export async function createCertRequest(cert: CertRequest) {
   const session = await auth();
@@ -24,7 +26,11 @@ export async function createCertRequest(cert: CertRequest) {
   // Return only a simplified serializable response
   try {
     await db.insert(certs).values(certData);
-    // Only return a simple success object, not the database result
+    await jobQueue.add('notification', 
+      { title: "Certificate Request", 
+        message: `A new certificate request has been created for ${cert.primaryDomain} by ${session.user.name}.`, 
+        roleNames: ["admin", "certs"] 
+      });
     return { success: true };
   } catch (error) {
     console.error("Error creating certificate request:", error);
@@ -139,7 +145,11 @@ export async function updateCertificate(cert: UpdateCert) {
     }
     
     const result = await db.update(certs).set(certData).where(eq(certs.id, certData.id)).returning();
-    // Only return a simple success object, not the database result
+    await jobQueue.add('notification', 
+      { title: "Certificate Request Update", 
+        message: `Your certificate request for ${cert.primaryDomain} has been updated by ${session.user.name}.`, 
+        userIds: [result[0].requestedById]
+      });
     return result;
   } catch (error) {
     console.error("Error updating certificate:", error);
