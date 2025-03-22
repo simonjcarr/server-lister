@@ -1,7 +1,7 @@
 'use client'
 import { Col, Form, Input, Modal, Row, Select, Tag } from 'antd'
-import { useQuery } from "@tanstack/react-query"
-import { getCertificateById } from '@/app/actions/certs/crudActions'
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
+import { getCertificateById, updateCertificate } from '@/app/actions/certs/crudActions'
 
 import React from 'react'
 import ClickToCopy from '../utils/ClickToCopy'
@@ -34,6 +34,7 @@ const ViewCertificateModal = ({ certId }: { certId: number }) => {
   const [requestId, setRequestId] = React.useState<string>('')
   const [status, setStatus] = React.useState<Certificate['status']>('Pending')
   const [storagePath, setStoragePath] = React.useState<string | null>(null)
+  const queryClient = useQueryClient()
   
   const { data: cert, isLoading, error } = useQuery({ 
     queryKey: ['cert', certId],
@@ -49,6 +50,15 @@ const ViewCertificateModal = ({ certId }: { certId: number }) => {
         setStoragePath(storPath)
       }
       return queryResult
+    }
+  })
+  
+  const mutate = useMutation({
+    mutationFn: updateCertificate,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['cert', certId] })
+      queryClient.invalidateQueries({ queryKey: ['certs'] })
+      setIsModalVisible(false)
     }
   })
   
@@ -95,6 +105,10 @@ const ViewCertificateModal = ({ certId }: { certId: number }) => {
     form.validateFields().then(values => {
       // Handle form submission here
       console.log('Form values:', values)
+      mutate.mutate({
+        id: certId,
+        ...values
+      })
       setIsModalVisible(false)
     }).catch(info => {
       console.log('Validation failed:', info)

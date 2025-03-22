@@ -259,6 +259,7 @@ export type SelectCert = z.infer<typeof selectCertSchema>
 export type UpdateCert = z.infer<typeof updateCertSchema>
 
 export type CertRequest = {
+  id: number,
   name: string,
   description?: string | null | undefined,
   primaryDomain: string,

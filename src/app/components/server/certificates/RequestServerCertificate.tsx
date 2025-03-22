@@ -48,7 +48,7 @@ const RequestServerCertificate = ({ serverId }: { serverId: number }) => {
     try {
       await form.validateFields()
       const formValues = form.getFieldsValue()
-      console.log(formValues)
+      
       // Transform otherDomains from string[] to {domain: string}[] if it exists
       const cert: CertRequest = {
         ...formValues,
