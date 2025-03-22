@@ -71,6 +71,13 @@
       "when": 1742654956000,
       "tag": "0009_overrated_gwen_stacy",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1742669312704,
+      "tag": "0010_redundant_mindworm",
+      "breakpoints": true
     }
   ]
 }

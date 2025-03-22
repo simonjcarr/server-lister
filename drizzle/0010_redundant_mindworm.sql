@@ -1,0 +1,1 @@
+ALTER TABLE "notifications" RENAME COLUMN "description" TO "message";
