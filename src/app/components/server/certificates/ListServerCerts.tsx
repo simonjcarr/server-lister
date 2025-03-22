@@ -36,7 +36,7 @@ const ListServerCerts = ({ serverId }: { serverId: number }) => {
             },
             { 
               title: "Status", 
-              render: (text, record) => <CertStatus cert={record.status} />, 
+              render: (text, record) => <CertStatus status={record.status} />, 
               sorter: (a, b) => (a.status && b.status) ? a.status.localeCompare(b.status) : 0, sortDirections: ['ascend', 'descend'], defaultSortOrder: 'ascend' 
             }
           ]}
