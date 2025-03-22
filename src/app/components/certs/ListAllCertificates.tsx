@@ -37,7 +37,7 @@ const ListAllCertificates = () => {
           { 
             title: 'Status', 
             dataIndex: 'status', 
-            render: (text) => <CertStatus cert={text} />, sorter: (a, b) => (a.status && b.status) ? a.status.localeCompare(b.status) : 0, sortDirections: ['ascend', 'descend'], defaultSortOrder: 'ascend' ,
+            render: (text) => <CertStatus status={text} />, sorter: (a, b) => (a.status && b.status) ? a.status.localeCompare(b.status) : 0, sortDirections: ['ascend', 'descend'], defaultSortOrder: 'ascend' ,
             filters: [
               { text: 'Pending', value: 'Pending' },
               { text: 'Ordered', value: 'Ordered' },

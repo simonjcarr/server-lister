@@ -1,17 +1,44 @@
 'use client'
-import { Modal } from 'antd'
+import { Modal, Select, Tag } from 'antd'
 import { useQuery } from "@tanstack/react-query"
 import { getCertificateById } from '@/app/actions/certs/crudActions'
 
 import React from 'react'
 import ClickToCopy from '../utils/ClickToCopy'
+import CertStatus from './CertStatus'
+
+// Define the certificate interface to match the actual data structure from the API
+interface Certificate {
+  id: number;
+  status: "Pending" | "Ordered" | "Ready";
+  primaryDomain: string;
+  otherDomains: { domain: string }[] | null;
+  server: {
+    id: number;
+    hostname: string;
+    ipv4: string | null;
+  } | null;
+  requestedBy: {
+    id: string;
+    name: string | null;
+    email: string | null;
+  } | null;
+}
 
 const ViewCertificateModal = ({ certId }: { certId: number }) => {
-  const { data: cert, isLoading, error } = useQuery({
+  const { data: cert, isLoading, error } = useQuery({ 
     queryKey: ['cert', certId],
-    queryFn: () => getCertificateById(certId)
+    queryFn: () => getCertificateById(certId) as Promise<Certificate>
   })
   const [isModalVisible, setIsModalVisible] = React.useState(false)
+  const handleStatusChange = (value: string) => {
+    console.log(value)
+  }
+  const statusOptions = [
+    { value: 'Pending', label: 'Pending' },
+    { value: 'Ordered', label: 'Ordered' },
+    { value: 'Ready', label: 'Ready' },
+  ]
   return (
     <>
       <div className="cursor-pointer" onClick={() => setIsModalVisible(true)}>View</div>
@@ -23,20 +50,42 @@ const ViewCertificateModal = ({ certId }: { certId: number }) => {
             <div>Error: {error.message}</div>
           ) : (
             <>
-            {cert && (
-              <>
-              <div className='font-semibold'>Ordered By</div>
-              <div className='flex justify-between gap-2 mb-4'>
-                <div>{cert?.requestedBy?.name}</div> 
-                <div className='flex'>{<ClickToCopy text={cert?.requestedBy?.email || ''} />}</div>
-              </div>
-              <div className='font-semibold'>Server</div>
-              <div className='flex justify-between gap-2 mb-4'>
-                <div>Server: <ClickToCopy text={cert?.server?.hostname || ''} /></div>
-                <div className='flex items-center'>{<ClickToCopy text={cert?.server?.ipv4 || ''} />}</div>
-              </div>
-              </>
-            )}
+              {cert && (
+                <>
+                  <div className='py-2 text-xl'>Status: <CertStatus status={cert.status} /></div>
+                  <div className='p-2 bg-gray-800 border border-gray-900 rounded'>
+                    <div className='font-semibold'>Ordered By</div>
+                    <div className='flex justify-between gap-2 mb-4'>
+                      <div>{cert.requestedBy?.name}</div>
+                      <div className='flex'>{<ClickToCopy text={cert.requestedBy?.email || ''} />}</div>
+                    </div>
+                  </div>
+                  <div className='p-2 bg-gray-800 border border-gray-900 rounded'>
+                    <div className='font-semibold'>Server</div>
+                    <div className='flex justify-between gap-2 mb-4'>
+                      <div><ClickToCopy text={cert.server?.hostname || ''} /></div>
+                      <div className='flex items-center'>{<ClickToCopy text={cert.server?.ipv4 || ''} />}</div>
+                    </div>
+                  </div>
+                  <div className='p-2 bg-gray-800 border border-gray-900 rounded'>
+                    <div className='font-semibold'>Hostnames</div>
+                    <div className='flex items-center mb-2 gap-2'>Primary: {<ClickToCopy text={cert.primaryDomain || ''} />}</div>
+                    <div className='flex items-center gap-2'>
+                      Other: {cert.otherDomains && cert.otherDomains.length > 0 ? cert.otherDomains.map((d: { domain: string }) => (
+                        <Tag key={d.domain}>
+                          <ClickToCopy text={d.domain} />
+                        </Tag>
+                      )) : 'None'}
+                    </div>
+                  </div>
+                  <div>
+                    <div className='flex gap-2'>
+                      <div>Status: </div>
+                      <div><Select value={cert.status} onChange={(value) => handleStatusChange(value)} options={statusOptions} /></div>
+                    </div>
+                  </div>
+                </>
+              )}
             </>
           )
         )}
