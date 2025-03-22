@@ -524,3 +524,27 @@ const updateServerGroupSchema = createUpdateSchema(serverGroups)
 export type InsertServerGroup = z.infer<typeof insertServerGroupSchema>
 export type SelectServerGroup = z.infer<typeof selectServerGroupSchema>
 export type UpdateServerGroup = z.infer<typeof updateServerGroupSchema>
+
+export const notifications = pgTable(
+  "notifications",
+  {
+    id: serial("id").primaryKey(),
+    title: text("title").notNull(),
+    description: text("description"),
+    userId: text("userId").notNull().references(() => users.id, { onDelete: "cascade" }),
+    read: boolean("read").notNull().default(false),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
+  },
+  (table) => [
+    index("notifications_user_id_idx").on(table.userId),
+    index("notifications_read_idx").on(table.read),
+  ]
+);
+
+const insertNotificationSchema = createInsertSchema(notifications)
+const selectNotificationSchema = createSelectSchema(notifications)
+const updateNotificationSchema = createUpdateSchema(notifications)
+export type InsertNotification = z.infer<typeof insertNotificationSchema>
+export type SelectNotification = z.infer<typeof selectNotificationSchema>
+export type UpdateNotification = z.infer<typeof updateNotificationSchema>
