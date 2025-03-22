@@ -57,7 +57,7 @@ const ListAllCertificates = () => {
             title: 'Other Domains', 
             dataIndex: 'otherDomains',
             render: (text) => {
-              return text.map((domain: {domain: string}) => <Tag key={domain.domain}>{domain.domain}</Tag>)
+              return text && text.map((domain: {domain: string}) => <Tag key={domain.domain}>{domain.domain}</Tag>)
             },
             
           },
