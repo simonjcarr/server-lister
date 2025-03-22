@@ -1,5 +1,5 @@
 'use client'
-import { Modal, Select, Tag } from 'antd'
+import { Col, Input, Modal, Row, Select, Tag } from 'antd'
 import { useQuery } from "@tanstack/react-query"
 import { getCertificateById } from '@/app/actions/certs/crudActions'
 
@@ -13,6 +13,8 @@ interface Certificate {
   status: "Pending" | "Ordered" | "Ready";
   primaryDomain: string;
   otherDomains: { domain: string }[] | null;
+  requestId: string | null;
+  storagePath: string | null;
   server: {
     id: number;
     hostname: string;
@@ -26,13 +28,25 @@ interface Certificate {
 }
 
 const ViewCertificateModal = ({ certId }: { certId: number }) => {
+  const [requestId, setRequestId] = React.useState<string>('')
+  const [status, setStatus] = React.useState<Certificate['status']>('Pending')
+  const [storagePath, setStoragePath] = React.useState<string | null>(null)
   const { data: cert, isLoading, error } = useQuery({ 
     queryKey: ['cert', certId],
-    queryFn: () => getCertificateById(certId) as Promise<Certificate>
+    queryFn: async () => {
+      const queryResult = await getCertificateById(certId) as unknown as Certificate
+
+      if(queryResult) {
+        setRequestId(queryResult.requestId || '')
+        setStatus(queryResult.status)
+        setStoragePath(queryResult.storagePath)
+      }
+      return queryResult
+    }
   })
   const [isModalVisible, setIsModalVisible] = React.useState(false)
   const handleStatusChange = (value: string) => {
-    console.log(value)
+    setStatus(value as Certificate['status'])
   }
   const statusOptions = [
     { value: 'Pending', label: 'Pending' },
@@ -78,11 +92,19 @@ const ViewCertificateModal = ({ certId }: { certId: number }) => {
                       )) : 'None'}
                     </div>
                   </div>
-                  <div>
-                    <div className='flex gap-2'>
-                      <div>Status: </div>
-                      <div><Select value={cert.status} onChange={(value) => handleStatusChange(value)} options={statusOptions} /></div>
-                    </div>
+                  <div className='mt-4 px-2'>
+                    <Row className='mb-2'>
+                      <Col span={12}>Request ID</Col>
+                      <Col span={12}><Input value={requestId} onChange={(e) => setRequestId(e.target.value)} /></Col>
+                    </Row>
+                    <Row className='mb-2'>
+                      <Col span={12}>Storage Path</Col>
+                      <Col span={12}><Input value={storagePath || ''} onChange={(e) => setStoragePath(e.target.value)} /></Col>
+                    </Row>
+                    <Row className='mb-2'>
+                      <Col span={12}>Status: </Col>
+                      <Col span={12}><Select className='w-full' value={status} onChange={(value) => handleStatusChange(value)} options={statusOptions} /></Col>
+                    </Row>
                   </div>
                 </>
               )}

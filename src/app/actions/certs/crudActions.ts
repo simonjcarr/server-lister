@@ -91,6 +91,8 @@ export async function getCertificateById(certId: number) {
         status: certs.status,
         primaryDomain: certs.primaryDomain,
         otherDomains: certs.otherDomains,
+        requestId: certs.requestId,
+        storagePath: certs.storagePath,
         server: {
           id: servers.id,
           hostname: servers.hostname,
@@ -112,4 +114,3 @@ export async function getCertificateById(certId: number) {
     throw error;
   }
 }
-
