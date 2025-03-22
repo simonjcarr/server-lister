@@ -2,10 +2,11 @@
 import { Col, Form, Input, Modal, Row, Select, Tag } from 'antd'
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { getCertificateById, updateCertificate } from '@/app/actions/certs/crudActions'
-
+import { useSession } from 'next-auth/react'
 import React from 'react'
 import ClickToCopy from '../utils/ClickToCopy'
 import CertStatus from './CertStatus'
+import { userHasAtLeastOneRole } from '@/lib/role-utils'
 
 // Define the certificate interface to match the actual data structure from the API
 interface Certificate {
@@ -28,6 +29,7 @@ interface Certificate {
 }
 
 const ViewCertificateModal = ({ certId }: { certId: number }) => {
+  const { data: session } = useSession()
   // Only create form instance when modal is visible
   const [isModalVisible, setIsModalVisible] = React.useState(false)
   const [form] = Form.useForm()
@@ -154,11 +156,12 @@ const ViewCertificateModal = ({ certId }: { certId: number }) => {
                       )) : 'None'}
                     </div>
                   </div>
-                  <div className='mt-4 px-2'>
-                    <Form
-                      form={form}
-                    >
-                    <Row className='mb-2'>
+                  {session && userHasAtLeastOneRole(session.user?.roles, ['admin', 'certs']) && (
+                    <div className='mt-4 px-2'>
+                      <Form
+                        form={form}
+                      >
+                      <Row className='mb-2'>
                       <Col span={12}>Request ID</Col>
                       <Col span={12}>
                       <Form.Item 
@@ -218,6 +221,7 @@ const ViewCertificateModal = ({ certId }: { certId: number }) => {
                     </Row>
                     </Form>
                   </div>
+                  )}
                 </>
               )}
             </>

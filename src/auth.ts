@@ -45,15 +45,19 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       return token;
     },
     async session({ session, token }) {
-      
       if (session.user) {
         // Add the roles from the token to the session
         session.user.roles = token.roles as string[] || [];
         // Add the user ID from the token to the session
         session.user.id = token.sub as string;
       }
+      const customSession = {
+        ...session,
+        userHasAtLeastOneRole: (roles: string[]) => session.user?.roles?.some(role => roles.includes(role)) || false,
+        userHasAllRoles: (roles: string[]) => session.user?.roles?.every(role => roles.includes(role)) || false
+      }
       
-      return session;
+      return customSession;
     },
   },
   debug: true,

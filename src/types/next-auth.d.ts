@@ -10,6 +10,10 @@ declare module "next-auth" {
       /** The user's roles. */
       roles: string[];
     } & DefaultSession["user"];
+    /** Check if the user has at least one of the specified roles */
+    userHasAtLeastOneRole: (roles: string[]) => boolean;
+    /** Check if the user has all of the specified roles */
+    userHasAllRoles: (roles: string[]) => boolean;
   }
 
   /** Returned by the `jwt` callback and `getToken`, when using JWT sessions */
