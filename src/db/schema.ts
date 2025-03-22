@@ -238,6 +238,7 @@ export const certs = pgTable("certs", {
   csr: text("csr"),
   cert: text("cert"),
   key: text("key"),
+  storagePath: text("storage_path"),
   serverId: integer("serverId").notNull().references(() => servers.id, { onDelete: "set null" }),
   primaryDomain: text("primary_domain").notNull(),
   otherDomains: jsonb("other_domains"),

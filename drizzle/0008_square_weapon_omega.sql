@@ -1,0 +1,1 @@
+ALTER TABLE "certs" ADD COLUMN "storage_path" text;
