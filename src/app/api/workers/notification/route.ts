@@ -10,7 +10,7 @@ export async function POST(request: Request) {
   }
 
   const roleConditions = roleNames?.map(role => 
-    sql`${users.roles} ? ${role}`
+    sql`${users.roles}::jsonb ? ${role}::text`
   ) || [];
 
   const userConditions = userIds?.map(user => 

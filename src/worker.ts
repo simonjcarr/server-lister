@@ -1,5 +1,10 @@
 import { Worker } from "bullmq"
 import IORedis from "ioredis"
+import dotenv from "dotenv"
+
+dotenv.config()
+
+console.log(process.env)
 
 const connection = new IORedis(process.env.REDIS_URL || 'redis://localhost:6379', {
   maxRetriesPerRequest: null
@@ -24,7 +29,7 @@ const postNotification = async (title: string, message: string, roleNames?: stri
 }
 
 
-new Worker(
+const worker =new Worker(
   'jobQueue',
   async job => {
     switch (job.name) {
@@ -41,5 +46,9 @@ new Worker(
   },
   { connection }
 )
-
-console.log('BullMQ Worker started')
+worker.on('error', (error) => {
+  console.error('BullMQ Worker error:', error)
+})
+worker.on('ready', () => {
+  console.log('BullMQ Worker started')
+})
