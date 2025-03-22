@@ -121,6 +121,12 @@ export async function updateCertificate(cert: UpdateCert) {
     throw new Error("Unauthorized");
   }
   
+  // Import the role checking utility
+  const { requireAtLeastOneRole } = await import('@/lib/role-utils');
+  
+  // Check if user has at least one of the required roles
+  requireAtLeastOneRole(session.user?.roles, ["admin", "certs"]);
+  
   // Make sure we're dealing with plain objects that can be serialized
   const certData = {
     ...cert,
