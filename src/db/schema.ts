@@ -530,7 +530,7 @@ export const notifications = pgTable(
   {
     id: serial("id").primaryKey(),
     title: text("title").notNull(),
-    description: text("description"),
+    message: text("message").notNull(),
     userId: text("userId").notNull().references(() => users.id, { onDelete: "cascade" }),
     read: boolean("read").notNull().default(false),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
