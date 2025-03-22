@@ -78,3 +78,38 @@ export async function getAllCertificates() {
     throw error;
   }
 }
+
+export async function getCertificateById(certId: number) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    throw new Error("Unauthorized");
+  }
+  try {
+    const result = await db
+      .select({
+        id: certs.id,
+        status: certs.status,
+        primaryDomain: certs.primaryDomain,
+        otherDomains: certs.otherDomains,
+        server: {
+          id: servers.id,
+          hostname: servers.hostname,
+          ipv4: servers.ipv4
+        },
+        requestedBy: {
+          id: users.id,
+          name: users.name,
+          email: users.email
+        }
+      })
+      .from(certs)
+      .where(eq(certs.id, certId))
+      .leftJoin(servers, eq(certs.serverId, servers.id))
+      .leftJoin(users, eq(certs.requestedById, users.id))
+    return result[0];
+  } catch (error) {
+    console.error("Error fetching certificate:", error);
+    throw error;
+  }
+}
+

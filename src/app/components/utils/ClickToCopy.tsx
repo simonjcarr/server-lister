@@ -4,18 +4,21 @@ import { useState } from 'react';
 
 const ClickToCopy = ({ text }: { text: string }) => {
   const [copied, setCopied] = useState(false);
-
+  const [messageApi, contextHolder] = message.useMessage();
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(text);
       setCopied(true);
       setTimeout(() => setCopied(false), 3000);
+      messageApi.success('Copied to clipboard');
     } catch (err) {
       console.error('Failed to copy text: ', err);
     }
   };
 
   return (
+    <>
+    {contextHolder}
     <span className='flex items-center gap-1'>
       {text}
       {text && (
@@ -28,6 +31,7 @@ const ClickToCopy = ({ text }: { text: string }) => {
         </span>
       )}
     </span>
+    </>
   );
 };
 
