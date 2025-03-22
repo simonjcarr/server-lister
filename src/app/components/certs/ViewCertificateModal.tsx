@@ -41,7 +41,7 @@ const CertificateModalContent = ({
   onSuccess: () => void,
 }) => {
   const { data: session } = useSession()
-  const hasRequiredRoles = session && userHasAtLeastOneRole(session.user?.roles, ['admin', 'certs'])
+  const hasRequiredRoles = userHasAtLeastOneRole(session?.user?.roles, ['admin', 'certs'])
   
   // Form state
   const [requestId, setRequestId] = React.useState('')

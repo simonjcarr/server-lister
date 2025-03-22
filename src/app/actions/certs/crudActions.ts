@@ -3,6 +3,7 @@ import { db } from "@/db"
 import { certs, CertRequest, servers, users, UpdateCert } from "@/db/schema"
 import { auth } from "@/auth"
 import { eq } from "drizzle-orm"
+import { requireAtLeastOneRole } from "@/lib/role-utils";
 
 export async function createCertRequest(cert: CertRequest) {
   const session = await auth();
@@ -120,9 +121,6 @@ export async function updateCertificate(cert: UpdateCert) {
   if (!session?.user?.id) {
     throw new Error("Unauthorized");
   }
-  
-  // Import the role checking utility
-  const { requireAtLeastOneRole } = await import('@/lib/role-utils');
   
   // Check if user has at least one of the required roles
   requireAtLeastOneRole(session.user?.roles, ["admin", "certs"]);
