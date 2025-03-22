@@ -5,7 +5,8 @@ import { getAllCertificates } from '@/app/actions/certs/crudActions'
 import { Input, Table, Tag } from 'antd'
 import CertStatus from '@/app/components/certs/CertStatus'
 import ClickToCopy from '../utils/ClickToCopy'
-import { SearchOutlined } from '@ant-design/icons'
+import { MoreOutlined, SearchOutlined } from '@ant-design/icons'
+import CertDropDownMenu from './CertDropDownMenu'
 
 const ListAllCertificates = () => {
   const [searchText, setSearchText] = React.useState('')
@@ -72,6 +73,9 @@ const ListAllCertificates = () => {
             render: (text) => text || 'N/A',
             sorter: (a, b) => (a.requestedBy?.name && b.requestedBy?.name) ? a.requestedBy.name.localeCompare(b.requestedBy.name) : 0, sortDirections: ['ascend', 'descend'], defaultSortOrder: 'ascend'
           },
+          {
+            render: (text, record) => <CertDropDownMenu certId={record.id}><MoreOutlined /></CertDropDownMenu>
+          }
         ]}
         dataSource={data.filter(cert => cert.primaryDomain.includes(searchText) || (cert.otherDomains as {domain: string}[]).some(domain => domain.domain.includes(searchText)) || cert.status.includes(searchText) || cert.server?.name.includes(searchText) || (cert.requestedBy?.name || '').includes(searchText)).map(cert => ({ ...cert, key: cert.id }))}
         loading={isLoading}
