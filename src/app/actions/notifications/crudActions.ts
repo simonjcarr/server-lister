@@ -60,7 +60,7 @@ export async function deleteNotifications(notificationIds: number[]) {
     const session = await auth()
 
     if(!session) {
-        return { success: false, error: 'Unauthorized' };
+        throw new Error('unauthorized')
     }
     const userId = session.user.id;
     if(!userId) {
@@ -71,14 +71,10 @@ export async function deleteNotifications(notificationIds: number[]) {
     return { success: true, result };
 }
 
-export async function getUnreadNotificationCount() {
-    const session = await auth();
-    if (!session) {
-        return { success: false, error: 'Unauthorized' };
-    }
-    const userId = session.user.id;
-    if (!userId) {
-        return { success: false, error: 'Unauthorized' };
+export async function getUnreadNotificationCount(userId: string) {
+    const session = await auth()
+    if(session?.user.id !== userId) {
+        throw new Error('unauthorized')
     }
     const queryResult = await db.select({count: count()}).from(notifications).where(and(eq(notifications.userId, userId), eq(notifications.read, false)));
     return queryResult[0].count;
