@@ -6,6 +6,8 @@ import { getUsersNotifications, markNotificationAsRead } from '@/app/actions/not
 import { useState } from 'react';
 import DistanceToNow from '@/app/components/utils/DistanceToNow';
 import type { SelectNotification } from '@/db/schema';
+import NotificationTable from './NotificationTable';
+
 
 const ViewNotificationsModal = ({children}: {children: React.ReactNode}) => {
   const [ selectedNotification, setSelectedNotification ] = useState<SelectNotification | null>(null)
@@ -19,7 +21,8 @@ const ViewNotificationsModal = ({children}: {children: React.ReactNode}) => {
   const { data: notifications, isLoading, error } = useQuery({
     queryKey: ['notifications'],
     queryFn: () => getUsersNotifications(),
-    refetchInterval: 5000
+    refetchInterval: 5000,
+    staleTime: 5000
   })
 
   const mutate = useMutation({
@@ -39,20 +42,16 @@ const ViewNotificationsModal = ({children}: {children: React.ReactNode}) => {
   return (
     <>
       <div onClick={() => setOpen(true)}>{children}</div>
-      <Modal title="Notifications" open={open} onCancel={() => setOpen(false)} width={800} onOk={() => setOpen(false)}>
+      <Modal title="Notifications" open={open} onCancel={() => setOpen(false)} width={1000} onOk={() => setOpen(false)} className='max-h-[80vh] overflow-y-auto'>
+        {notifications && notifications.length === 0 && <div>No notifications to display</div>}
         {isLoading && <div>Loading...</div>}
         {error && <div>{error.message}</div>}
         {notifications && notifications.length > 0 && (
           <Splitter>
-            <Splitter.Panel>
-              {notifications.map((notification) => (
-                <div key={notification.id} className='pr-2 border-b-1 border-gray-700 pb-2 mr-4' onClick={() => handleClickNotification(notification)}>
-                  <div className={notification.read ? 'text-gray-500' : 'font-semibold'}>{notification.title}</div>
-                  <div className='text-xs text-gray-500'><DistanceToNow date={notification.createdAt} /></div>
-                </div>
-              ))}
+            <Splitter.Panel className='max-h-[80vh] overflow-y-auto'>
+              <NotificationTable handleClickNotification={handleClickNotification} />
             </Splitter.Panel>
-            <Splitter.Panel>
+            <Splitter.Panel className='max-h-[80vh] overflow-y-auto'>
               {selectedNotification && (
                 <div className='px-4'>
                   <h3 className='text-lg font-bold'>{selectedNotification.title}</h3>
