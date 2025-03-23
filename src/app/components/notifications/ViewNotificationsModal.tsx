@@ -42,7 +42,7 @@ const ViewNotificationsModal = ({children}: {children: React.ReactNode}) => {
   return (
     <>
       <div onClick={() => setOpen(true)}>{children}</div>
-      <Modal title="Notifications" open={open} onCancel={() => setOpen(false)} width={1000} onOk={() => setOpen(false)} className='max-h-[80vh] overflow-y-auto'>
+      <Modal title="Notifications" destroyOnClose open={open} onCancel={() => setOpen(false)} width={1000} onOk={() => setOpen(false)} className='max-h-[85vh] overflow-y-auto'>
         {notifications && notifications.length === 0 && <div>No notifications to display</div>}
         {isLoading && <div>Loading...</div>}
         {error && <div>{error.message}</div>}
