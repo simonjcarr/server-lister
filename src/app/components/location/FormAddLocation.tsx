@@ -2,7 +2,7 @@
 "use client";
 
 import { useState } from "react";
-import { Button, Card, Col, Form, Input, notification, Row, Typography } from "antd";
+import { Button, Card, Form, Input, notification, Typography } from "antd";
 import { addLocation } from "@/app/actions/location/crudActions";
 import type { InsertLocation } from "@/db/schema";
 
