@@ -16,7 +16,8 @@ const NotificationCountBadge = ({ children }: { children: React.ReactNode }) => 
   }
   const {data} = useQuery({
     queryKey: ['unreadNotificationCount', userId],
-    queryFn: () => getUnreadNotificationCount(userId)
+    queryFn: () => getUnreadNotificationCount(userId),
+    refetchInterval: 5000
   })
   return (
     <Badge count={data} showZero={false}>
