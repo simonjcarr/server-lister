@@ -7,15 +7,7 @@ import { deleteNotifications, getUsersNotifications, markNotificationAsRead, mar
 import type { SelectNotification } from '@/db/schema'
 import DistanceToNow from '@/app/components/utils/DistanceToNow'
 import { Mail, MailOpen } from 'lucide-react'
-import DropdownButton from 'antd/es/dropdown/dropdown-button'
 
-
-interface DataType {
-  key: React.Key;
-  name: string;
-  age: number;
-  address: string;
-}
 
 const NotificationStatusIcon = ({ status }: { status: boolean }) => {
   return (
@@ -37,7 +29,7 @@ const NotificationCount = ({ notifications }: { notifications: SelectNotificatio
   )
 }
 
-const DeleteNotificationsButtons = ({ selectedRows }: { selectedRows: DataType[] }) => {
+const DeleteNotificationsButtons = ({ selectedRows }: { selectedRows: SelectNotification[] }) => {
   return (
     <div className='flex items-center gap-2'>
       <Button size='small' type="primary" onClick={() => {}}>Mark all as read</Button>
@@ -56,16 +48,17 @@ const RowMenu = ({ notificationId }: { notificationId: number }) => {
       return await markNotificationAsRead(notificationId)
     },
     onSuccess: () => {
+      console.log("mark as read")
       queryClient.invalidateQueries({ queryKey: ['notifications'] })
     }
   })
   const markAsUnreadMutation = useMutation({
     mutationFn: async () => {
-      console.log("notificationId", notificationId)
       if (!notificationId) return
       return await markNotificationAsUnread(notificationId)
     },
     onSuccess: () => {
+      console.log("mark as unread")
       queryClient.invalidateQueries({ queryKey: ['notifications'] })
     }
   })
@@ -111,22 +104,21 @@ const RowMenu = ({ notificationId }: { notificationId: number }) => {
 
 
 const NotificationTable = ({ handleClickNotification }: { handleClickNotification: (notification: SelectNotification) => void }) => {
-  const [selectedRows, setSelectedRows] = useState<DataType[]>([]);
-  const rowSelection: TableProps<DataType>['rowSelection'] = {
-    onChange: (selectedRowKeys: React.Key[], selectedRows: DataType[]) => {
+  const [selectedRows, setSelectedRows] = useState<SelectNotification[]>([]);
+  const rowSelection: TableProps<SelectNotification>['rowSelection'] = {
+    onChange: (selectedRowKeys: React.Key[], selectedRows: SelectNotification[]) => {
       setSelectedRows(selectedRows);
     },
-    getCheckboxProps: (record: DataType) => ({
-      disabled: record.name === 'Disabled User', // Column configuration not to be checked
-      name: record.name,
+    getCheckboxProps: (record: SelectNotification) => ({
+      disabled: false,
+      name: record.title,
     }),
   };
   
   const { data: notifications, isLoading, error } = useQuery({
     queryKey: ['notifications'],
     queryFn: () => getUsersNotifications(),
-    refetchInterval: 5000,
-    staleTime: 5000
+    // refetchInterval: 5000,
   })
   const columns = [
     {

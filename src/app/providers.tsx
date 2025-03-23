@@ -10,14 +10,16 @@ const queryClient = new QueryClient();
 
 export function Providers({ children }: { children: ReactNode }) {
   return (
+    <QueryClientProvider client={queryClient}>
     <AntdCompatibilityProvider>
       <SessionProvider>
         <ThemeProvider>
-          <QueryClientProvider client={queryClient}>
+          
             {children}
-          </QueryClientProvider>
+          
         </ThemeProvider>
       </SessionProvider>
     </AntdCompatibilityProvider>
+    </QueryClientProvider>
   );
 }
