@@ -118,7 +118,8 @@ const NotificationTable = ({ handleClickNotification }: { handleClickNotificatio
   const { data: notifications, isLoading, error } = useQuery({
     queryKey: ['notifications'],
     queryFn: () => getUsersNotifications(),
-    // refetchInterval: 5000,
+    refetchInterval: 5000,
+    staleTime: 5000
   })
   const columns = [
     {
