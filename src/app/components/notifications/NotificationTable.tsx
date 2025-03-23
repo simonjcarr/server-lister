@@ -3,7 +3,7 @@ import { Button, Dropdown, MenuProps, Table, TableProps } from 'antd'
 import { MoreOutlined } from '@ant-design/icons'
 import React, { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { deleteNotifications, getUsersNotifications, markNotificationAsRead, markNotificationAsUnread } from '@/app/actions/notifications/crudActions'
+import { deleteNotifications, getUsersNotifications, markAllNotificationsAsRead, markAllNotificationsAsUnread, markNotificationAsRead, markNotificationAsUnread } from '@/app/actions/notifications/crudActions'
 import type { SelectNotification } from '@/db/schema'
 import DistanceToNow from '@/app/components/utils/DistanceToNow'
 import { Mail, MailOpen } from 'lucide-react'
@@ -29,12 +29,38 @@ const NotificationCount = ({ notifications }: { notifications: SelectNotificatio
   )
 }
 
-const DeleteNotificationsButtons = ({ selectedRows }: { selectedRows: SelectNotification[] }) => {
+const DeleteNotificationsButtons = ({ selectedRows, clearSelectedRows }: { selectedRows: SelectNotification[]; clearSelectedRows: () => void }) => {
+  const queryClient = useQueryClient()
+  const markAllAsReadMutation = useMutation({
+    mutationFn: async () => {
+      return await markAllNotificationsAsRead()
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notifications'] })
+    }
+  })
+  const markAllAsUnreadMutation = useMutation({
+    mutationFn: async () => {
+      return await markAllNotificationsAsUnread()
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notifications'] })
+    }
+  })
+  const deleteSelectedNotificationsMutation = useMutation({
+    mutationFn: async () => {
+      return await deleteNotifications(selectedRows.map((row) => row.id))
+    },
+    onSuccess: () => {
+      clearSelectedRows()
+      queryClient.invalidateQueries({ queryKey: ['notifications'] })
+    }
+  })
   return (
     <div className='flex items-center gap-2'>
-      <Button size='small' type="primary" onClick={() => {}}>Mark all as read</Button>
-      <Button size='small' type="primary" onClick={() => {}}>Mark all as unread</Button>
-      {selectedRows.length > 0 && <Button size='small' type="primary" danger onClick={() => { }}>Delete Selected</Button>}
+      <Button size='small' type="primary" onClick={() => markAllAsReadMutation.mutate()}>Mark all as read</Button>
+      <Button size='small' type="primary" onClick={() => markAllAsUnreadMutation.mutate()}>Mark all as unread</Button>
+      {selectedRows.length > 0 && <Button size='small' type="primary" danger onClick={() => deleteSelectedNotificationsMutation.mutate()}>Delete Selected</Button>}
     </div>
   )
 }
@@ -131,7 +157,7 @@ const NotificationTable = ({ handleClickNotification }: { handleClickNotificatio
           {error && <div>{error.message}</div>}
           {isLoading && <div>Loading...</div>}
           {notifications && notifications.length > 0 && (
-            <div onClick={() => handleClickNotification(record)}>
+            <div onClick={() => handleClickNotification(record)} className='flex items-center justify-between'>
               <div className='flex items-center gap-2'>
                 <NotificationStatusIcon status={record.read} />
                 <div className={record.read ? 'text-gray-500' : 'font-semibold'}>{record.title}</div>
@@ -150,11 +176,15 @@ const NotificationTable = ({ handleClickNotification }: { handleClickNotificatio
       )
     }
   ]
+
+  const clearSelectedRows = () => {
+    setSelectedRows([])
+  }
   return (
     <>
       <div className='flex flex-col gap-2'>
-        <DeleteNotificationsButtons selectedRows={selectedRows} />
-        <Table columns={columns} dataSource={notifications} loading={isLoading} className='cursor-pointer' rowKey='id' rowSelection={{ type: 'checkbox', ...rowSelection}} />
+        <DeleteNotificationsButtons selectedRows={selectedRows} clearSelectedRows={clearSelectedRows} />
+        <Table size='small' columns={columns} dataSource={notifications} loading={isLoading} className='cursor-pointer' rowKey='id' rowSelection={{ type: 'checkbox', ...rowSelection}} />
       </div>
     </>
   )
