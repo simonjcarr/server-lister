@@ -1,14 +1,11 @@
 import React from 'react';
-import { DownOutlined, UserOutlined, LogoutOutlined } from '@ant-design/icons';
+import { UserOutlined, LogoutOutlined } from '@ant-design/icons';
 import type { MenuProps } from 'antd';
-import { Button, Dropdown, message, Space, Tooltip } from 'antd';
+import { Dropdown, Space } from 'antd';
 import { useSession, signOut } from 'next-auth/react';
+import NotificationCountBadge from '../notifications/NotificationCountBadge';
 
 
-const handleButtonClick = (e: React.MouseEvent<HTMLButtonElement>) => {
-  message.info('Click on left button.');
-  console.log('click left button', e);
-};
 
 const handleMenuClick: MenuProps['onClick'] = (e) => {
   switch (e.key) {
@@ -39,9 +36,11 @@ function AuthMenu() {
   const { data: session } = useSession();
   return (
     <Space wrap>
-      <Dropdown.Button menu={menuProps} placement="bottom" icon={<UserOutlined />}>
-        {session?.user?.email}
-      </Dropdown.Button>
+      <NotificationCountBadge>
+        <Dropdown.Button menu={menuProps} placement="bottom" icon={<UserOutlined />}>
+          {session?.user?.email}
+        </Dropdown.Button>
+      </NotificationCountBadge>
     </Space>
   )
 }

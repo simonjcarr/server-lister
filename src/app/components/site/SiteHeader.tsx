@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react'
-import { SignIn, SignOut } from '@/app/components/auth/AuthButtons'
+import { SignIn } from '@/app/components/auth/AuthButtons'
 import { useTheme } from '@/app/theme/ThemeProvider';
 import { Button } from 'antd';
 import { Moon, Sun } from 'lucide-react';
