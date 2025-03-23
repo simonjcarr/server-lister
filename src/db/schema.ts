@@ -548,3 +548,26 @@ const updateNotificationSchema = createUpdateSchema(notifications)
 export type InsertNotification = z.infer<typeof insertNotificationSchema>
 export type SelectNotification = z.infer<typeof selectNotificationSchema>
 export type UpdateNotification = z.infer<typeof updateNotificationSchema>
+
+export const chatMessages = pgTable(
+  "chat_messages",
+  {
+    id: serial("id").primaryKey(),
+    userId: text("userId").notNull().references(() => users.id, { onDelete: "cascade" }),
+    message: text("message").notNull(),
+    chatRoomId: text("chatRoomId").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
+  },
+  (table) => [
+    index("chat_messages_user_id_idx").on(table.userId),
+    index("chat_messages_chatRoomId_idx").on(table.chatRoomId),
+  ]
+)
+
+const insertChatMessageSchema = createInsertSchema(chatMessages)
+const selectChatMessageSchema = createSelectSchema(chatMessages)
+const updateChatMessageSchema = createUpdateSchema(chatMessages)
+export type InsertChatMessage = z.infer<typeof insertChatMessageSchema>
+export type SelectChatMessage = z.infer<typeof selectChatMessageSchema>
+export type UpdateChatMessage = z.infer<typeof updateChatMessageSchema>
