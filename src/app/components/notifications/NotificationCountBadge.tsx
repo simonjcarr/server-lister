@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useState } from 'react'
 import { getUnreadNotificationCount } from '@/app/actions/notifications/crudActions'
 import { useQuery } from "@tanstack/react-query"
 import { useSession } from 'next-auth/react' 
+import ViewNotificationsModal from './ViewNotificationsModal'
 
 const NotificationCountBadge = ({ children }: { children: React.ReactNode }) => {
   const [api, contextHolder] = notification.useNotification();
@@ -14,7 +15,12 @@ const NotificationCountBadge = ({ children }: { children: React.ReactNode }) => 
   const openNotification = useCallback(() => {
     api.open({
       message: 'Notifications',
-      description: 'You have new notifications',
+      description: (
+        <>
+          <p>You have new notifications</p>
+          <ViewNotificationsModal><div className='mt-4 cursor-pointer text-blue-500'>View your notifications</div></ViewNotificationsModal>
+        </>
+      ),
       duration: 3.5,
       type: 'info',
       placement: 'bottomRight'
