@@ -1,0 +1,72 @@
+import { db } from "@/db"
+import { notifications } from "@/db/schema"
+import { eq, and, asc, gte, inArray } from "drizzle-orm"
+import { auth } from '@/auth'
+
+export async function getUsersNotifications() {
+    const session = await auth();
+    if (!session) {
+        return { success: false, error: 'Unauthorized' };
+    }
+    const userId = session.user.id;
+    if (!userId) {
+        return { success: false, error: 'Unauthorized' };
+    }
+
+    // Delete read notifications greater than 1 month old
+    await db.delete(notifications)
+        .where(and(eq(notifications.userId, userId), eq(notifications.read, true), gte(notifications.createdAt, new Date(Date.now() - 30 * 24 * 60 * 60 * 1000))));
+
+    // Delete all notifications greater than 3 months old
+    await db.delete(notifications)
+        .where(and(eq(notifications.userId, userId), gte(notifications.createdAt, new Date(Date.now() - 90 * 24 * 60 * 60 * 1000))));
+    const notificationsResult = await db
+        .select()
+        .from(notifications)
+        .where(and(eq(notifications.userId, userId), eq(notifications.read, false)))
+        .orderBy(asc(notifications.createdAt));
+    return notificationsResult;
+}
+
+export async function getNotificationById(notificationId: number) {
+    const session = await auth();
+    if (!session) {
+        return { success: false, error: 'Unauthorized' };
+    }
+    const userId = session.user.id;
+    if (!userId) {
+        return { success: false, error: 'Unauthorized' };
+    }
+    const notification = await db.select().from(notifications).where(and(eq(notifications.userId, userId), eq(notifications.id, notificationId)));
+    return notification;
+}
+
+export async function markNotificationAsRead(notificationId: number) {
+    const session = await auth();
+    if (!session) {
+        return { success: false, error: 'Unauthorized' };
+    }
+    const userId = session.user.id;
+    if (!userId) {
+        return { success: false, error: 'Unauthorized' };
+    }
+    const result = await db.update(notifications)
+        .set({ read: true })
+        .where(and(eq(notifications.userId, userId), eq(notifications.id, notificationId)));
+    return { success: true, result };
+}
+
+export async function deleteNotifications(notificationIds: number[]) {
+    const session = await auth()
+
+    if(!session) {
+        return { success: false, error: 'Unauthorized' };
+    }
+    const userId = session.user.id;
+    if(!userId) {
+        return { success: false, error: 'Unauthorized' };
+    }
+    const result = await db.delete(notifications)
+        .where(and(eq(notifications.userId, userId), inArray(notifications.id, notificationIds)));
+    return { success: true, result };
+}
