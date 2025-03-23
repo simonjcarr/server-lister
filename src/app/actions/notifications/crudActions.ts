@@ -1,7 +1,7 @@
 'use server'
 import { db } from "@/db"
 import { notifications } from "@/db/schema"
-import { eq, and, asc, inArray, count } from "drizzle-orm"
+import { eq, and, desc, inArray, count } from "drizzle-orm"
 import { auth } from '@/auth'
 
 export async function getUsersNotifications() {
@@ -25,7 +25,7 @@ export async function getUsersNotifications() {
         .select()
         .from(notifications)
         .where(eq(notifications.userId, userId))
-        .orderBy(asc(notifications.createdAt));
+        .orderBy(desc(notifications.createdAt));
     return notificationsResult;
 }
 
