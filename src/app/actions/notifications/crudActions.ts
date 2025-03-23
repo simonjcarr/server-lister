@@ -57,6 +57,21 @@ export async function markNotificationAsRead(notificationId: number) {
     return { success: true, result };
 }
 
+export async function markNotificationAsUnread(notificationId: number) {
+    const session = await auth();
+    if (!session) {
+        return { success: false, error: 'Unauthorized' };
+    }
+    const userId = session.user.id;
+    if (!userId) {
+        return { success: false, error: 'Unauthorized' };
+    }
+    const result = await db.update(notifications)
+        .set({ read: false })
+        .where(and(eq(notifications.userId, userId), eq(notifications.id, notificationId)));
+    return { success: true, result };
+}
+
 export async function deleteNotifications(notificationIds: number[]) {
     const session = await auth()
 
