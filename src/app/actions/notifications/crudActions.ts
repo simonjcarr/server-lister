@@ -1,6 +1,6 @@
 import { db } from "@/db"
 import { notifications } from "@/db/schema"
-import { eq, and, asc, gte, inArray } from "drizzle-orm"
+import { eq, and, asc, gte, inArray, count } from "drizzle-orm"
 import { auth } from '@/auth'
 
 export async function getUsersNotifications() {
@@ -69,4 +69,17 @@ export async function deleteNotifications(notificationIds: number[]) {
     const result = await db.delete(notifications)
         .where(and(eq(notifications.userId, userId), inArray(notifications.id, notificationIds)));
     return { success: true, result };
+}
+
+export async function getUnreadNotificationCount() {
+    const session = await auth();
+    if (!session) {
+        return { success: false, error: 'Unauthorized' };
+    }
+    const userId = session.user.id;
+    if (!userId) {
+        return { success: false, error: 'Unauthorized' };
+    }
+    const queryResult = await db.select({count: count()}).from(notifications).where(and(eq(notifications.userId, userId), eq(notifications.read, false)));
+    return queryResult[0].count;
 }
