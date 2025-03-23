@@ -7,24 +7,24 @@ import { auth } from '@/auth'
 export async function getUsersNotifications() {
     const session = await auth();
     if (!session) {
-        return { success: false, error: 'Unauthorized' };
+        throw new Error('unauthorized')
     }
     const userId = session.user.id;
     if (!userId) {
-        return { success: false, error: 'Unauthorized' };
+        throw new Error('unauthorized')
     }
 
     // Delete read notifications greater than 1 month old
-    await db.delete(notifications)
-        .where(and(eq(notifications.userId, userId), eq(notifications.read, true), gte(notifications.createdAt, new Date(Date.now() - 30 * 24 * 60 * 60 * 1000))));
+    // await db.delete(notifications)
+    //     .where(and(eq(notifications.userId, userId), eq(notifications.read, true), gte(notifications.createdAt, new Date(Date.now() - 30 * 24 * 60 * 60 * 1000))));
 
     // Delete all notifications greater than 3 months old
-    await db.delete(notifications)
-        .where(and(eq(notifications.userId, userId), gte(notifications.createdAt, new Date(Date.now() - 90 * 24 * 60 * 60 * 1000))));
+    // await db.delete(notifications)
+    //     .where(and(eq(notifications.userId, userId), gte(notifications.createdAt, new Date(Date.now() - 90 * 24 * 60 * 60 * 1000))));
     const notificationsResult = await db
         .select()
         .from(notifications)
-        .where(and(eq(notifications.userId, userId), eq(notifications.read, false)))
+        .where(eq(notifications.userId, userId))
         .orderBy(asc(notifications.createdAt));
     return notificationsResult;
 }
