@@ -1,5 +1,5 @@
-import { Form, Input, Button, Spin, Alert, Card, Select, Row, Col } from 'antd'
-import { useQuery } from "@tanstack/react-query"
+import { Form, Input, Button, Spin, Alert, Card, Select, Row, Col, message, Drawer } from 'antd'
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { getServerById, updateServer } from "@/app/actions/server/crudActions"
 import FormInputSelectLocation from '../location/FormInputSelectLocation'
 import { UpdateServer } from '@/db/schema'
@@ -8,8 +8,11 @@ import FormInputSelectBusiness from '../business/FormInputSelectBusiness'
 import FormInputSelectProject from '../project/FormInputSelectProject'
 import FormInputSelectOS from '../os/FormInputSelectOS'
 import { getIP } from '@/app/actions/utils/getIP';
+import { useState } from 'react'
 
-const FormEditServer = ({ serverId }: { serverId: number }) => {
+const FormEditServer = ({ children, serverId }: { children: React.ReactNode, serverId: number }) => {
+  const queryClient = useQueryClient()
+  const [open, setOpen] = useState(false);
   const router = useRouter()
   const [form] = Form.useForm();
   const { data: serverData, isLoading, error } = useQuery({
@@ -17,8 +20,20 @@ const FormEditServer = ({ serverId }: { serverId: number }) => {
     queryFn: () => getServerById(serverId),
   })
 
+  const mutation = useMutation({
+    mutationFn: (data: UpdateServer) => updateServer(data, serverId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["server", serverId] });
+      messageApi.success('Server updated successfully!');
+    },
+    onError: (error: unknown) => {
+      console.error('Error updating server:', error);
+      messageApi.error(error instanceof Error ? error.message : 'Failed to update server. Please try again.');
+    }
+  });
+  const [messageApi, contextHolder] = message.useMessage();
   const onFinish = async (values: UpdateServer) => {
-    await updateServer(values, serverId);
+    mutation.mutate(values);
     router.push(`/server/view/${serverId}`);
   };
 
@@ -40,8 +55,17 @@ const FormEditServer = ({ serverId }: { serverId: number }) => {
   };
 
   return (
+    <>
+      <span onClick={() => setOpen(true)}>{children}</span>
+      {contextHolder}
+      <Drawer 
+      title={`Edit Server: ${serverData?.hostname || 'Loading...'}`} 
+      width={600}
+      open={open} 
+      onClose={() => setOpen(false)} 
+      placement='right' 
+      destroyOnClose>
     <Card
-      title={`Server: ${serverData?.hostname || 'Loading...'}`}
       className="dark:bg-gray-800 dark:border-gray-700"
       styles={{
         header: { color: 'inherit' },
@@ -88,7 +112,7 @@ const FormEditServer = ({ serverId }: { serverId: number }) => {
               </Form.Item>
             </Col>
             <Col span={8}>
-              <Form.Item label="Disk Space" name="diskSpace">
+              <Form.Item label="Disk (GB)" name="diskSpace">
                 <Input type='number' className="dark:bg-gray-700 dark:text-white dark:border-gray-600" />
               </Form.Item>
             </Col>
@@ -140,6 +164,8 @@ const FormEditServer = ({ serverId }: { serverId: number }) => {
         </Form>
       )}
     </Card>
+    </Drawer>
+    </>
   )
 }
 

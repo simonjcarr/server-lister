@@ -6,11 +6,10 @@ import { useQuery } from '@tanstack/react-query'
 import { getServerById } from '@/app/actions/server/crudActions'
 
 import ClickToCopy from '@/app/components/utils/ClickToCopy'
-import { useRouter } from 'next/navigation'
 import ViewServerDetails from '@/app/components/server/view/ViewServerDetails'
+import FormEditServer from '@/app/components/server/FormEditServer'
 
 function Page() {
-  const router = useRouter()
   const params = useParams<{ serverId: string }>()
   const { data: serverData, isLoading, error } = useQuery({
     queryKey: ["server", params.serverId],
@@ -31,7 +30,9 @@ function Page() {
         )}
       </div>
     } extra={
-      <Button type="primary" onClick={() => { router.push(`/server/edit/${params.serverId}`) }}>Edit</Button>
+      <FormEditServer serverId={+params.serverId}>
+        <Button type="primary">Edit</Button>
+      </FormEditServer>
     }>
       <ViewServerDetails serverId={+params.serverId} />
     </Card>
