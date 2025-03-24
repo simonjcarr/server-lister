@@ -9,6 +9,7 @@ import { IoIosBusiness } from 'react-icons/io';
 import { AiOutlineMenuUnfold } from 'react-icons/ai';
 import { useSession } from 'next-auth/react';
 import FormAddServer from '../../server/FormAddServer';
+import FormAddLocation from '../../location/FormAddLocation';
 
 
 
@@ -90,11 +91,9 @@ const App: React.FC = () => {
       children: [
         {
           key: 'location-add',
-          label: 'Add Location',
+          label: <FormAddLocation><div>Add Location</div></FormAddLocation>,
           icon: <MdAddBox />,
-          onClick: () => {
-            router.push('/location/add');
-          },
+          
         },
         {
           key: 'location-list',
