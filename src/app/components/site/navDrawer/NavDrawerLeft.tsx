@@ -10,6 +10,7 @@ import { AiOutlineMenuUnfold } from 'react-icons/ai';
 import { useSession } from 'next-auth/react';
 import FormAddServer from '../../server/FormAddServer';
 import FormAddLocation from '../../location/FormAddLocation';
+import FormAddProject from '../../project/FormAddProject';
 
 
 
@@ -112,11 +113,8 @@ const App: React.FC = () => {
       children: [
         {
           key: 'project-add',
-          label: 'Add Project',
+          label: <FormAddProject><div>Add Project</div></FormAddProject>,
           icon: <MdAddBox />,
-          onClick: () => {
-            router.push('/project/add');
-          },
         },
         {
           key: 'project-list',

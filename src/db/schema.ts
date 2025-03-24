@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { sql } from "drizzle-orm";
-import { pgTable, text, integer, uniqueIndex, index, primaryKey, varchar, boolean, timestamp, serial, json, pgEnum, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, text, integer, uniqueIndex, index, primaryKey, boolean, timestamp, serial, json, pgEnum, jsonb } from "drizzle-orm/pg-core";
 import { createInsertSchema, createSelectSchema, createUpdateSchema } from "drizzle-zod";
 import type { AdapterAccountType } from "next-auth/adapters";
 import { z } from "zod";
@@ -99,6 +99,21 @@ export const projects = pgTable(
   },
   (table) => [uniqueIndex("unique_project_name_idx").on(table.name)]
 );
+
+export const insertProjectSchema = createInsertSchema(projects).extend({
+  description: z.string().nullable(),
+  business: z.number().nullable(),
+  code: z.string().nullable(),
+})
+export const selectProjectSchema = createSelectSchema(projects)
+export const updateProjectSchema = createUpdateSchema(projects).extend({
+  description: z.string().nullable(),
+  business: z.number().nullable(),
+  code: z.string().nullable(),
+})
+export type InsertProject = z.infer<typeof insertProjectSchema>
+export type SelectProject = z.infer<typeof selectProjectSchema>
+export type UpdateProject = z.infer<typeof updateProjectSchema>
 
 export const business = pgTable(
   "business",
