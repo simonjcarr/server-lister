@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation';
 import { IoIosBusiness } from 'react-icons/io';
 import { AiOutlineMenuUnfold } from 'react-icons/ai';
 import { useSession } from 'next-auth/react';
+import FormAddServer from '../../server/FormAddServer';
 
 
 
@@ -37,11 +38,8 @@ const App: React.FC = () => {
       children: [
         {
           key: 'server-add',
-          label: 'Add Server',
+          label: <FormAddServer><div>Add Server</div></FormAddServer>,
           icon: <MdAddBox />,
-          onClick: () => {
-            router.push('/server/add');
-          },
         },
         {
           key: 'server-list',
@@ -247,9 +245,7 @@ const App: React.FC = () => {
 
   return (
     <>
-      
       <Space>
-        
         <Button type="primary" size='small' onClick={showDrawer}>
           <AiOutlineMenuUnfold />
         </Button>
