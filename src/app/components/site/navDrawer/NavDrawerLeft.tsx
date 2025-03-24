@@ -11,6 +11,7 @@ import { useSession } from 'next-auth/react';
 import FormAddServer from '../../server/FormAddServer';
 import FormAddLocation from '../../location/FormAddLocation';
 import FormAddProject from '../../project/FormAddProject';
+import FormAddBusiness from '../../business/FormAddBusiness';
 
 
 
@@ -133,7 +134,7 @@ const App: React.FC = () => {
       children: [
         {
           key: 'business-add',
-          label: 'Add Business',
+          label: <FormAddBusiness><div>Add Business</div></FormAddBusiness>,
           icon: <MdAddBox />,
           onClick: () => {
             router.push('/business/add');
