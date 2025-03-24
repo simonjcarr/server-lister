@@ -1,0 +1,23 @@
+import { jobQueue } from "@/lib/queue";
+
+
+export async function POST(request: Request) {
+  const authToken = request.headers.get("Authorization");
+  if (authToken != process.env.SCAN_TOKEN) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401,
+    });
+  }
+  //Get JSON body
+  const jsonRequest = await request.json();
+  
+  //Add job to the queue
+  await jobQueue.add('serverScan', jsonRequest);
+  
+  // Debug
+  // console.log("JSON Body:", jsonRequest);
+  // console.log("Auth Token:", authToken);
+  
+  // Return success
+  return new Response(JSON.stringify({ message: 'Success' }), { status: 200 });
+}

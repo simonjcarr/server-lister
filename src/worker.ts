@@ -1,10 +1,11 @@
 import { Worker } from "bullmq"
 import IORedis from "ioredis"
 import dotenv from "dotenv"
+import { insertScan } from "@/app/actions/scan/crudActions"
 
 dotenv.config()
 
-console.log(process.env)
+
 
 const connection = new IORedis(process.env.REDIS_URL || 'redis://localhost:6379', {
   maxRetriesPerRequest: null
@@ -29,6 +30,9 @@ const postNotification = async (title: string, message: string, roleNames?: stri
 }
 
 
+
+
+
 const worker =new Worker(
   'jobQueue',
   async job => {
@@ -36,6 +40,10 @@ const worker =new Worker(
       case 'notification':
         console.log('Notification job')
         await postNotification(job.data.title, job.data.message, job.data.roleNames, job.data.userIds)
+        break
+      case 'serverScan':
+        console.log('Server scan job')
+        await insertScan(job.data)
         break
       case 'email':
         console.log('Email job')
