@@ -8,7 +8,6 @@ import type { InsertBusiness } from '@/db/schema'
 
 function FormAddBusiness({ children }: { children: React.ReactNode }) {
   const [form] = Form.useForm();
-  const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
   const [messageApi, contextHolder] = message.useMessage();
 
@@ -25,7 +24,6 @@ function FormAddBusiness({ children }: { children: React.ReactNode }) {
     }
   });
   const onFinish = async (values: { name: string }) => {
-    setLoading(true);
     mutation.mutate({
       name: values.name,
       createdAt: new Date(),
