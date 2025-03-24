@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { sql } from "drizzle-orm";
-import { pgTable, text, integer, uniqueIndex, index, primaryKey, boolean, timestamp, serial, json, pgEnum, jsonb } from "drizzle-orm/pg-core";
+import { decimal } from "drizzle-orm/gel-core";
+import { pgTable, text, integer, uniqueIndex, index, primaryKey, boolean, timestamp, serial, json, pgEnum, jsonb, doublePrecision } from "drizzle-orm/pg-core";
 import { createInsertSchema, createSelectSchema, createUpdateSchema } from "drizzle-zod";
 import type { AdapterAccountType } from "next-auth/adapters";
 import { z } from "zod";
