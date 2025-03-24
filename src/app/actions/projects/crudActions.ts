@@ -4,6 +4,7 @@ import { db } from '@/db';
 import { projects } from '@/db/schema';
 import { revalidatePath } from 'next/cache';
 import { eq } from 'drizzle-orm';
+import type { InsertProject } from '@/db/schema';
 
 export interface ProjectFormData {
   name: string;
@@ -15,7 +16,7 @@ export interface ProjectFormData {
 /**
  * Creates a new project with the provided data
  */
-export async function createProject(formData: ProjectFormData) {
+export async function createProject(formData: InsertProject) {
   try {
     const result = await db.insert(projects).values({
       name: formData.name,
@@ -28,11 +29,11 @@ export async function createProject(formData: ProjectFormData) {
     
     revalidatePath('/project/list');
     return { success: true, data: result[0] };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error creating project:', error);
     return { 
       success: false, 
-      error: error.message || 'Failed to create project' 
+      error: error instanceof Error ? error.message : 'Failed to create project' 
     };
   }
 }
@@ -44,9 +45,9 @@ export async function getProjects() {
   try {
     const allProjects = await db.select().from(projects).orderBy(projects.name);
     return allProjects
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error fetching projects:', error);
-    throw new Error(error.message || 'Failed to fetch projects');
+    throw new Error(error instanceof Error ? error.message : 'Failed to fetch projects');
   }
 }
 
@@ -60,9 +61,9 @@ export async function getProjectById(id: number) {
       throw new Error('Project not found');
     }
     return projectData[0]
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error(`Error fetching project with ID ${id}:`, error);
-    throw new Error(error.message || 'Failed to fetch project');
+    throw new Error(error instanceof Error ? error.message : 'Failed to fetch project');
   }
 }
 
@@ -85,11 +86,11 @@ export async function updateProject(id: number, formData: Partial<ProjectFormDat
     
     revalidatePath('/project/list');
     return { success: true, data: result[0] };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error(`Error updating project with ID ${id}:`, error);
     return { 
       success: false, 
-      error: error.message || 'Failed to update project' 
+      error: error instanceof Error ? error.message : 'Failed to update project' 
     };
   }
 }
@@ -109,11 +110,11 @@ export async function deleteProject(id: number) {
     
     revalidatePath('/project/list');
     return { success: true, data: result[0] };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error(`Error deleting project with ID ${id}:`, error);
     return { 
       success: false, 
-      error: error.message || 'Failed to delete project' 
+      error: error instanceof Error ? error.message : 'Failed to delete project' 
     };
   }
 }

@@ -1,79 +1,54 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import { Button, Form, Input, Select, notification, Card } from 'antd';
+import { Button, Form, Input, Select, notification, Card, Drawer } from 'antd';
 import { useRouter } from 'next/navigation';
-import { createProject, ProjectFormData } from '@/app/actions/projects/crudActions';
+import { createProject } from '@/app/actions/projects/crudActions';
 import { getBusinesses } from '@/app/actions/business/crudActions';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { InsertProject } from '@/db/schema';
+import { useState } from 'react';
 
-interface Business {
-  id: number;
-  name: string;
-  createdAt: string;
-  updatedAt: string;
-}
 
-function FormAddProject() {
+function FormAddProject({ children }: { children: React.ReactNode }) {
+  const [open, setOpen] = useState(false);
   const [form] = Form.useForm();
-  const [businesses, setBusinesses] = useState<Business[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [loadingBusinesses, setLoadingBusinesses] = useState(true);
   const router = useRouter();
+  const queryClient = useQueryClient();
 
-  useEffect(() => {
-    // Fetch businesses for the dropdown
-    const fetchBusinesses = async () => {
-      try {
-        setLoadingBusinesses(true);
-        const result = await getBusinesses();
-        if (result.success && result.data) {
-          setBusinesses(result.data as Business[]);
-        } else {
-          throw new Error(result.error || 'Failed to load businesses');
-        }
-      } catch (error: any) {
-        console.error('Error fetching businesses:', error);
-        notification.error({
-          message: 'Error',
-          description: error.message || 'Failed to load businesses. Please try again later.',
-        });
-      } finally {
-        setLoadingBusinesses(false);
-      }
-    };
+  const { data: businesses, isLoading: isLoadingBusinesses } = useQuery({
+    queryKey: ['businesses'],
+    queryFn: () => getBusinesses(),
+  });
 
-    fetchBusinesses();
-  }, []);
-
-  const onFinish = async (values: ProjectFormData) => {
-    setLoading(true);
-    try {
-      const result = await createProject(values);
-      
-      if (result.success) {
-        notification.success({
-          message: 'Success',
-          description: 'Project created successfully!',
-        });
-        form.resetFields();
-        router.push('/project/list');
-      } else {
-        throw new Error(result.error || 'Failed to create project');
-      }
-    } catch (error: any) {
+  const mutation = useMutation({
+    mutationFn: (values: InsertProject) => createProject(values),
+    onSuccess: () => {
+      notification.success({
+        message: 'Success',
+        description: 'Project created successfully!',
+      });
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
+      form.resetFields();
+      router.push('/project/list');
+    },
+    onError: (error: unknown) => {
       console.error('Error creating project:', error);
       notification.error({
         message: 'Error',
-        description: error.message || 'Failed to create project. Please try again.',
+        description: error instanceof Error ? error.message : 'Failed to create project. Please try again.',
       });
-    } finally {
-      setLoading(false);
-    }
+    },
+  })
+
+  const onFinish = async (values: InsertProject) => {
+    mutation.mutate(values)
   };
 
   return (
+    <>
+    <span onClick={() => setOpen(true)}>{children}</span>
+    <Drawer title="Add New Project" open={open} onClose={() => setOpen(false)} placement="right" >
     <Card
-      title="Add New Project"
       className="dark:bg-gray-800 dark:border-gray-700"
       styles={{
         header: { color: 'inherit' },
@@ -115,12 +90,12 @@ function FormAddProject() {
         >
           <Select
             placeholder="Select a business"
-            loading={loadingBusinesses}
+            loading={isLoadingBusinesses}
             allowClear
             className="dark:bg-gray-700 dark:text-white dark:border-gray-600"
             dropdownStyle={{ backgroundColor: 'var(--bg-dropdown)', color: 'var(--text-dropdown)' }}
           >
-            {businesses.map((business) => (
+            {businesses?.map((business) => (
               <Select.Option key={business.id} value={business.id}>
                 {business.name}
               </Select.Option>
@@ -137,12 +112,14 @@ function FormAddProject() {
         </Form.Item>
 
         <Form.Item>
-          <Button type="primary" htmlType="submit" loading={loading}>
+          <Button type="primary" htmlType="submit" loading={mutation.isPending}>
             Create Project
           </Button>
         </Form.Item>
       </Form>
     </Card>
+    </Drawer>
+    </>
   );
 }
 
