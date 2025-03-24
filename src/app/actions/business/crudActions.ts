@@ -16,8 +16,8 @@ export async function getBusinesses() {
   try {
     const allBusinesses = await db.select().from(businessTable).orderBy(businessTable.name);
     return allBusinesses
-  } catch (error: any) {
-    console.error('Error fetching businesses:', error);
+  } catch (error: unknown) {
+    console.error('Error fetching businesses:', error as Error);
     throw new Error('Failed to fetch businesses');
   }
 }
@@ -32,8 +32,8 @@ export async function getBusinessById(id: number) {
       throw new Error('Business not found');
     }
     return businessData[0];
-  } catch (error: any) {
-    console.error(`Error fetching business with ID ${id}:`, error);
+  } catch (error: unknown) {
+    console.error(`Error fetching business with ID ${id}:`, error as Error);
     throw new Error('Failed to fetch business');
   }
 }
@@ -52,13 +52,10 @@ export async function createBusiness(formData: BusinessFormData) {
     }).returning();
     
     revalidatePath('/business/list');
-    return { success: true, data: result[0] };
-  } catch (error: any) {
-    console.error('Error creating business:', error);
-    return { 
-      success: false, 
-      error: error.message || 'Failed to create business' 
-    };
+    return result[0];
+  } catch (error: unknown) {
+    console.error('Error creating business:', error as Error);
+    throw new Error('Failed to create business');
   }
 }
 
@@ -83,11 +80,11 @@ export async function updateBusiness(id: number, formData: Partial<BusinessFormD
     
     revalidatePath('/business/list');
     return { success: true, data: result[0] };
-  } catch (error: any) {
-    console.error(`Error updating business with ID ${id}:`, error);
+  } catch (error: unknown) {
+    console.error(`Error updating business with ID ${id}:`, error as Error);
     return { 
       success: false, 
-      error: error.message || 'Failed to update business' 
+      error: (error as Error).message || 'Failed to update business' 
     };
   }
 }
@@ -107,11 +104,11 @@ export async function deleteBusiness(id: number) {
     
     revalidatePath('/business/list');
     return { success: true, data: result[0] };
-  } catch (error: any) {
-    console.error(`Error deleting business with ID ${id}:`, error);
+  } catch (error: unknown) {
+    console.error(`Error deleting business with ID ${id}:`, error as Error);
     return { 
       success: false, 
-      error: error.message || 'Failed to delete business' 
+      error: (error as Error).message || 'Failed to delete business' 
     };
   }
 }
