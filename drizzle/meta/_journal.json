@@ -85,6 +85,13 @@
       "when": 1742764052267,
       "tag": "0011_warm_hercules",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1742841851811,
+      "tag": "0012_goofy_wong",
+      "breakpoints": true
     }
   ]
 }

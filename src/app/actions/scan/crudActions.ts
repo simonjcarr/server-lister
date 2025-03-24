@@ -1,0 +1,57 @@
+import { db } from "@/db";
+import type { ScanResults } from "@/db/schema";
+import { servers, serverScans } from "@/db/schema";
+import { eq } from "drizzle-orm";
+
+export async function insertScan(data: ScanResults) {
+  data.host.memoryGB = Number(data.host.memoryGB)
+  data.host.cores = Number(data.host.cores)
+  try {
+    let server = await db.select().from(servers).where(eq(servers.hostname, data.host.hostname))
+    if (!server || server.length === 0) {
+      console.log("server not found: creating new server", typeof data.host.memoryGB, +data.host.memoryGB, data.host.cores)
+      server = await db.insert(servers).values({
+        hostname: data.host.hostname,
+        description: 'Auto created by Server Scan',
+        ram: +data.host.memoryGB,
+        cores: +data.host.cores,
+        ipv4: data.host.ipv4,
+        ipv6: data.host.ipv6,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }).returning()
+    } else {
+      await updateServerWithScan(data)
+    }
+    await db.delete(serverScans).where(eq(serverScans.serverId, server[0].id))
+    return await db.insert(serverScans).values({
+      scanResults: data,
+      serverId: server[0].id,
+      scanDate: new Date(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    })
+  } catch (error) {
+    console.error(error)
+    throw new Error("Failed to create scan");
+  }
+}
+
+export async function updateServerWithScan(data: ScanResults) {
+  try {
+    const server = await db.select().from(servers).where(eq(servers.hostname, data.host.hostname))
+    if (!server || server.length === 0) {
+      throw new Error("Server not found");
+    }
+    return await db.update(servers).set({
+      ipv4: data.host.ipv4,
+      ipv6: data.host.ipv6,
+      cores: Number(data.host.cores),
+      ram: Number(data.host.memoryGB),
+      updatedAt: new Date(),
+    }).where(eq(servers.id, server[0].id))
+  } catch (error) {
+    console.error(error)
+    throw new Error("Failed to update server");
+  }
+}

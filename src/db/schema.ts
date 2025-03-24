@@ -168,17 +168,15 @@ export const servers = pgTable(
   "servers",
   {
     id: serial("id").primaryKey(),
-    projectId: integer("projectId")
-      .notNull()
-      .references(() => projects.id, { onDelete: "set null" }),
+    projectId: integer("projectId").references(() => projects.id, { onDelete: "set null" }),
     hostname: text("hostname").notNull(),
     ipv4: text("ipv4"),
     ipv6: text("ipv6"),
     description: text("description"),
     docLink: text("docLink"),
     business: integer("business"),
-    itar: boolean("itar").notNull(),
-    secureServer: boolean("secureServer").notNull(),
+    itar: boolean("itar").notNull().default(false),
+    secureServer: boolean("secureServer").notNull().default(false),
     osId: integer("osId").references(() => os.id, { onDelete: "set null" }),
     locationId: integer("locationId").references(() => locations.id, {
       onDelete: "set null",
@@ -212,6 +210,76 @@ const updateServerSchema = createUpdateSchema(servers)
 export type InsertServer = z.infer<typeof insertServerSchema>
 export type SelectServer = z.infer<typeof selectServerSchema>
 export type UpdateServer = z.infer<typeof updateServerSchema>
+
+
+
+
+export const serverScans = pgTable("server_scans", {
+  id: serial("id").primaryKey(),
+  serverId: integer("serverId").notNull().references(() => servers.id, { onDelete: "cascade" }),
+  scanDate: timestamp("scanDate", { withTimezone: true }).notNull(),
+  scanResults: jsonb("scanResults").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
+}, (table) => [
+  index("server_id_idx").on(table.serverId),
+])
+
+
+const scanResultsSchema = z
+  .object({
+    host: z.object({
+      hostname: z.string(),
+      ipv4: z.string(),
+      ipv6: z.string(),
+      macAddress: z.string(),
+      cores: z.number(),
+      memoryGB: z.number(),
+      storage: z.array(
+        z.object({
+          diskMountPath: z.string(),
+          totalGB: z.number(),
+          usedGB: z.number(),
+        })
+      ),
+    }),
+    services: z.array(
+      z.object({
+        name: z.string(),
+        running: z.boolean(),
+      })
+    ),
+    software: z.array(
+      z.object({
+        name: z.string(),
+        version: z.string(),
+        install_location: z.string(),
+      })
+    ),
+    os: z.object({
+      name: z.string(),
+      version: z.string(),
+      patch_version: z.string(),
+    }),
+  })
+  .strict();
+
+
+
+const insertServerScanSchema = createInsertSchema(serverScans).extend({
+  scanResults: scanResultsSchema,
+});
+const selectServerScanSchema = createSelectSchema(serverScans).extend({
+  scanResults: scanResultsSchema,
+});
+const updateServerScanSchema = createUpdateSchema(serverScans).extend({
+  scanResults: scanResultsSchema,
+});
+
+export type InsertServerScan = z.infer<typeof insertServerScanSchema>
+export type SelectServerScan = z.infer<typeof selectServerScanSchema>
+export type UpdateServerScan = z.infer<typeof updateServerScanSchema>
+export type ScanResults = z.infer<typeof scanResultsSchema>;
 
 export const notes = pgTable("notes", {
   id: serial("id").primaryKey(),
