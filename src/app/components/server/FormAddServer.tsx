@@ -1,7 +1,8 @@
 'use client';
 
-import { Card, Form, Input, Button, Select, Switch, Row, Col, App } from 'antd'
+import { Card, Form, Input, Button, Select, Switch, Row, Col, Drawer, message } from 'antd'
 import React, { useEffect, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { getOS } from '@/app/actions/os/crudActions';
 import { InsertLocation, InsertOS, InsertServer } from '@/db/schema';
 const { TextArea } = Input;
@@ -28,15 +29,18 @@ interface Project {
   updatedAt: string;
 }
 
-function FormAddServer() {
+function FormAddServer({ children }: { children: React.ReactNode }) {
+  const [messageApi, contextHolder] = message.useMessage();
+  const [open, setOpen] = useState(false);
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
-  const { notification } = App.useApp();
   const [osList, setOsList] = useState<InsertOS[]>([]);
   const [locationList, setLocationList] = useState<InsertLocation[]>([]);
   const [businessList, setBusinessList] = useState<Business[]>([]);
   const [projectList, setProjectList] = useState<Project[]>([]);
   const [formSubmitStatus, setFormSubmitStatus] = useState<{ status: 'idle' | 'success' | 'error', message?: string }>({ status: 'idle' });
+
+  const queryClient = useQueryClient()
 
   useEffect(() => {
     const fetchOS = async () => {
@@ -84,28 +88,21 @@ function FormAddServer() {
   // Handle notifications based on form submission status
   useEffect(() => {
     if (formSubmitStatus.status === 'success') {
-      notification.success({
-        message: "Created",
-        description: "Server has been created successfully",
-        duration: 3,
-      });
+      messageApi.success("Server Created")
     } else if (formSubmitStatus.status === 'error') {
-      notification.error({
-        message: "Failed",
-        description: formSubmitStatus.message || "Failed to create server",
-        duration: 3,
-      });
+      message.error("Error creating server")
     }
-  }, [formSubmitStatus, notification]);
+  }, [formSubmitStatus, messageApi]);
 
   const onFinish = async (values: InsertServer) => {
     try {
       setLoading(true);
       // Convert boolean values to 0 or 1
-      const formattedValues = {...values};
+      const formattedValues = { ...values };
 
       // Submit to server action
       const result = await addServer(formattedValues);
+      queryClient.invalidateQueries({ queryKey: ["server"] })
 
       if (result.success) {
         setFormSubmitStatus({ status: 'success' });
@@ -138,257 +135,262 @@ function FormAddServer() {
     }
   };
   return (
-    <Card
-      title="Add Server"
-      className="dark:bg-gray-800 dark:border-gray-700"
-      styles={{
-        header: { color: 'inherit' },
-        body: { color: 'inherit' }
-      }}
-    >
-      <Form
-        form={form}
-        onFinish={onFinish}
-        layout="vertical"
-        initialValues={{
-          hostname: "",
-          ipv4: "",
-          ipv6: "",
-          locationId: null,
-          osId: null,
-          business: null,
-          projectId: null,
-          description: "",
-          itar: false,
-          secureServer: false,
-        }}
-        className="dark:text-white"
-      >
-
-
-        <Form.Item
-          name="hostname"
-          label="Hostname"
-          rules={[
-            {
-              required: true,
-              message: "Please enter a hostname",
-            },
-          ]}
-          className="dark:text-white"
+    <>
+      {contextHolder}
+      <span onClick={() => setOpen(true)}>{children}</span>
+      <Drawer title="Add Server" placement="right" width={400} open={open} onClose={() => setOpen(false)}>
+        <Card
+          className="dark:bg-gray-800 dark:border-gray-700"
+          styles={{
+            header: { color: 'inherit' },
+            body: { color: 'inherit' }
+          }}
         >
-          <Input
-            onChange={(e) => handleHostnameChange(e.target.value)}
-            className="dark:bg-gray-700 dark:text-white dark:border-gray-600"
-          />
-        </Form.Item>
-        <Row gutter={[16, 16]}>
-          <Col span={12}>
+          <Form
+            form={form}
+            onFinish={onFinish}
+            layout="vertical"
+            initialValues={{
+              hostname: "",
+              ipv4: "",
+              ipv6: "",
+              locationId: null,
+              osId: null,
+              business: null,
+              projectId: null,
+              description: "",
+              itar: false,
+              secureServer: false,
+            }}
+            className="dark:text-white"
+          >
+
+
             <Form.Item
-              name="ipv4"
-              label="IPv4"
+              name="hostname"
+              label="Hostname"
               rules={[
                 {
-                  required: false,
-                  message: "Please enter an IPv4 address",
+                  required: true,
+                  message: "Please enter a hostname",
+                },
+              ]}
+              className="dark:text-white"
+            >
+              <Input
+                onChange={(e) => handleHostnameChange(e.target.value)}
+                className="dark:bg-gray-700 dark:text-white dark:border-gray-600"
+              />
+            </Form.Item>
+            <Row gutter={[16, 16]}>
+              <Col span={12}>
+                <Form.Item
+                  name="ipv4"
+                  label="IPv4"
+                  rules={[
+                    {
+                      required: false,
+                      message: "Please enter an IPv4 address",
+                    },
+                  ]}
+                  className="dark:text-white"
+                >
+                  <Input className="dark:bg-gray-700 dark:text-white dark:border-gray-600" />
+                </Form.Item>
+              </Col>
+
+              <Col span={12}>
+                <Form.Item
+                  name="ipv6"
+                  label="IPv6"
+                  rules={[
+                    {
+                      required: false,
+                      message: "Please enter an IPv6 address",
+                    },
+                  ]}
+                  className="dark:text-white"
+                >
+                  <Input className="dark:bg-gray-700 dark:text-white dark:border-gray-600" />
+                </Form.Item>
+              </Col>
+            </Row>
+            <Row gutter={[16, 16]}>
+              <Col span={12}>
+                <Form.Item
+                  name="osId"
+                  label="OS"
+                  rules={[
+                    {
+                      required: true,
+                      message: "Please select an OS",
+                    },
+                  ]}
+                  className="dark:text-white"
+                >
+                  <Select
+                    placeholder="Select an OS"
+                    style={{ width: "100%" }}
+                    className="dark:bg-gray-700 dark:text-white dark:border-gray-600"
+                    dropdownStyle={{ backgroundColor: 'var(--bg-dropdown)', color: 'var(--text-dropdown)' }}
+                  >
+                    {osList.map(os => (
+                      <Select.Option key={os.id} value={os.id}>
+                        {os.name}
+                      </Select.Option>
+                    ))}
+                  </Select>
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item
+                  name="locationId"
+                  label="Location"
+                  rules={[
+                    {
+                      required: true,
+                      message: "Please select a location",
+                    },
+                  ]}
+                  className="dark:text-white"
+                >
+                  <Select
+                    placeholder="Select a location"
+                    style={{ width: "100%" }}
+                    className="dark:bg-gray-700 dark:text-white dark:border-gray-600"
+                    dropdownStyle={{ backgroundColor: 'var(--bg-dropdown)', color: 'var(--text-dropdown)' }}
+                  >
+                    {locationList.map(location => (
+                      <Select.Option key={location.id} value={location.id}>
+                        {location.name}
+                      </Select.Option>
+                    ))}
+                  </Select>
+                </Form.Item>
+              </Col>
+            </Row>
+
+            <Row gutter={[16, 16]}>
+              <Col span={12}>
+                <Form.Item
+                  name="business"
+                  label="Business"
+                  rules={[
+                    {
+                      required: true,
+                      message: "Please select a business",
+                    },
+                  ]}
+                  className="dark:text-white"
+                >
+                  <Select
+                    placeholder="Select a business"
+                    style={{ width: "100%" }}
+                    className="dark:bg-gray-700 dark:text-white dark:border-gray-600"
+                    dropdownStyle={{ backgroundColor: 'var(--bg-dropdown)', color: 'var(--text-dropdown)' }}
+                    allowClear
+                  >
+                    {businessList.map(business => (
+                      <Select.Option key={business.id} value={business.id}>
+                        {business.name}
+                      </Select.Option>
+                    ))}
+                  </Select>
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item
+                  name="projectId"
+                  label="Project"
+                  rules={[
+                    {
+                      required: true,
+                      message: "Please select a project",
+                    },
+                  ]}
+                  className="dark:text-white"
+                >
+                  <Select
+                    placeholder="Select a project"
+                    style={{ width: "100%" }}
+                    className="dark:bg-gray-700 dark:text-white dark:border-gray-600"
+                    dropdownStyle={{ backgroundColor: 'var(--bg-dropdown)', color: 'var(--text-dropdown)' }}
+                  >
+                    {projectList.map(project => (
+                      <Select.Option key={project.id} value={project.id}>
+                        {project.name}
+                      </Select.Option>
+                    ))}
+                  </Select>
+                </Form.Item>
+              </Col>
+            </Row>
+            <Form.Item
+              name="docLink"
+              label="Documentation Link"
+              rules={[
+                {
+                  max: 500,
+                  message: "Documentation link must not exceed 500 characters",
                 },
               ]}
               className="dark:text-white"
             >
               <Input className="dark:bg-gray-700 dark:text-white dark:border-gray-600" />
             </Form.Item>
-          </Col>
+            <Form.Item
+              name="description"
+              label="Description"
+              rules={[
+                {
+                  max: 500,
+                  message: "Description must not exceed 500 characters",
+                },
+              ]}
+              className="dark:text-white"
+            >
+              <TextArea className="dark:bg-gray-700 dark:text-white dark:border-gray-600" />
+            </Form.Item>
 
-          <Col span={12}>
-            <Form.Item
-              name="ipv6"
-              label="IPv6"
-              rules={[
-                {
-                  required: false,
-                  message: "Please enter an IPv6 address",
-                },
-              ]}
-              className="dark:text-white"
-            >
-              <Input className="dark:bg-gray-700 dark:text-white dark:border-gray-600" />
+            <Row gutter={[16, 16]}>
+              <Col>
+                <Form.Item
+                  name="itar"
+                  label="ITAR"
+                  rules={[
+                    {
+                      required: true,
+                      message: "Please select an ITAR status",
+                    },
+                  ]}
+                  className="dark:text-white"
+                >
+                  <Switch />
+                </Form.Item>
+              </Col>
+              <Col>
+                <Form.Item
+                  name="secureServer"
+                  label="Secure Server"
+                  rules={[
+                    {
+                      required: true,
+                      message: "Please select a secure server status",
+                    },
+                  ]}
+                  className="dark:text-white"
+                >
+                  <Switch />
+                </Form.Item>
+              </Col>
+            </Row>
+            <Form.Item>
+              <Button type="primary" htmlType="submit" loading={loading}>Add Server</Button>
             </Form.Item>
-          </Col>
-        </Row>
-        <Row gutter={[16, 16]}>
-          <Col span={12}>
-            <Form.Item
-              name="osId"
-              label="OS"
-              rules={[
-                {
-                  required: true,
-                  message: "Please select an OS",
-                },
-              ]}
-              className="dark:text-white"
-            >
-              <Select
-                placeholder="Select an OS"
-                style={{ width: "100%" }}
-                className="dark:bg-gray-700 dark:text-white dark:border-gray-600"
-                dropdownStyle={{ backgroundColor: 'var(--bg-dropdown)', color: 'var(--text-dropdown)' }}
-              >
-                {osList.map(os => (
-                  <Select.Option key={os.id} value={os.id}>
-                    {os.name}
-                  </Select.Option>
-                ))}
-              </Select>
-            </Form.Item>
-          </Col>
-          <Col span={12}>
-            <Form.Item
-              name="locationId"
-              label="Location"
-              rules={[
-                {
-                  required: true,
-                  message: "Please select a location",
-                },
-              ]}
-              className="dark:text-white"
-            >
-              <Select
-                placeholder="Select a location"
-                style={{ width: "100%" }}
-                className="dark:bg-gray-700 dark:text-white dark:border-gray-600"
-                dropdownStyle={{ backgroundColor: 'var(--bg-dropdown)', color: 'var(--text-dropdown)' }}
-              >
-                {locationList.map(location => (
-                  <Select.Option key={location.id} value={location.id}>
-                    {location.name}
-                  </Select.Option>
-                ))}
-              </Select>
-            </Form.Item>
-          </Col>
-        </Row>
-
-        <Row gutter={[16, 16]}>
-          <Col span={12}>
-            <Form.Item
-              name="business"
-              label="Business"
-              rules={[
-                {
-                  required: true,
-                  message: "Please select a business",
-                },
-              ]}
-              className="dark:text-white"
-            >
-              <Select
-                placeholder="Select a business"
-                style={{ width: "100%" }}
-                className="dark:bg-gray-700 dark:text-white dark:border-gray-600"
-                dropdownStyle={{ backgroundColor: 'var(--bg-dropdown)', color: 'var(--text-dropdown)' }}
-                allowClear
-              >
-                {businessList.map(business => (
-                  <Select.Option key={business.id} value={business.id}>
-                    {business.name}
-                  </Select.Option>
-                ))}
-              </Select>
-            </Form.Item>
-          </Col>
-          <Col span={12}>
-            <Form.Item
-              name="projectId"
-              label="Project"
-              rules={[
-                {
-                  required: true,
-                  message: "Please select a project",
-                },
-              ]}
-              className="dark:text-white"
-            >
-              <Select
-                placeholder="Select a project"
-                style={{ width: "100%" }}
-                className="dark:bg-gray-700 dark:text-white dark:border-gray-600"
-                dropdownStyle={{ backgroundColor: 'var(--bg-dropdown)', color: 'var(--text-dropdown)' }}
-              >
-                {projectList.map(project => (
-                  <Select.Option key={project.id} value={project.id}>
-                    {project.name}
-                  </Select.Option>
-                ))}
-              </Select>
-            </Form.Item>
-          </Col>
-        </Row>
-        <Form.Item
-          name="docLink"
-          label="Documentation Link"
-          rules={[
-            {
-              max: 500,
-              message: "Documentation link must not exceed 500 characters",
-            },
-          ]}
-          className="dark:text-white"
-        >
-          <Input className="dark:bg-gray-700 dark:text-white dark:border-gray-600" />
-        </Form.Item>
-        <Form.Item
-          name="description"
-          label="Description"
-          rules={[
-            {
-              max: 500,
-              message: "Description must not exceed 500 characters",
-            },
-          ]}
-          className="dark:text-white"
-        >
-          <TextArea className="dark:bg-gray-700 dark:text-white dark:border-gray-600" />
-        </Form.Item>
-
-        <Row gutter={[16, 16]}>
-          <Col>
-            <Form.Item
-              name="itar"
-              label="ITAR"
-              rules={[
-                {
-                  required: true,
-                  message: "Please select an ITAR status",
-                },
-              ]}
-              className="dark:text-white"
-            >
-              <Switch />
-            </Form.Item>
-          </Col>
-          <Col>
-            <Form.Item
-              name="secureServer"
-              label="Secure Server"
-              rules={[
-                {
-                  required: true,
-                  message: "Please select a secure server status",
-                },
-              ]}
-              className="dark:text-white"
-            >
-              <Switch />
-            </Form.Item>
-          </Col>
-        </Row>
-        <Form.Item>
-          <Button type="primary" htmlType="submit" loading={loading}>Add Server</Button>
-        </Form.Item>
-      </Form>
-    </Card>
+          </Form>
+        </Card>
+      </Drawer>
+    </>
   )
 }
 
