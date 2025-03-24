@@ -126,6 +126,13 @@ export const business = pgTable(
   (table) => [uniqueIndex("unique_business_name_idx").on(table.name)]
 );
 
+export const insertBusinessSchema = createInsertSchema(business)
+export const selectBusinessSchema = createSelectSchema(business)
+export const updateBusinessSchema = createUpdateSchema(business)
+export type InsertBusiness = z.infer<typeof insertBusinessSchema>
+export type SelectBusiness = z.infer<typeof selectBusinessSchema>
+export type UpdateBusiness = z.infer<typeof updateBusinessSchema>
+
 export const patchingPolicyResponsibility = pgTable(
   "patching_policy_responsibility",
   {
