@@ -1,10 +1,10 @@
 'use client';
 
 import { Card, Form, Input, Button, Select, Switch, Row, Col, Drawer, message } from 'antd'
-import React, { useEffect, useState } from 'react'
-import { useQueryClient } from '@tanstack/react-query'
+import React, { useState } from 'react'
+import { useQueryClient, useQuery, useMutation } from '@tanstack/react-query'
 import { getOS } from '@/app/actions/os/crudActions';
-import { InsertLocation, InsertOS, InsertServer } from '@/db/schema';
+import { InsertServer } from '@/db/schema';
 const { TextArea } = Input;
 import { addServer } from '@/app/actions/server/crudActions';
 import { getIP } from '@/app/actions/utils/getIP';
@@ -12,115 +12,87 @@ import { getLocations } from '@/app/actions/location/crudActions';
 import { getBusinesses } from '@/app/actions/business/crudActions';
 import { getProjects } from '@/app/actions/projects/crudActions';
 
-interface Business {
-  id: number;
-  name: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-interface Project {
-  id: number;
-  name: string;
-  description?: string;
-  business?: number;
-  code: string | null;
-  createdAt: string;
-  updatedAt: string;
-}
-
 function FormAddServer({ children }: { children: React.ReactNode }) {
   const [messageApi, contextHolder] = message.useMessage();
   const [open, setOpen] = useState(false);
   const [form] = Form.useForm();
-  const [loading, setLoading] = useState(false);
-  const [osList, setOsList] = useState<InsertOS[]>([]);
-  const [locationList, setLocationList] = useState<InsertLocation[]>([]);
-  const [businessList, setBusinessList] = useState<Business[]>([]);
-  const [projectList, setProjectList] = useState<Project[]>([]);
-  const [formSubmitStatus, setFormSubmitStatus] = useState<{ status: 'idle' | 'success' | 'error', message?: string }>({ status: 'idle' });
 
-  const queryClient = useQueryClient()
+  const queryClient = useQueryClient();
 
-  useEffect(() => {
-    const fetchOS = async () => {
-      const osList = await getOS();
-      setOsList(osList);
-    };
-    const fetchLocation = async () => {
-      const locationList = await getLocations();
-      setLocationList(locationList);
-    };
-    const fetchBusinesses = async () => {
+  // Fetch OS list
+  const { data: osList = [], isLoading: isLoadingOS } = useQuery({
+    queryKey: ['os'],
+    queryFn: () => getOS(),
+  });
+
+  // Fetch locations
+  const { data: locationList = [], isLoading: isLoadingLocations } = useQuery({
+    queryKey: ['locations'],
+    queryFn: () => getLocations(),
+  });
+
+  // Fetch businesses
+  const { data: businessList = [], isLoading: isLoadingBusinesses } = useQuery({
+    queryKey: ['businesses'],
+    queryFn: async () => {
       const result = await getBusinesses();
       if (result) {
-        const data = result.map(item => ({
+        return result.map(item => ({
           ...item,
           createdAt: item.createdAt.toISOString(),
           updatedAt: item.updatedAt.toISOString()
         }));
-        setBusinessList(data);
-      } else {
-        console.error('Error fetching businesses:');
       }
-    };
-    const fetchProjects = async () => {
+      return [];
+    },
+  });
+
+  // Fetch projects
+  const { data: projectList = [], isLoading: isLoadingProjects } = useQuery({
+    queryKey: ['projects'],
+    queryFn: async () => {
       const result = await getProjects();
       if (result) {
-        const projectsResult = result.map(project => ({
+        return result.map(project => ({
           ...project,
           description: project.description === null ? undefined : project.description,
           business: project.business === null ? undefined : project.business,
           createdAt: project.createdAt.toISOString(),
           updatedAt: project.updatedAt.toISOString()
         }));
-        setProjectList(projectsResult);
-      } else {
-        console.error('Error fetching projects:');
       }
-    };
-    fetchOS();
-    fetchLocation();
-    fetchBusinesses();
-    fetchProjects();
-  }, []);
+      return [];
+    },
+  });
 
-  // Handle notifications based on form submission status
-  useEffect(() => {
-    if (formSubmitStatus.status === 'success') {
-      messageApi.success("Server Created")
-    } else if (formSubmitStatus.status === 'error') {
-      message.error("Error creating server")
-    }
-  }, [formSubmitStatus, messageApi]);
-
-  const onFinish = async (values: InsertServer) => {
-    try {
-      setLoading(true);
-      // Convert boolean values to 0 or 1
-      const formattedValues = { ...values };
-
-      // Submit to server action
-      const result = await addServer(formattedValues);
-      queryClient.invalidateQueries({ queryKey: ["server"] })
-
+  // Server creation mutation
+  const serverMutation = useMutation({
+    mutationFn: (values: InsertServer) => addServer(values),
+    onSuccess: (result) => {
       if (result.success) {
-        setFormSubmitStatus({ status: 'success' });
+        messageApi.success("Server Created");
+        queryClient.invalidateQueries({ queryKey: ["server"] });
         form.resetFields();
       } else {
-        setFormSubmitStatus({ status: 'error', message: "Failed to create server" });
+        messageApi.error("Failed to create server");
       }
-    } catch (error) {
+    },
+    onError: (error: unknown) => {
       console.error("Error creating server:", error);
-      setFormSubmitStatus({ status: 'error', message: "An unexpected error occurred while creating the server" });
-    } finally {
-      setLoading(false);
-    }
+      messageApi.error("An unexpected error occurred while creating the server");
+    },
+  });
+
+  const onFinish = (values: InsertServer) => {
+    // Convert boolean values to 0 or 1 if needed
+    const formattedValues = { ...values };
+    serverMutation.mutate(formattedValues);
   };
 
-  const handleHostnameChange = async (value: string) => {
-    try {
-      const result = await getIP(value);
+  // Get IP address mutation
+  const ipMutation = useMutation({
+    mutationFn: (hostname: string) => getIP(hostname),
+    onSuccess: (result) => {
       if (result?.ip) {
         form.setFieldsValue({
           ipv4: result.ip
@@ -130,8 +102,18 @@ function FormAddServer({ children }: { children: React.ReactNode }) {
           ipv4: ""
         });
       }
-    } catch (error) {
+    },
+    onError: (error: unknown) => {
       console.error("Error fetching IP:", error);
+      form.setFieldsValue({
+        ipv4: ""
+      });
+    },
+  });
+
+  const handleHostnameChange = (value: string) => {
+    if (value) {
+      ipMutation.mutate(value);
     }
   };
   return (
@@ -180,6 +162,7 @@ function FormAddServer({ children }: { children: React.ReactNode }) {
               <Input
                 onChange={(e) => handleHostnameChange(e.target.value)}
                 className="dark:bg-gray-700 dark:text-white dark:border-gray-600"
+                suffix={ipMutation.isPending ? <span>Loading...</span> : null}
               />
             </Form.Item>
             <Row gutter={[16, 16]}>
@@ -217,7 +200,8 @@ function FormAddServer({ children }: { children: React.ReactNode }) {
             </Row>
             <Row gutter={[16, 16]}>
               <Col span={12}>
-                <Form.Item
+
+                {isLoadingOS ? <div>Loading...</div> : <Form.Item
                   name="osId"
                   label="OS"
                   rules={[
@@ -228,6 +212,7 @@ function FormAddServer({ children }: { children: React.ReactNode }) {
                   ]}
                   className="dark:text-white"
                 >
+
                   <Select
                     placeholder="Select an OS"
                     style={{ width: "100%" }}
@@ -240,10 +225,11 @@ function FormAddServer({ children }: { children: React.ReactNode }) {
                       </Select.Option>
                     ))}
                   </Select>
-                </Form.Item>
+                </Form.Item>}
+
               </Col>
               <Col span={12}>
-                <Form.Item
+                {isLoadingLocations ? <div>Loading...</div> : <Form.Item
                   name="locationId"
                   label="Location"
                   rules={[
@@ -266,14 +252,14 @@ function FormAddServer({ children }: { children: React.ReactNode }) {
                       </Select.Option>
                     ))}
                   </Select>
-                </Form.Item>
+                </Form.Item>}
               </Col>
             </Row>
 
             <Row gutter={[16, 16]}>
               <Col span={12}>
-                <Form.Item
-                  name="business"
+                {isLoadingBusinesses ? <div>Loading...</div> : <Form.Item
+                  name="businessId"
                   label="Business"
                   rules={[
                     {
@@ -296,10 +282,10 @@ function FormAddServer({ children }: { children: React.ReactNode }) {
                       </Select.Option>
                     ))}
                   </Select>
-                </Form.Item>
+                </Form.Item>}
               </Col>
               <Col span={12}>
-                <Form.Item
+                {isLoadingProjects ? <div>Loading...</div> : <Form.Item
                   name="projectId"
                   label="Project"
                   rules={[
@@ -322,7 +308,7 @@ function FormAddServer({ children }: { children: React.ReactNode }) {
                       </Select.Option>
                     ))}
                   </Select>
-                </Form.Item>
+                </Form.Item>}
               </Col>
             </Row>
             <Form.Item
@@ -385,7 +371,7 @@ function FormAddServer({ children }: { children: React.ReactNode }) {
               </Col>
             </Row>
             <Form.Item>
-              <Button type="primary" htmlType="submit" loading={loading}>Add Server</Button>
+              <Button type="primary" htmlType="submit" loading={serverMutation.isPending}>Add Server</Button>
             </Form.Item>
           </Form>
         </Card>
