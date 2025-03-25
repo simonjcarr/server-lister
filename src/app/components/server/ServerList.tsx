@@ -1,7 +1,8 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useState } from 'react'
 import { Table, Input, Select, Card, Space, Button, Tag, Typography } from 'antd'
+import { useQuery, useQueries } from '@tanstack/react-query'
 import { SearchOutlined, ReloadOutlined } from '@ant-design/icons'
 import { PaginationParams, ServerFilter, ServerSort, getBusinessOptions, getLocationOptions, getOSOptions, getProjectOptions, getServers } from '@/app/actions/server/crudActions'
 import type { ColumnsType } from 'antd/es/table'
@@ -17,20 +18,11 @@ type ServerData = Awaited<ReturnType<typeof getServers>>['data'][number] & { key
 
 function ServerList() {
   const router = useRouter()
-  // State for server data and loading status
-  const [loading, setLoading] = useState(true)
-  const [data, setData] = useState<ServerData[]>([])
+  // State for pagination, filters, and sorting
   const [pagination, setPagination] = useState<PaginationParams>({
     page: 1,
     pageSize: 10,
   })
-  const [total, setTotal] = useState(0)
-
-  // State for filter options
-  const [businessOptions, setBusinessOptions] = useState<Array<{ id: number; name: string }>>([])
-  const [projectOptions, setProjectOptions] = useState<Array<{ id: number; name: string }>>([])
-  const [osOptions, setOSOptions] = useState<Array<{ id: number; name: string }>>([])
-  const [locationOptions, setLocationOptions] = useState<Array<{ id: number; name: string }>>([])
 
   // State for active filters
   const [filters, setFilters] = useState<ServerFilter>({})
@@ -42,71 +34,56 @@ function ServerList() {
     direction: 'asc',
   })
 
-  // Track if we need to load data
-  const [shouldLoadData, setShouldLoadData] = useState(true)
+  // Current filters including search text
+  const currentFilters: ServerFilter = searchText ? { ...filters, search: searchText } : { ...filters }
 
-  // Load filter options on component mount
-  useEffect(() => {
-    const loadFilterOptions = async () => {
-      const [business, projects, osystems, locations] = await Promise.all([
-        getBusinessOptions(),
-        getProjectOptions(),
-        getOSOptions(),
-        getLocationOptions(),
-      ])
+  // Query for filter options
+  const filterQueries = useQueries({
+    queries: [
+      {
+        queryKey: ['businessOptions'],
+        queryFn: getBusinessOptions,
+      },
+      {
+        queryKey: ['projectOptions'],
+        queryFn: getProjectOptions,
+      },
+      {
+        queryKey: ['osOptions'],
+        queryFn: getOSOptions,
+      },
+      {
+        queryKey: ['locationOptions'],
+        queryFn: getLocationOptions,
+      },
+    ],
+  })
 
-      setBusinessOptions(business)
-      setProjectOptions(projects)
-      setOSOptions(osystems)
-      setLocationOptions(locations)
-    }
+  const businessOptions = filterQueries[0].data ?? []
+  const projectOptions = filterQueries[1].data ?? []
+  const osOptions = filterQueries[2].data ?? []
+  const locationOptions = filterQueries[3].data ?? []
 
-    loadFilterOptions()
-  }, [])
+  // Query for server data
+  const { data: serverData, isLoading, refetch } = useQuery({
+    queryKey: ['servers',],
+    queryFn: () => getServers(currentFilters, sort, pagination),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    refetchInterval: 5 * 60 * 1000 // 5 minutes
+  })
 
-  // Load server data based on filters, sorting, and pagination
-  const loadData = useCallback(async () => {
-    if (!shouldLoadData) return
-
-    setLoading(true)
-    setShouldLoadData(false)
-
-    // Apply search filter if provided
-    const currentFilters: ServerFilter = {
-      ...filters,
-    }
-
-    if (searchText) {
-      currentFilters.search = searchText
-    }
-
-    const result = await getServers(currentFilters, sort, pagination)
-
-    setData(result.data.map(server => ({ ...server, key: server.id })))
-    setTotal(result.pagination.total)
-    // Update pagination only if page or pageSize changed from the server
-    if (pagination.page !== result.pagination.current ||
-      pagination.pageSize !== result.pagination.pageSize) {
-      setPagination({
-        page: result.pagination.current,
-        pageSize: result.pagination.pageSize,
-      })
-    }
-
-    setLoading(false)
-  }, [filters, sort, pagination, searchText, shouldLoadData])
-
-  // Trigger data load when needed
-  useEffect(() => {
-    if (shouldLoadData) {
-      loadData()
-    }
-  }, [shouldLoadData, loadData])
-
-  // When filters, sort, or pagination change, set shouldLoadData to true
-  useEffect(() => {
-    setShouldLoadData(true)
-  }, [filters, sort, pagination, searchText])
+  // Process server data
+  const data = serverData?.data.map(server => ({ ...server, key: server.id })) ?? []
+  const total = serverData?.pagination.total ?? 0
+  
+  // Update pagination if needed
+  if (serverData && (pagination.page !== serverData.pagination.current || 
+      pagination.pageSize !== serverData.pagination.pageSize)) {
+    setPagination({
+      page: serverData.pagination.current,
+      pageSize: serverData.pagination.pageSize,
+    })
+  }
 
   // Map the Ant Design field keys to our backend sort field names
   const mapFieldToSortField = (field: string): string => {
@@ -333,7 +310,7 @@ function ServerList() {
 
         <Button
           icon={<ReloadOutlined />}
-          onClick={() => setShouldLoadData(true)}
+          onClick={() => refetch()}
         >
           Refresh
         </Button>
@@ -350,7 +327,7 @@ function ServerList() {
         }}}}
         columns={columns}
         dataSource={data}
-        loading={loading}
+        loading={isLoading}
         pagination={{
           current: pagination.page,
           pageSize: pagination.pageSize,

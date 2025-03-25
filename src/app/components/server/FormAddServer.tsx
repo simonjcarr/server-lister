@@ -71,7 +71,7 @@ function FormAddServer({ children }: { children: React.ReactNode }) {
     onSuccess: (result) => {
       if (result.success) {
         messageApi.success("Server Created");
-        queryClient.invalidateQueries({ queryKey: ["server"] });
+        queryClient.invalidateQueries({ queryKey: ["servers"] });
         form.resetFields();
       } else {
         messageApi.error("Failed to create server");
