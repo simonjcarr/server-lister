@@ -19,6 +19,18 @@ const ServerServices = ({ serverId }: { serverId: number }) => {
       title: "Port",
       dataIndex: "port",
       key: "port",
+    },
+    {
+      title: "Running",
+      dataIndex: "running",
+      render: (text: boolean) => text ? <span className="text-green-500">Yes</span> : <span className="text-red-500">No</span>,
+      key: "running",
+      sorter: (a: Partial<ScanResults['services'][number]>, b: Partial<ScanResults['services'][number]>) => {
+        // Convert booleans to numbers (true = 1, false = 0) for sorting
+        const aVal = a.running ? 1 : 0;
+        const bVal = b.running ? 1 : 0;
+        return bVal - aVal; // Descending order so true values appear first
+      },
     }
   ]
 
@@ -40,10 +52,19 @@ const ServerServices = ({ serverId }: { serverId: number }) => {
       </div>
       {isLoading && <Spin />}
       {error && <Alert message="Error" description={error instanceof Error ? error.message : 'An error occurred'} type="error" />}
-      {data && data.length > 0 && (
+      {data && Array.isArray(data) && data.length > 0 ? (
         <>
-          <Table columns={columns} dataSource={data.filter((item) => item.name.toLowerCase().includes(searchName.toLowerCase()))} rowKey="name" size="small" />
+          <Table 
+            columns={columns} 
+            dataSource={data.filter((item) => 
+              item && item.name && item.name.toLowerCase().includes(searchName.toLowerCase())
+            )} 
+            rowKey="name" 
+            size="small" 
+          />
         </>
+      ) : (
+        !isLoading && !error && <Alert message="Info" description="No services found" type="info" />
       )}
     </div>
   )
