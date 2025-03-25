@@ -173,6 +173,7 @@ export const servers = pgTable(
     hostname: text("hostname").notNull(),
     ipv4: text("ipv4"),
     ipv6: text("ipv6"),
+    macAddress: text("macAddress"),
     description: text("description"),
     docLink: text("docLink"),
     business: integer("business"),
