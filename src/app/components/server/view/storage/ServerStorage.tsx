@@ -44,7 +44,7 @@ const ServerStorage = ({ serverId }: { serverId: number }) => {
       {error && <Alert message="Error" description={error instanceof Error ? error.message : 'An error occurred'} type="error" />}
       {data && data.length > 0 && (
         <>
-        <Table columns={columns} dataSource={data} />
+        <Table columns={columns} dataSource={data} rowKey="diskMountPath" />
         </>
       )}
     </>
