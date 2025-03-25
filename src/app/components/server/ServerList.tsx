@@ -326,9 +326,12 @@ function ServerList() {
 
       {/* Server data table */}
       <Table
-        onRow={(record)=> {return { onClick: () => {
-          router.push(`/server/view/${record.id}`)
-        }}}}
+        onRow={(record)=> {return { 
+          onClick: () => {
+            router.push(`/server/view/${record.id}`)
+          },
+          className: 'cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700'
+        }}}
         columns={columns}
         dataSource={data}
         loading={isLoading}
