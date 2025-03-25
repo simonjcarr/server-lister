@@ -7,7 +7,7 @@ import { useState } from "react"
 const ServerSoftware = ({ serverId }: { serverId: number }) => {
   const [searchName, setSearchName] = useState('')
   const { data, error, isLoading } = useQuery({
-    queryKey: ["server", serverId],
+    queryKey: ["server", "software", serverId],
     queryFn: () => getServerSoftware(serverId),
     enabled: !!serverId,
   })

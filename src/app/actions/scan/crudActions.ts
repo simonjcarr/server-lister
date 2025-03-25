@@ -83,3 +83,16 @@ export async function getServerSoftware(serverId: number) {
     throw new Error("Failed to get server software");
   }
 }
+
+export async function getServerServices(serverId: number) {
+  try {
+    const scanResults = await db.select().from(serverScans).where(eq(serverScans.serverId, serverId)).limit(1)
+    if (!scanResults || scanResults.length === 0) {
+      throw new Error("Server not found");
+    }
+    return scanResults[0].scanResults.services
+  } catch (error) {
+    console.error(error)
+    throw new Error("Failed to get server services");
+  }
+}
