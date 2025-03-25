@@ -162,7 +162,7 @@ function FormAddServer({ children }: { children: React.ReactNode }) {
               <Input
                 onChange={(e) => handleHostnameChange(e.target.value)}
                 className="dark:bg-gray-700 dark:text-white dark:border-gray-600"
-                suffix={ipMutation.isPending ? <span>Loading...</span> : null}
+                suffix={<span style={{ visibility: ipMutation.isPending ? 'visible' : 'hidden' }}>Loading...</span>}
               />
             </Form.Item>
             <Row gutter={[16, 16]}>
