@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { Table, Input, Select, Card, Space, Button, Tag, Typography } from 'antd'
 import { useQuery, useQueries } from '@tanstack/react-query'
-import { SearchOutlined, ReloadOutlined } from '@ant-design/icons'
+import { SearchOutlined, ReloadOutlined, PlusOutlined } from '@ant-design/icons'
 import { PaginationParams, ServerFilter, ServerSort, getBusinessOptions, getLocationOptions, getOSOptions, getProjectOptions, getServers } from '@/app/actions/server/crudActions'
 import type { ColumnsType } from 'antd/es/table'
 import type { TablePaginationConfig } from 'antd/es/table'
@@ -11,6 +11,7 @@ import type { FilterValue, SorterResult } from 'antd/es/table/interface'
 import type { Breakpoint } from 'antd/es/_util/responsiveObserver'
 import { useRouter } from 'next/navigation'
 import ClickToCopy from '../utils/ClickToCopy';
+import FormAddServer from './FormAddServer'
 
 const { Title } = Typography
 
@@ -257,7 +258,10 @@ function ServerList() {
 
   return (
     <Card>
-      <Title level={4}>Server List</Title>
+      <Title level={4} className='flex justify-between items-center'>
+        <div>Server List</div>
+        <FormAddServer><Button icon={<PlusOutlined />} size='small'>New Server</Button></FormAddServer>
+      </Title>
 
       {/* Filter and search controls */}
       <Space wrap style={{ marginBottom: 16 }}>
