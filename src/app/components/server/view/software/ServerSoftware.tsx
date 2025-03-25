@@ -1,6 +1,6 @@
 import { useQuery} from "@tanstack/react-query"
 import { getServerSoftware } from "@/app/actions/scan/crudActions"
-import { Alert, Form, Input, Spin, Table } from "antd"
+import { Empty, Form, Input, Spin, Table } from "antd"
 import { ScanResults } from "@/db/schema"
 import { useState } from "react"
 
@@ -27,8 +27,9 @@ const ServerSoftware = ({ serverId }: { serverId: number }) => {
   
   return (
     <div>
+      <div className="text-2xl font-bold mb-4">Software</div>
       {isLoading && <Spin />}
-      {error && <Alert message="Error" description={error instanceof Error ? error.message : 'An error occurred'} type="error" />}
+      {error && <div><Empty className="flex justify-center" image={Empty.PRESENTED_IMAGE_SIMPLE} /></div>}
       {data && (
         <>
           {data && data.length > 0 && (
