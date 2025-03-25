@@ -1,7 +1,7 @@
 'use client'
 import { useQuery } from "@tanstack/react-query"
 import { getServerServices } from "@/app/actions/scan/crudActions"
-import { Alert, Form, Input, Spin, Table } from "antd"
+import { Alert, Empty, Form, Input, Spin, Table } from "antd"
 import type { ScanResults } from "@/db/schema"
 import { useState } from "react"
 
@@ -51,7 +51,7 @@ const ServerServices = ({ serverId }: { serverId: number }) => {
         </Form>
       </div>
       {isLoading && <Spin />}
-      {error && <Alert message="Error" description={error instanceof Error ? error.message : 'An error occurred'} type="error" />}
+      {error && <div><Empty className="flex justify-center" image={Empty.PRESENTED_IMAGE_SIMPLE} /></div>}
       {data && Array.isArray(data) && data.length > 0 ? (
         <>
           <Table 

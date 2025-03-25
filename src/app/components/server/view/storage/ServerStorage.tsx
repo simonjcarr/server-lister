@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query"
-import { Alert, Spin, Table } from "antd"
+import { Empty, Spin, Table } from "antd"
 import { getServerStorage } from "@/app/actions/scan/crudActions"
 
 type Storage = {
@@ -39,15 +39,16 @@ const ServerStorage = ({ serverId }: { serverId: number }) => {
     },
   ]
   return (
-    <>
+    <div>
+      <div className="text-2xl font-bold mb-4">Storage</div>
       {isLoading && <Spin />}
-      {error && <Alert message="Error" description={error instanceof Error ? error.message : 'An error occurred'} type="error" />}
+      {error && <div><Empty className="flex justify-center" image={Empty.PRESENTED_IMAGE_SIMPLE} /></div>}
       {data && data.length > 0 && (
         <>
         <Table columns={columns} dataSource={data} rowKey="diskMountPath" />
         </>
       )}
-    </>
+    </div>
   )
 }
 

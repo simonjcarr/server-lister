@@ -2,7 +2,7 @@
 
 import { db } from "@/db";
 import { InsertServer, SelectServer, UpdateServer, business, locations, os, projects, servers } from "@/db/schema";
-import { and, asc, count, desc, eq, ilike, isNotNull, isNull, or, sql } from "drizzle-orm";
+import { and, asc, count, desc, eq, ilike, or} from "drizzle-orm";
 import { SQLWrapper } from "drizzle-orm/sql";
 
 export async function addServer(data: InsertServer) {
