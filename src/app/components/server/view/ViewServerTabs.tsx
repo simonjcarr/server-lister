@@ -6,18 +6,21 @@ import HardwareTabData from "./HardwareTabData"
 import NetworkTabData from "./NetworkTabData"
 import ViewServerNotes from "./notes/ViewServerNotes"
 import CertificateTabData from "./certificates/CertificateTabData"
+import ServerStorage from "./storage/ServerStorage"
 
 const ViewServerTabs = ({ serverId }: { serverId: number }) => {
   const { data, error, isLoading } = useQuery({
     queryKey: ["server", serverId],
     queryFn: () => getServerById(serverId),
     enabled: !!serverId,
+    staleTime: 600000, // 10 minutes
+    refetchInterval: 600000, // 10 minutes
   })
   const items = [
     { key: 'hardware', label: 'Hardware', children: <HardwareTabData serverId={serverId} /> },
     { key: 'network', label: 'Network', children: <NetworkTabData serverId={serverId} /> },
     { key: 'certs', label: 'Certificates', children: <CertificateTabData serverId={serverId} /> },
-    { key: 'storage', label: 'Storage', children: <div>Storage</div> },
+    { key: 'storage', label: 'Storage', children: <ServerStorage serverId={serverId} /> },
     { key: 'os', label: 'OS', children: <ViewOS osId={data?.osId ?? 0} /> },
     { key: 'services', label: 'Services', children: <div>Services</div> },
     { key: 'users', label: 'Users', children: <div>Users</div> },

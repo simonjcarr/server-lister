@@ -219,7 +219,7 @@ export const serverScans = pgTable("server_scans", {
   id: serial("id").primaryKey(),
   serverId: integer("serverId").notNull().references(() => servers.id, { onDelete: "cascade" }),
   scanDate: timestamp("scanDate", { withTimezone: true }).notNull(),
-  scanResults: jsonb("scanResults").notNull(),
+  scanResults: jsonb("scanResults").$type<ScanResults>().notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
 }, (table) => [
