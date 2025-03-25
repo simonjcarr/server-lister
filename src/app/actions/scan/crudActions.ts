@@ -1,3 +1,4 @@
+'use server'
 import { db } from "@/db";
 import type { ScanResults } from "@/db/schema";
 import { servers, serverScans } from "@/db/schema";
@@ -54,5 +55,18 @@ export async function updateServerWithScan(data: ScanResults) {
   } catch (error) {
     console.error(error)
     throw new Error("Failed to update server");
+  }
+}
+
+export async function getServerStorage(serverId: number) {
+  try {
+    const scanResults = await db.select().from(serverScans).where(eq(serverScans.serverId, serverId)).limit(1)
+    if (!scanResults || scanResults.length === 0) {
+      throw new Error("Server not found");
+    }
+    return scanResults[0].scanResults.host.storage
+  } catch (error) {
+    console.error(error)
+    throw new Error("Failed to get server storage");
   }
 }
