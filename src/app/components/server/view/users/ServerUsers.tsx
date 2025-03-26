@@ -1,9 +1,12 @@
 import { useQuery } from "@tanstack/react-query"
 import { getServerUsers } from "@/app/actions/scan/crudActions"
-import { Empty, Spin, Table } from "antd"
+import { Empty, Form, Input, Spin, Table } from "antd"
 import { ScanResults } from "@/db/schema"
+import { useState } from "react"
+import { SearchOutlined } from "@ant-design/icons"
 
 const ServerUsers = ({ serverId }: { serverId: number }) => {
+  const [searchName, setSearchName] = useState('')
   const { data, isLoading, error } = useQuery({
     queryKey: ['server-users', serverId],
     queryFn: () => getServerUsers(serverId),
@@ -29,13 +32,22 @@ const ServerUsers = ({ serverId }: { serverId: number }) => {
   ]
   return (
     <div>
+      <div className="text-2xl font-bold mb-4">Server Users</div>
+      <div className="mb-4">
+        <Form layout="inline">
+          
+          <Form.Item className="w-full" name="username" ><Input prefix={<SearchOutlined />} placeholder="Search..." value={searchName} onChange={(e) => setSearchName(e.target.value)} /></Form.Item>
+        </Form>
+      </div>
       {isLoading && <Spin />}
       {error && <div><Empty className="flex justify-center" image={Empty.PRESENTED_IMAGE_SIMPLE} /></div>}
       {data && (
         <>
         <Table
             columns={columns}
-            dataSource={data}
+            dataSource={data.filter((item) => 
+              item && item.username && item.username.toLowerCase().includes(searchName.toLowerCase())
+            )}
             rowKey="username"
             size="small"
         />

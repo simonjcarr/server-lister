@@ -4,7 +4,7 @@ import { getServerServices } from "@/app/actions/scan/crudActions"
 import { Alert, Empty, Form, Input, Spin, Table } from "antd"
 import type { ScanResults } from "@/db/schema"
 import { useState } from "react"
-
+import { SearchOutlined } from "@ant-design/icons"
 
 const ServerServices = ({ serverId }: { serverId: number }) => {
 
@@ -45,9 +45,10 @@ const ServerServices = ({ serverId }: { serverId: number }) => {
   })
   return (
     <div>
+      <div className="text-2xl font-bold mb-4">Services</div>
       <div className="mb-4">
         <Form layout="inline">
-          <Form.Item className="w-full" name="name"><Input placeholder="Search..." value={searchName} onChange={(e) => setSearchName(e.target.value)} /></Form.Item>
+          <Form.Item className="w-full" name="name"><Input prefix={<SearchOutlined />} placeholder="Search..." value={searchName} onChange={(e) => setSearchName(e.target.value)} /></Form.Item>
         </Form>
       </div>
       {isLoading && <Spin />}
