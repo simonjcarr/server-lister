@@ -12,6 +12,7 @@ import FormAddServer from '../../server/FormAddServer';
 import FormAddLocation from '../../location/FormAddLocation';
 import FormAddProject from '../../project/FormAddProject';
 import FormAddBusiness from '../../business/FormAddBusiness';
+import FormAddOS from '../../os/FormAddOS';
 
 
 
@@ -59,11 +60,9 @@ const App: React.FC = () => {
           children: [
             {
               key: 'os-add',
-              label: 'Add OS',
+              label: <FormAddOS><div>Add OS</div></FormAddOS>,
               icon: <MdAddBox />,
-              onClick: () => {
-                router.push('/os/add');
-              },
+              
             },
             {
               key: 'os-list',

@@ -1,12 +1,13 @@
 'use client'
 import { addOS } from '@/app/actions/os/crudActions';
 import { InsertOS } from '@/db/schema';
-import { Card, Form, Input, Button, notification, Typography } from 'antd'
+import { Card, Form, Input, Button, notification, Typography, Drawer } from 'antd'
 import { useState } from 'react';
 const { TextArea } = Input;
 const { Text } = Typography;
 
-function FormAddOS() {
+function FormAddOS({children}: {children: React.ReactNode}) {
+  const [open, setOpen] = useState(false);
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const [messageApi, contextHolder] = notification.useNotification();
@@ -45,6 +46,9 @@ function FormAddOS() {
   }
 
   return (
+    <>
+    <span onClick={() => setOpen(true)}>{children}</span>
+    <Drawer title="Add OS" open={open} onClose={() => setOpen(false)} width={400} placement="right" destroyOnClose>
     <Card
       title="Add OS"
       extra={<Text type="secondary" className="dark:text-gray-300">Create a new server OS</Text>}
@@ -133,6 +137,8 @@ function FormAddOS() {
       </Form>
 
     </Card>
+    </Drawer>
+    </>
   )
 }
 
