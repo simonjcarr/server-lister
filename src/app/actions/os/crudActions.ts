@@ -3,7 +3,12 @@
 import { db } from "@/db";
 import { os, osPatchVersions } from "@/db/schema";
 import { eq, sql } from "drizzle-orm";
-import type { InsertOS, UpdateOS } from "@/db/schema";
+import type { InsertOS, UpdateOS, SelectOS } from "@/db/schema";
+
+// Define a type for the result of getOSs
+export type OSWithPatchVersion = Omit<SelectOS, 'version' | 'description'> & {
+  latestPatchVersion: string | null;
+};
 
 export async function getOS() {
   try {
@@ -69,16 +74,18 @@ export async function getOSById(id: number) {
   }
 }
 
-export async function getOSs() {
+export async function getOSs(): Promise<OSWithPatchVersion[]> {
   try {
     const osResult = await db
       .select({
         id: os.id,
         name: os.name,
         EOLDate: os.EOLDate,
+        version: os.version,
+        description: os.description,
         createdAt: os.createdAt,
         updatedAt: os.updatedAt,
-        latestPatchVersion: sql`COALESCE(
+        latestPatchVersion: sql<string | null>`COALESCE(
         (
           SELECT ${osPatchVersions.patchVersion}
           FROM ${osPatchVersions}
@@ -90,7 +97,8 @@ export async function getOSs() {
       )`,
       })
       .from(os);
-    return osResult;
+      console.log(JSON.stringify(osResult, null, 2));
+    return osResult as OSWithPatchVersion[];
   } catch (error) {
     console.error("Error getting OSs:", error);
     throw new Error("Failed to get OSs");

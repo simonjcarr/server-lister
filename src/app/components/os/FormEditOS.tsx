@@ -1,0 +1,187 @@
+'use client'
+import { Card, Form, Input, Button, notification, Typography, Drawer, Spin } from 'antd'
+import { useState } from 'react';
+const { TextArea } = Input;
+const { Text } = Typography;
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { getOSById, updateOS } from '@/app/actions/os/crudActions';
+import { UpdateOS } from '@/db/schema';
+
+const FormEditOS = ({ children, id }: { children: React.ReactNode, id: number }) => {
+  const [open, setOpen] = useState(false);
+  const [form] = Form.useForm();
+  const [loading, setLoading] = useState(false);
+  const [messageApi, contextHolder] = notification.useNotification();
+  const queryClient = useQueryClient();
+
+  // Fetch OS data
+  const { data: os, isLoading, isFetching } = useQuery({
+    queryKey: ['os', id],
+    queryFn: () => getOSById(id),
+    enabled: open, // Only fetch when drawer is open
+  });
+
+  // Update OS mutation
+  const { mutate: updateOSMutation, isPending: updateLoading } = useMutation({
+    mutationFn: (data: UpdateOS) => updateOS(id, data),
+    onSuccess: () => {
+      messageApi.success({
+        message: "Updated",
+        description: "OS has been updated successfully",
+        duration: 3,
+      });
+      form.resetFields();
+      setOpen(false);
+      queryClient.invalidateQueries({ queryKey: ['oss'] });
+      queryClient.invalidateQueries({ queryKey: ['os', id] });
+      queryClient.invalidateQueries({ queryKey: ['os'] });
+    },
+    onError: (error) => {
+      console.error("Error updating OS:", error);
+      messageApi.error({
+        message: "Failed",
+        description: "Failed to update OS",
+        duration: 3,
+      });
+    },
+  });
+
+  // Handle form submission
+  const onFinish = async (values: UpdateOS) => {
+    try {
+      setLoading(true);
+      console.log("values", values)
+      updateOSMutation({
+        ...values,
+        EOLDate: values.EOLDate ? new Date(values.EOLDate) : undefined,
+      });
+    } catch (error) {
+      console.error("Error updating OS:", error);
+      messageApi.error({
+        message: "Failed",
+        description: "An unexpected error occurred while updating the OS",
+        duration: 3,
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Prepare initial values when OS data is available
+  const initialValues = os ? {
+    name: os.name,
+    version: os.version,
+    description: os.description,
+    EOLDate: os.EOLDate ? new Date(os.EOLDate).toISOString().split('T')[0] : '',
+  } : undefined;
+
+  return (
+    <>
+    {contextHolder}
+    <span onClick={() => setOpen(true)}>{children}</span>
+    <Drawer
+      title="Edit OS"
+      open={open}
+      onClose={() => setOpen(false)}
+      width={400}
+      placement="right"
+      destroyOnClose
+    >
+      {(isLoading || isFetching) ? (
+        <div className="flex justify-center items-center h-full">
+          <Spin size="large"  />
+        </div>
+      ) : os ? (
+        <Card
+          title="Edit OS"
+          extra={<Text type="secondary" className="dark:text-gray-300">Edit server OS</Text>}
+          className="dark:bg-gray-800 dark:border-gray-700"
+        >
+          <Form
+            form={form}
+            layout="vertical"
+            onFinish={onFinish}
+            className="dark:text-white"
+            initialValues={initialValues}
+          >
+            <Form.Item
+              name="name"
+              label="Name"
+              rules={[
+                {
+                  required: true,
+                  message: "Please enter an OS name",
+                },
+                {
+                  min: 2,
+                  message: "Name must be at least 2 characters",
+                },
+                {
+                  max: 100,
+                  message: "Name must not exceed 100 characters",
+                },
+              ]}
+              className="dark:text-white"
+            >
+              <Input className="dark:bg-gray-700 dark:text-white dark:border-gray-600" />
+            </Form.Item>
+            <Form.Item
+              name="version"
+              label="Version"
+              rules={[
+                {
+                  required: true,
+                  message: "Please enter an OS version",
+                },
+              ]}
+              className="dark:text-white"
+            >
+              <Input className="dark:bg-gray-700 dark:text-white dark:border-gray-600" />
+            </Form.Item>
+
+            <Form.Item
+              name="EOLDate"
+              label="End of Life Date"
+              rules={[
+                {
+                  required: true,
+                  message: "Please enter an EOL date",
+                },
+              ]}
+              className="dark:text-white"
+            >
+              <Input type="date" className="dark:bg-gray-700 dark:text-white dark:border-gray-600" />
+            </Form.Item>
+
+            <Form.Item
+              name="description"
+              label="Description"
+              rules={[
+                {
+                  max: 500,
+                  message: "Description must not exceed 500 characters",
+                },
+              ]}
+              className="dark:text-white"
+            >
+              <TextArea className="dark:bg-gray-700 dark:text-white dark:border-gray-600" />
+            </Form.Item>
+
+            <Form.Item>
+              <Button type="primary" htmlType="submit" loading={loading || updateLoading}>
+                Update
+              </Button>
+            </Form.Item>
+          </Form>
+        </Card>
+      ) : (
+        <div className="text-center text-red-500">
+          Failed to load OS data. Please try again.
+        </div>
+      )}
+    </Drawer>
+    </>
+  )
+}
+
+export default FormEditOS
