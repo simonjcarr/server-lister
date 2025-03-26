@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import type { DrawerProps, MenuProps } from 'antd';
 import { Button, Drawer, Space, Menu } from 'antd';
 import Link from 'next/link';
-import { FaCertificate, FaMap, FaProjectDiagram, FaRegListAlt, FaRegObjectGroup, FaServer, FaTools, FaUsers, FaWindows } from 'react-icons/fa';
+import { FaCertificate, FaFileInvoiceDollar, FaMap, FaProjectDiagram, FaRegListAlt, FaRegObjectGroup, FaServer, FaTools, FaUsers, FaWindows } from 'react-icons/fa';
 import { MdAddBox, MdAdminPanelSettings, MdNetworkPing } from 'react-icons/md';
 import { useRouter } from 'next/navigation';
 import { IoIosBusiness } from 'react-icons/io';
@@ -178,6 +178,14 @@ const App: React.FC = () => {
           },
         }
       ]
+    },
+    {
+      key: 'reports',
+      label: 'Reports',
+      icon: <FaFileInvoiceDollar />,
+      onClick: () => {
+        router.push('/reports');
+      },
     }
   ]
   if(session?.user?.roles?.includes('admin')) {
