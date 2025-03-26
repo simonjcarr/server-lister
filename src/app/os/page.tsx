@@ -30,7 +30,7 @@ const Page = () => {
       sorter: (a: OSWithPatchVersion, b: OSWithPatchVersion) => new Date(a.EOLDate).getTime() - new Date(b.EOLDate).getTime(),
     },
     {
-      title: 'Patch Version',
+      title: 'Latest Patch',
       dataIndex: 'latestPatchVersion',
       key: 'latestPatchVersion',
     },
