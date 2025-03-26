@@ -1,6 +1,6 @@
 import { useQuery} from "@tanstack/react-query"
 import { getServerSoftware } from "@/app/actions/scan/crudActions"
-import { Empty, Form, Input, Spin, Table } from "antd"
+import { Alert, Empty, Form, Input, Spin, Table } from "antd"
 import { ScanResults } from "@/db/schema"
 import { useState } from "react"
 
@@ -28,21 +28,24 @@ const ServerSoftware = ({ serverId }: { serverId: number }) => {
   return (
     <div>
       <div className="text-2xl font-bold mb-4">Software</div>
+      <div className="mb-4">
+        <Form layout="inline">
+          <Form.Item className="w-full" name="name"><Input placeholder="Search..." value={searchName} onChange={(e) => setSearchName(e.target.value)} /></Form.Item>
+        </Form>
+      </div>
       {isLoading && <Spin />}
       {error && <div><Empty className="flex justify-center" image={Empty.PRESENTED_IMAGE_SIMPLE} /></div>}
-      {data && (
-        <>
-          {data && data.length > 0 && (
-            <>
-            <div className="mb-4">
-              <Form layout="inline">
-                <Form.Item className="w-full" name="name"><Input placeholder="Search..." value={searchName} onChange={(e) => setSearchName(e.target.value)} /></Form.Item>
-              </Form>
-            </div>
-            <Table columns={columns} dataSource={data.filter((item) => item.name.toLowerCase().includes(searchName.toLowerCase()))} rowKey="name" size="small"/>
-            </>
-          )}
-        </>
+      {data && Array.isArray(data) && data.length > 0 ? (
+        <Table 
+          columns={columns} 
+          dataSource={data.filter((item) => 
+            item && item.name && item.name.toLowerCase().includes(searchName.toLowerCase())
+          )} 
+          rowKey="name" 
+          size="small"
+        />
+      ) : (
+        !isLoading && !error && <Alert message="Info" description="No software found" type="info" />
       )}
     </div>
   )
