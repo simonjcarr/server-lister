@@ -96,3 +96,17 @@ export async function getServerServices(serverId: number) {
     throw new Error("Failed to get server services");
   }
 }
+
+export async function getServerUsers(serverId: number) {
+  try {
+    const scanResults = await db.select().from(serverScans).where(eq(serverScans.serverId, serverId)).limit(1)
+    if (!scanResults || scanResults.length === 0) {
+      throw new Error("Server not found");
+    }
+    return scanResults[0].scanResults.users
+  } catch (error) {
+    console.error(error)
+    throw new Error("Failed to get server users");
+  }
+}
+  

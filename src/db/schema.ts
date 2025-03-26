@@ -263,6 +263,12 @@ const scanResultsSchema = z
       version: z.string(),
       patch_version: z.string(),
     }),
+    users: z.array(
+      z.object({
+        username: z.string(),
+        localAccount: z.boolean(),
+      })
+    ),
   })
   .strict();
 
