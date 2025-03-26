@@ -22,6 +22,7 @@ const NetworkTabData = ({ serverId }: { serverId: number }) => {
       {data && (
         <>
           <div >
+            <div className="text-lg font-bold">Network</div>
             {tableData.map((item) => (
               <Row key={item.key} className='border-b border-gray-700 py-2'>
                 <Col span={8}>{item.label}</Col>
