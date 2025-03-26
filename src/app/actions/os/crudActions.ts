@@ -61,12 +61,14 @@ export async function deleteOS(id: number) {
   }
 }
 
-export async function getOSById(id: number) {
+export async function getOSById(id: number, _timestamp?: number) {
   try {
+    console.log(`Fetching OS with ID: ${id} at ${_timestamp || 'no timestamp'}`);
     const osData = await db.select().from(os).where(eq(os.id, id)).limit(1);
     if (osData.length === 0) {
       throw new Error("OS not found");
     }
+    console.log(`Found OS data:`, JSON.stringify(osData[0], null, 2));
     return osData[0];
   } catch (error) {
     console.error("Error getting OS by ID:", error);

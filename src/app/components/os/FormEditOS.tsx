@@ -1,6 +1,6 @@
 'use client'
+import React, { useState, useEffect } from 'react';
 import { Card, Form, Input, Button, notification, Typography, Drawer, Spin } from 'antd'
-import { useState } from 'react';
 const { TextArea } = Input;
 const { Text } = Typography;
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
@@ -15,10 +15,13 @@ const FormEditOS = ({ children, id }: { children: React.ReactNode, id: number })
   const queryClient = useQueryClient();
 
   // Fetch OS data
-  const { data: os, isLoading, isFetching } = useQuery({
+  const { data: os, isLoading, isFetching, refetch } = useQuery({
     queryKey: ['os', id],
-    queryFn: () => getOSById(id),
+    queryFn: () => getOSById(id, Date.now()), // Add timestamp to bust cache
     enabled: open, // Only fetch when drawer is open
+    staleTime: 0, // Always consider data stale
+    refetchOnWindowFocus: false, // Don't refetch on window focus
+    gcTime: 0, // Disable garbage collection (equivalent to old cacheTime),
   });
 
   // Update OS mutation
@@ -32,9 +35,14 @@ const FormEditOS = ({ children, id }: { children: React.ReactNode, id: number })
       });
       form.resetFields();
       setOpen(false);
-      queryClient.invalidateQueries({ queryKey: ['oss'] });
-      queryClient.invalidateQueries({ queryKey: ['os', id] });
-      queryClient.invalidateQueries({ queryKey: ['os'] });
+      
+      // Force refetch all related queries
+      console.log('Mutation successful - refetching queries');
+      
+      // Then refetch
+      queryClient.refetchQueries({ queryKey: ['oss'] });
+      queryClient.refetchQueries({ queryKey: ['os', id] });
+      queryClient.refetchQueries({ queryKey: ['os'] });
     },
     onError: (error) => {
       console.error("Error updating OS:", error);
@@ -67,13 +75,31 @@ const FormEditOS = ({ children, id }: { children: React.ReactNode, id: number })
     }
   };
 
-  // Prepare initial values when OS data is available
-  const initialValues = os ? {
-    name: os.name,
-    version: os.version,
-    description: os.description,
-    EOLDate: os.EOLDate ? new Date(os.EOLDate).toISOString().split('T')[0] : '',
-  } : undefined;
+  // Update form values when OS data changes
+  useEffect(() => {
+    if (os) {
+      console.log('Setting form values with OS data:', os);
+      form.setFieldsValue({
+        name: os.name,
+        version: os.version,
+        description: os.description,
+        EOLDate: os.EOLDate ? new Date(os.EOLDate).toISOString().split('T')[0] : '',
+      });
+    }
+  }, [os, form]);
+
+  // Ensure fresh data is fetched when drawer opens
+  useEffect(() => {
+    if (open) {
+      console.log('Drawer opened - forcing refetch for OS:', id);
+      // Completely remove the query from cache before refetching
+      queryClient.removeQueries({ queryKey: ['os', id] });
+      setTimeout(() => refetch(), 0); // Force refetch on next tick
+    } else {
+      // Reset form when drawer closes
+      form.resetFields();
+    }
+  }, [open, refetch, queryClient, id, form]);
 
   return (
     <>
@@ -85,7 +111,7 @@ const FormEditOS = ({ children, id }: { children: React.ReactNode, id: number })
       onClose={() => setOpen(false)}
       width={400}
       placement="right"
-      destroyOnClose
+      destroyOnClose={true} // Make sure drawer fully destroys content when closed
     >
       {(isLoading || isFetching) ? (
         <div className="flex justify-center items-center h-full">
@@ -102,7 +128,7 @@ const FormEditOS = ({ children, id }: { children: React.ReactNode, id: number })
             layout="vertical"
             onFinish={onFinish}
             className="dark:text-white"
-            initialValues={initialValues}
+            key={`os-form-${id}-${os ? String(new Date(os.updatedAt).getTime()) : 'new'}`} // Fix TS error with conditional check
           >
             <Form.Item
               name="name"
