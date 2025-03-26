@@ -34,6 +34,8 @@ const ManageOSPatchVersions: React.FC<ManageOSPatchVersionsProps> = ({ osId }) =
       queryClient.invalidateQueries({ queryKey: ['osPatchVersions', osId] });
       setIsModalVisible(false);
       form.resetFields();
+      queryClient.invalidateQueries({ queryKey: ['os', osId] });
+      queryClient.invalidateQueries({ queryKey: ['oss'] });
     },
     onError: (err: Error) => {
       messageApi.error({ message: 'Failed to add patch version', description: err.message });
@@ -47,6 +49,8 @@ const ManageOSPatchVersions: React.FC<ManageOSPatchVersionsProps> = ({ osId }) =
       messageApi.success({ message: 'Patch version deleted successfully' });
       // Invalidate queries to refresh the data
       queryClient.invalidateQueries({ queryKey: ['osPatchVersions', osId] });
+      queryClient.invalidateQueries({ queryKey: ['os', osId] });
+      queryClient.invalidateQueries({ queryKey: ['oss'] });
     },
     onError: (err: Error) => {
       messageApi.error({ message: 'Failed to delete patch version', description: err.message });

@@ -2,7 +2,7 @@
 
 import { db } from "@/db";
 import { os, osPatchVersions } from "@/db/schema";
-import { eq, sql } from "drizzle-orm";
+import { eq, desc } from "drizzle-orm";
 import type { InsertOS, UpdateOS, SelectOS } from "@/db/schema";
 
 // Define a type for the result of getOSs
@@ -78,29 +78,44 @@ export async function getOSById(id: number, _timestamp?: number) {
 
 export async function getOSs(): Promise<OSWithPatchVersion[]> {
   try {
-    const osResult = await db
+    // Debug query to directly check for patch versions
+    const debugPatchVersions = await db
       .select({
-        id: os.id,
-        name: os.name,
-        EOLDate: os.EOLDate,
-        version: os.version,
-        description: os.description,
-        createdAt: os.createdAt,
-        updatedAt: os.updatedAt,
-        latestPatchVersion: sql<string | null>`COALESCE(
-        (
-          SELECT ${osPatchVersions.patchVersion}
-          FROM ${osPatchVersions}
-          WHERE ${osPatchVersions.osId} = ${os.id}
-          ORDER BY ${osPatchVersions.patchVersion} DESC
-          LIMIT 1
-        ),
-        'No patch version'
-      )`,
+        osId: osPatchVersions.osId,
+        patchVersion: osPatchVersions.patchVersion,
       })
-      .from(os);
-      console.log(JSON.stringify(osResult, null, 2));
-    return osResult as OSWithPatchVersion[];
+      .from(osPatchVersions);
+    
+    console.log("Debug - All patch versions:", JSON.stringify(debugPatchVersions, null, 2));
+    
+    // Get all OS records
+    const osRecords = await db.select().from(os);
+    console.log("OS records:", JSON.stringify(osRecords, null, 2));
+    
+    // For each OS, find the latest patch version
+    const results = await Promise.all(
+      osRecords.map(async (osRecord) => {
+        // Find the latest patch version for this OS
+        const patchVersions = await db
+          .select({
+            patchVersion: osPatchVersions.patchVersion,
+          })
+          .from(osPatchVersions)
+          .where(eq(osPatchVersions.osId, osRecord.id))
+          .orderBy(desc(osPatchVersions.patchVersion))
+          .limit(1);
+        
+        return {
+          ...osRecord,
+          latestPatchVersion: patchVersions.length > 0 
+            ? patchVersions[0].patchVersion 
+            : "No patch version"
+        };
+      })
+    );
+    
+    console.log("Final results:", JSON.stringify(results, null, 2));
+    return results as OSWithPatchVersion[];
   } catch (error) {
     console.error("Error getting OSs:", error);
     throw new Error("Failed to get OSs");
