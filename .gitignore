@@ -45,3 +45,4 @@ sqlite.db
 
 tests/screenshots
 tests_output
+.aider*
