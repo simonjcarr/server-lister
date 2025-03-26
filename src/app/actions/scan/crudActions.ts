@@ -7,7 +7,6 @@ import { eq } from "drizzle-orm";
 export async function insertScan(data: ScanResults) {
   data.host.memoryGB = Math.round(Number(data.host.memoryGB))
   data.host.cores = Number(data.host.cores)
-  console.log(data.host)
   try {
     let server = await db.select().from(servers).where(eq(servers.hostname, data.host.hostname))
     if (!server || server.length === 0) {
@@ -51,6 +50,7 @@ export async function updateServerWithScan(data: ScanResults) {
       cores: data.host.cores,
       ram: data.host.memoryGB,
       updatedAt: new Date(),
+      macAddress: data.host.macAddress,
     }).where(eq(servers.id, server[0].id))
   } catch (error) {
     console.error(error)
