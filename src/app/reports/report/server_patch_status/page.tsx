@@ -4,8 +4,9 @@ import { getRawPatchStatus } from '@/app/actions/reports/patchStatus'
 import { Table } from 'antd'
 const Page = () => {
   const { data, isLoading, error } = useQuery({
-    queryKey: ['patchStatus'],
-    queryFn: getRawPatchStatus
+    queryKey: ['report', 'server_patch_status'],
+    queryFn: () => getRawPatchStatus(),
+    staleTime: 1000 * 60 * 5 // 5 minutes
   })
   const columns = [
     {
