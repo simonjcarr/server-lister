@@ -1,14 +1,13 @@
 'use client'
 import { Badge, notification } from 'antd'
-import React, { useCallback, useEffect, useState } from 'react'
-import { getUnreadNotificationCount } from '@/app/actions/notifications/crudActions'
+import React, { useCallback, useEffect, useState, memo } from 'react'
 import { useQuery } from "@tanstack/react-query"
 import { useSession } from 'next-auth/react' 
 import ViewNotificationsModal from './ViewNotificationsModal'
 
-const NotificationCountBadge = ({ children }: { children: React.ReactNode }) => {
+// Memoize the component to prevent unnecessary re-renders from parent components
+const NotificationCountBadge = memo(({ children }: { children: React.ReactNode }) => {
   const [api, contextHolder] = notification.useNotification();
-
   const [count, setCount] = useState<number | null>(null)
   const session = useSession()
   
@@ -27,26 +26,42 @@ const NotificationCountBadge = ({ children }: { children: React.ReactNode }) => 
     })
   }, [api])
 
-  if(!session.data) {
-    throw new Error('unauthorized')
-  }
-  const userId = session.data.user.id
-  if(!userId) {
-    throw new Error('unauthorized')
-  }
+  // Ensure we're only fetching when authenticated
+  const enabled = session.status === 'authenticated'
+
+  // Use React Query with an API route instead of a server action
   const {data} = useQuery({
-    queryKey: ['unreadNotificationCount', userId],
-    queryFn: () => getUnreadNotificationCount(userId),
-    refetchInterval: 5000
+    queryKey: ['unreadNotificationCount'],
+    queryFn: async () => {
+      const response = await fetch('/api/notifications/count')
+      if (!response.ok) {
+        throw new Error('Failed to fetch notification count')
+      }
+      const data = await response.json()
+      return data.count
+    },
+    refetchInterval: 5000, // Keep the 5-second polling
+    enabled, // Only run the query when authenticated
+    notifyOnChangeProps: ['data'],
+    refetchOnWindowFocus: false,
   })
 
-  
+  // Only update state and trigger notification when count actually changes
   useEffect(() => {
-    if(!data) return
-    if (count !== null &&data > count) { openNotification() }
-    setCount(data)
+    if (data === undefined) return
+    if (count !== null && data > count) { 
+      openNotification() 
+    }
+    if (count !== data) { // Only update state when there's an actual change
+      setCount(data)
+    }
   }, [data, count, openNotification])
 
+  if (!enabled) {
+    return <>{children}</>
+  }
+
+  // Use regular Badge without memoization as it's already efficient
   return (
     <>
       {contextHolder}
@@ -55,6 +70,9 @@ const NotificationCountBadge = ({ children }: { children: React.ReactNode }) => 
       </Badge>
     </>
   )
-}
+})
+
+// Add displayName to the memoized component
+NotificationCountBadge.displayName = 'NotificationCountBadge';
 
 export default NotificationCountBadge
