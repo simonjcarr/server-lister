@@ -9,6 +9,7 @@ import CertificateTabData from "./certificates/CertificateTabData"
 import ServerStorage from "./storage/ServerStorage"
 import ServerSoftware from "./software/ServerSoftware"
 import ServerServices from "./services/ServerServices"
+import ServerUsers from "./users/ServerUsers"
 
 const ViewServerTabs = ({ serverId }: { serverId: number }) => {
   const { data, error, isLoading } = useQuery({
@@ -25,7 +26,7 @@ const ViewServerTabs = ({ serverId }: { serverId: number }) => {
     { key: 'storage', label: 'Storage', children: <ServerStorage serverId={serverId} /> },
     { key: 'os', label: 'OS', children: <ViewOS osId={data?.osId ?? 0} /> },
     { key: 'services', label: 'Services', children: <ServerServices serverId={serverId} /> },
-    { key: 'users', label: 'Users', children: <div>Users</div> },
+    { key: 'users', label: 'Users', children: <ServerUsers serverId={serverId} /> },
     { key: 'software', label: 'Software', children: <ServerSoftware serverId={serverId} /> },
     { key: 'notes', label: 'Notes', children: <ViewServerNotes serverId={serverId} /> },
   ]

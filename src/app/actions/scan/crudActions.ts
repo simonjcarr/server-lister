@@ -103,7 +103,7 @@ export async function getServerUsers(serverId: number) {
     if (!scanResults || scanResults.length === 0) {
       throw new Error("Server not found");
     }
-    return scanResults[0].scanResults.users
+    return scanResults[0].scanResults.host.users
   } catch (error) {
     console.error(error)
     throw new Error("Failed to get server users");
