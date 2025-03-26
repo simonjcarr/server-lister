@@ -2,28 +2,29 @@
 import { useQuery } from '@tanstack/react-query'
 import { getRawPatchStatus } from '@/app/actions/reports/patchStatus'
 import { Table } from 'antd'
-import { PatchStatus } from '@/app/types/reports'
+import type { TableProps } from 'antd';
+import { PatchStatus } from '@/app/types/reports' 
+import DownloadCSV from '@/app/components/reports/DownloadCSV'
+
+
+type FetchedPatchStatus = Omit<PatchStatus, 'server_id'>;
+
 
 const Page = () => {
-  const { data, isLoading, error } = useQuery<PatchStatus[]>({
+  const { data, isLoading, error } = useQuery<FetchedPatchStatus[]>({ 
     queryKey: ['report', 'server_patch_status'],
-    queryFn: () => getRawPatchStatus(),
-    staleTime: 1000 * 60 * 5 // 5 minutes
-  })
+    queryFn: () => getRawPatchStatus(), 
+    staleTime: 1000 * 60 * 5
+  });
 
-const formatDaysBehind = (record: PatchStatus) => {
-  if(record.patch_status === 'No Scan Data') {
-    return "N/A"
-  }
-  return record.days_behind.toString()
-}
-  
-  const columns = [
-    {
-      title: 'Server ID',
-      dataIndex: 'server_id',
-      key: 'server_id',
-    },
+  const formatDaysBehind = (record: FetchedPatchStatus): string => {
+    if (record.patch_status === 'No Scan Data') {
+      return "N/A";
+    }
+    return record.days_behind?.toString() ?? "N/A";
+  };
+
+  const columns: TableProps<FetchedPatchStatus>['columns'] = [ 
     {
       title: 'Hostname',
       dataIndex: 'hostname',
@@ -52,17 +53,33 @@ const formatDaysBehind = (record: PatchStatus) => {
     {
       title: 'Days Behind',
       dataIndex: 'days_behind',
-      render: (text: number, record: PatchStatus) => formatDaysBehind(record),
+      render: (_text, record) => formatDaysBehind(record),
       key: 'days_behind',
     },
-  ]
+  ];
+
+  const rowKey = 'hostname';
+
   return (
     <div>
-      {isLoading && <div>Loading...</div>}
-      {error && <div>Error: {error.message}</div>}
-        {data && <Table columns={columns} dataSource={data} size="small" rowKey="server_id" />}
+      <Table
+        loading={isLoading}
+        columns={columns}
+        dataSource={data} 
+        size="small"
+        rowKey={rowKey}
+      />
+
+      {error && <div style={{ color: 'red', marginTop: '10px' }}>Error: {error.message}</div>}
+      {data && !error && (
+        <div style={{ marginTop: '16px' }}>
+          <DownloadCSV data={data}>
+            Download CSV
+          </DownloadCSV>
+        </div>
+      )}
     </div>
-  )
+  );
 }
 
-export default Page
+export default Page;
