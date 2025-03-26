@@ -1,6 +1,7 @@
 'use server'
 import { db } from "@/db"; // Your database instance
 import { sql } from "drizzle-orm";
+import { PatchStatus } from "@/app/types/reports";
 
 // Your original raw SQL query
 const rawSqlQuery = sql`
@@ -68,23 +69,8 @@ ORDER BY
   s.hostname;
 `;
 
-// Define an expected result type (optional but recommended for clarity)
-// interface ServerPatchStatusRaw {
-//   server_id: number;
-//   hostname: string;
-//   osId: number | null;
-//   current_scanned_patch: string | null;
-//   latest_available_patch: string | null;
-//   patch_status:
-//     | "No OS Patch Data"
-//     | "No Scan Data"
-//     | "Up to Date"
-//     | "Out of Date";
-//   days_behind: number;
-// }
-
 // Execute the raw query
-export async function getRawPatchStatus() {
+export async function getRawPatchStatus(): Promise<PatchStatus[]> {
   try {
     // Use db.execute for arbitrary SQL.
     // The result structure depends on the underlying driver (e.g., node-postgres).
@@ -93,7 +79,7 @@ export async function getRawPatchStatus() {
 
     // Assuming node-postgres, result.rows contains the array of results.
     // Cast the result rows to your defined type.
-    const data = result.rows;
+    const data = result.rows as PatchStatus[];
 
     console.log(data);
     return data;
