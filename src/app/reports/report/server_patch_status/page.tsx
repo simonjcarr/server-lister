@@ -2,12 +2,22 @@
 import { useQuery } from '@tanstack/react-query'
 import { getRawPatchStatus } from '@/app/actions/reports/patchStatus'
 import { Table } from 'antd'
+import { PatchStatus } from '@/app/types/reports'
+
 const Page = () => {
-  const { data, isLoading, error } = useQuery({
+  const { data, isLoading, error } = useQuery<PatchStatus[]>({
     queryKey: ['report', 'server_patch_status'],
     queryFn: () => getRawPatchStatus(),
     staleTime: 1000 * 60 * 5 // 5 minutes
   })
+
+const formatDaysBehind = (record: PatchStatus) => {
+  if(record.patch_status === 'No Scan Data') {
+    return "N/A"
+  }
+  return record.days_behind.toString()
+}
+  
   const columns = [
     {
       title: 'Server ID',
@@ -42,6 +52,7 @@ const Page = () => {
     {
       title: 'Days Behind',
       dataIndex: 'days_behind',
+      render: (text: number, record: PatchStatus) => formatDaysBehind(record),
       key: 'days_behind',
     },
   ]
