@@ -1,21 +1,22 @@
 'use client'
 import React, { useState } from 'react';
-import { Card, Form, Input, Button, notification, Typography, Drawer, Spin } from 'antd'
+import { Card, Form, Input, Button, notification, Typography, Drawer, Spin, Divider } from 'antd'; // Added Divider
 const { TextArea } = Input;
 const { Text } = Typography;
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { getOSById, updateOS } from '@/app/actions/os/crudActions';
-import { UpdateOS } from '@/db/schema';
+import { UpdateOS, SelectOS } from '@/db/schema'; // Added SelectOS
+import ManageOSPatchVersions from './ManageOSPatchVersions'; // Import the new component
 
 const FormEditOS = ({ children, id }: { children: React.ReactNode, id: number }) => {
   const [open, setOpen] = useState(false);
   const [form] = Form.useForm();
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(false); // Consider removing if only updateLoading is used
   const [messageApi, contextHolder] = notification.useNotification();
   const queryClient = useQueryClient();
 
   // Fetch OS data
-  const { data: os, isLoading, isFetching } = useQuery({
+  const { data: os, isLoading, isFetching } = useQuery<SelectOS, Error>({ // Specify types
     queryKey: ['os', id],
     queryFn: () => getOSById(id, Date.now()), // Add timestamp to bust cache
     enabled: open, // Only fetch when drawer is open
@@ -176,6 +177,8 @@ const FormEditOS = ({ children, id }: { children: React.ReactNode, id: number })
               </Button>
             </Form.Item>
           </Form>
+          {/* Add the ManageOSPatchVersions component here */}
+          <ManageOSPatchVersions osId={id} />
         </Card>
       ) : (
         <div className="text-center text-red-500">
@@ -184,7 +187,7 @@ const FormEditOS = ({ children, id }: { children: React.ReactNode, id: number })
       )}
     </Drawer>
     </>
-  )
+  );
 }
 
 export default FormEditOS
