@@ -57,7 +57,12 @@ function AuthMenu() {
   return (
     <Space wrap>
       <NotificationCountBadge>
-        <Dropdown.Button menu={menuProps} placement="bottom" icon={<UserOutlined />}>
+        <Dropdown.Button 
+          data-testid="user-profile" 
+          menu={menuProps} 
+          placement="bottom" 
+          icon={<UserOutlined />}
+        >
           {session?.user?.email}
         </Dropdown.Button>
       </NotificationCountBadge>

@@ -10,7 +10,15 @@
     "db:migrate": "drizzle-kit migrate",
     "db:generate": "drizzle-kit generate",
     "db:push": "drizzle-kit push",
-    "test:e2e": "nightwatch"
+    "test:e2e": "node scripts/load-test-env.js && nightwatch",
+    "test:e2e:visual": "node scripts/load-test-env.js && nightwatch --env visual",
+    "test:e2e:auth": "node scripts/load-test-env.js && nightwatch tests/e2e/auth-flow.test.js",
+    "test:e2e:protected": "node scripts/load-test-env.js && nightwatch tests/e2e/protected-routes.test.js",
+    "test:e2e:data": "node scripts/load-test-env.js && nightwatch tests/e2e/data-operations.test.js",
+    "test:e2e:public": "node scripts/load-test-env.js && nightwatch tests/e2e/public-routes.test.js",
+    "test:e2e:login": "node scripts/load-test-env.js && nightwatch tests/e2e/login-page.test.js",
+    "test:e2e:login-flow": "node scripts/load-test-env.js && nightwatch tests/e2e/login-flow.test.js",
+    "test:e2e:db-write": "node scripts/load-test-env.js && nightwatch tests/e2e/database-write.test.js"
   },
   "dependencies": {
     "@ant-design/cssinjs": "^1.23.0",
