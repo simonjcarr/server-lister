@@ -15,7 +15,7 @@ const FormEditOS = ({ children, id }: { children: React.ReactNode, id: number })
   const queryClient = useQueryClient();
 
   // Fetch OS data
-  const { data: os, isLoading, isFetching, refetch } = useQuery({
+  const { data: os, isLoading, isFetching } = useQuery({
     queryKey: ['os', id],
     queryFn: () => getOSById(id, Date.now()), // Add timestamp to bust cache
     enabled: open, // Only fetch when drawer is open
@@ -33,8 +33,7 @@ const FormEditOS = ({ children, id }: { children: React.ReactNode, id: number })
         description: "OS has been updated successfully",
         duration: 3,
       });
-      form.resetFields();
-      setOpen(false);
+      
       
       // Force refetch all related queries
       console.log('Mutation successful - refetching queries');
@@ -43,6 +42,7 @@ const FormEditOS = ({ children, id }: { children: React.ReactNode, id: number })
       queryClient.refetchQueries({ queryKey: ['oss'] });
       queryClient.refetchQueries({ queryKey: ['os', id] });
       queryClient.refetchQueries({ queryKey: ['os'] });
+      setOpen(false);
     },
     onError: (error) => {
       console.error("Error updating OS:", error);
@@ -75,31 +75,7 @@ const FormEditOS = ({ children, id }: { children: React.ReactNode, id: number })
     }
   };
 
-  // Update form values when OS data changes
-  useEffect(() => {
-    if (os) {
-      console.log('Setting form values with OS data:', os);
-      form.setFieldsValue({
-        name: os.name,
-        version: os.version,
-        description: os.description,
-        EOLDate: os.EOLDate ? new Date(os.EOLDate).toISOString().split('T')[0] : '',
-      });
-    }
-  }, [os, form]);
-
-  // Ensure fresh data is fetched when drawer opens
-  useEffect(() => {
-    if (open) {
-      console.log('Drawer opened - forcing refetch for OS:', id);
-      // Completely remove the query from cache before refetching
-      queryClient.removeQueries({ queryKey: ['os', id] });
-      setTimeout(() => refetch(), 0); // Force refetch on next tick
-    } else {
-      // Reset form when drawer closes
-      form.resetFields();
-    }
-  }, [open, refetch, queryClient, id, form]);
+  
 
   return (
     <>
@@ -125,6 +101,7 @@ const FormEditOS = ({ children, id }: { children: React.ReactNode, id: number })
         >
           <Form
             form={form}
+            initialValues={{...os, EOLDate: os.EOLDate ? new Date(os.EOLDate).toISOString().split('T')[0] : ''}}
             layout="vertical"
             onFinish={onFinish}
             className="dark:text-white"
