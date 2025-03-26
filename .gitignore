@@ -44,3 +44,4 @@ next-env.d.ts
 sqlite.db
 
 tests/screenshots
+tests_output
