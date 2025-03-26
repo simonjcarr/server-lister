@@ -244,6 +244,12 @@ const scanResultsSchema = z
           usedGB: z.number(),
         })
       ),
+      users: z.array(
+        z.object({
+          username: z.string(),
+          localAccount: z.boolean(),
+        })
+      ),
     }),
     services: z.array(
       z.object({
@@ -263,12 +269,6 @@ const scanResultsSchema = z
       version: z.string(),
       patch_version: z.string(),
     }),
-    users: z.array(
-      z.object({
-        username: z.string(),
-        localAccount: z.boolean(),
-      })
-    ),
   })
   .strict();
 
