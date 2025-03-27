@@ -1,103 +1,142 @@
-// components/DrawIOEmbed.jsx
-import React, { useEffect, useRef, useState } from 'react';
+// DrawIO.tsx - Self-hosted DrawIO component
+import React, { useRef, useState, useEffect } from 'react';
 
-// IMPORTANT: Change this to your self-hosted URL
-// Use HTTPS if you configured it via a reverse proxy
-const SELF_HOSTED_DRAWIO_URL = 'http://<your-server-ip>:8080'; // Or 'https://<your-domain-or-ip>'
+// Self-hosted DrawIO URL - this should be the base URL of your DrawIO instance
+const DRAWIO_URL = 'http://localhost:8080';
 
-function DrawIOEmbed({ initialDiagramXml = '', onSave, onLoad }) {
-  const iframeRef = useRef(null);
-  const [isEditorReady, setIsEditorReady] = useState(false);
+interface DrawIOEmbedProps {
+  initialDiagramXml?: string;
+  onSave?: (xml: string) => void;
+  onLoad?: () => void;
+}
 
-  const getEmbedUrl = () => {
-    // Parameters remain largely the same
-    const params = new URLSearchParams({
-      embed: '1',
-      ui: 'atlas',
-      spin: '1',
-      modified: 'unsavedChanges',
-      proto: 'json',
-      // Add/remove other params as needed for self-hosted version
-    });
-    // Use the SELF_HOSTED_DRAWIO_URL
-    return `${SELF_HOSTED_DRAWIO_URL}?${params.toString()}`;
+function DrawIOEmbed({ initialDiagramXml, onSave, onLoad }: DrawIOEmbedProps) {
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const iframeRef = useRef<HTMLIFrameElement | null>(null);
+
+  // Construct URL with proper parameters
+  const getDrawioUrl = () => {
+    return `${DRAWIO_URL}?embed=1&proto=json&spin=1`;
   };
 
+  // Setup communication with the iframe
   useEffect(() => {
-    const handleMessage = (event) => {
-      // IMPORTANT: Update the origin check to match your self-hosted URL's origin
-      const expectedOrigin = new URL(SELF_HOSTED_DRAWIO_URL).origin;
-      if (event.origin !== expectedOrigin || !event.data) {
-        // console.log(`Ignoring message from origin: ${event.origin}. Expected: ${expectedOrigin}`);
-        return;
-      }
+    const handleMessage = (event: MessageEvent) => {
+      // Verify message origin is from our DrawIO instance
+      if (event.origin !== new URL(DRAWIO_URL).origin) return;
 
       try {
+        // Parse message from DrawIO
         const message = JSON.parse(event.data);
-        // console.log('Message from self-hosted draw.io:', message);
-
-        // --- The rest of the message handling logic remains the same ---
-        switch (message.event) {
-          case 'init':
-            setIsEditorReady(true);
-            if (onLoad) onLoad();
-            if (initialDiagramXml) {
-              postMessageToEditor({ action: 'load', xml: initialDiagramXml });
-            }
-            break;
-          case 'save':
-            if (onSave) onSave(message.xml);
-            // Optionally trigger export if needed:
-            // postMessageToEditor({ action: 'export', format: 'xmlsvg' });
-            break;
-          case 'autosave':
-            if (onSave) onSave(message.xml);
-            break;
-          case 'export':
-            console.log('Exported data:', message.data);
-            // Handle exported data
-            break;
-          case 'exit':
-            console.log('User requested exit');
-            break;
-          // ... other cases ...
+        console.log('Received message from DrawIO:', message);
+        
+        // Critical: When we receive init message, hide the loading spinner
+        if (message.event === 'init') {
+          console.log('DrawIO initialized!');
+          setIsLoading(false);
+          if (onLoad) onLoad();
+          
+          // If diagram data is provided, load it
+          if (initialDiagramXml && initialDiagramXml.length > 0) {
+            console.log('Loading initial diagram data');
+            sendMessageToDrawio({
+              action: 'load',
+              xml: initialDiagramXml
+            });
+          }
         }
-      } catch (e) {
-        console.error('Error parsing message from self-hosted draw.io:', e, event.data);
+        
+        // Handle the save event
+        if (message.event === 'save' && onSave && message.xml) {
+          console.log('Saving diagram data');
+          onSave(message.xml);
+        }
+      } catch (error) {
+        console.error('Error handling message from DrawIO:', error);
       }
     };
 
+    // Add event listener for messages
     window.addEventListener('message', handleMessage);
-    return () => window.removeEventListener('message', handleMessage);
-  }, [onSave, onLoad, initialDiagramXml]); // Dependencies
+    
+    // Clean up listener when component unmounts
+    return () => {
+      window.removeEventListener('message', handleMessage);
+    };
+  }, [initialDiagramXml, onSave, onLoad]);
 
-  const postMessageToEditor = (message) => {
-    if (iframeRef.current && iframeRef.current.contentWindow) {
-      // IMPORTANT: Update the targetOrigin to match your self-hosted URL's origin
-      const targetOrigin = new URL(SELF_HOSTED_DRAWIO_URL).origin;
-      iframeRef.current.contentWindow.postMessage(
-        JSON.stringify(message),
-        targetOrigin
-      );
-    } else {
-      console.warn('Self-hosted draw.io iframe not ready to receive messages.');
+  // Function to send messages to the DrawIO iframe
+  const sendMessageToDrawio = (message: { action: string; xml?: string }) => {
+    if (iframeRef.current?.contentWindow) {
+      const targetOrigin = new URL(DRAWIO_URL).origin;
+      iframeRef.current.contentWindow.postMessage(JSON.stringify(message), targetOrigin);
     }
   };
 
-  // --- Trigger functions (triggerSave, triggerExport) remain the same ---
-
-  // --- Render ---
   return (
-    <div style={{ width: '100%', height: '70vh', border: '1px solid #ccc' }}>
-      <iframe
-        ref={iframeRef}
-        src={getEmbedUrl()} // This now points to your local instance
-        style={{ width: '100%', height: '100%', border: 'none' }}
-        title="Diagram Editor (Self-Hosted)"
-      // Optional: Add sandbox attribute for extra security if needed,
-      // but ensure it allows necessary permissions for draw.io
-      // sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
-      />
+    <div style={{ width: '100%' }}>
+      <div style={{ 
+        width: '100%', 
+        height: '70vh',
+        position: 'relative',
+        border: '1px solid #ccc'
+      }}>
+        <iframe
+          ref={iframeRef}
+          src={getDrawioUrl()}
+          style={{ 
+            width: '100%', 
+            height: '100%', 
+            border: 'none',
+          }}
+          onError={() => {
+            console.error('Error loading DrawIO iframe');
+            setLoadError('Failed to load DrawIO editor. Make sure it\'s running at ' + DRAWIO_URL);
+            setIsLoading(false);
+          }}
+          title="DrawIO Editor"
+        />
+        
+        {isLoading && (
+          <div style={{ 
+            position: 'absolute', 
+            top: '50%', 
+            left: '50%', 
+            transform: 'translate(-50%, -50%)',
+            backgroundColor: 'rgba(255,255,255,0.7)',
+            padding: '10px 20px',
+            borderRadius: '4px',
+            textAlign: 'center',
+            zIndex: 1000 // Ensure this is above the iframe
+          }}>
+            <div>Loading diagram editor...</div>
+            <div style={{ fontSize: '0.8rem', marginTop: '8px' }}>Connecting to {DRAWIO_URL}</div>
+          </div>
+        )}
+        
+        {loadError && (
+          <div style={{ 
+            position: 'absolute', 
+            top: '50%', 
+            left: '50%', 
+            transform: 'translate(-50%, -50%)',
+            backgroundColor: 'rgba(255,255,255,0.9)',
+            padding: '20px',
+            borderRadius: '4px',
+            border: '1px solid #f44336',
+            maxWidth: '80%',
+            textAlign: 'center',
+            zIndex: 1000 // Ensure this is above the iframe
+          }}>
+            <div style={{ color: '#f44336', fontWeight: 'bold', marginBottom: '10px' }}>Error</div>
+            <div>{loadError}</div>
+            <div style={{ fontSize: '0.8rem', marginTop: '10px' }}>
+              Check that DrawIO is running and accessible at <a href={DRAWIO_URL} target="_blank" rel="noopener noreferrer">{DRAWIO_URL}</a>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
