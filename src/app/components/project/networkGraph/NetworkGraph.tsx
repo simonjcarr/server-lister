@@ -63,10 +63,10 @@ async function loadData(): Promise<GraphData | null> {
       { id: uuidv4(), from: 'fw1', to: 'client2' },
     ],
   };
-  // Simulate loading delay
-  await new Promise(resolve => setTimeout(resolve, 500));
-  console.log('Loaded default data.');
-  return defaultData; // Or return null if loading fails or no data exists
+  // DO NOT delay in development to avoid loading state issues
+  // await new Promise(resolve => setTimeout(resolve, 500));
+  console.log('Loaded default data:', defaultData);
+  return defaultData; // Return default data to ensure graph initializes properly
 }
 
 // Placeholder function to simulate saving data to a backend
@@ -132,10 +132,21 @@ const NetworkGraph: React.FC = () => {
 
   // --- Initialization ---
   useEffect(() => {
+    console.log('NetworkGraph component mounted with key:', key);
+    // Always reset loading state on mount
+    setIsLoading(true);
+    
     // Avoid duplicate initialization if refs are already populated
-    if (networkInstanceRef.current || !visJsRef.current) {
-      console.log('Skipping initialization - already initialized or container missing');
-      return; // Early return to prevent duplicate initialization
+    if (networkInstanceRef.current) {
+      console.log('Skipping initialization - network already initialized');
+      setIsLoading(false); // Make sure to update loading state
+      return;
+    }
+
+    if (!visJsRef.current) {
+      console.log('Skipping initialization - container ref missing');
+      // Don't set loading to false yet - wait for the ref to be available
+      return;
     }
 
     let isMounted = true; // Flag to prevent state updates on unmounted component
@@ -145,118 +156,138 @@ const NetworkGraph: React.FC = () => {
     const visJsContainer = visJsRef.current;
 
     const initializeGraph = async () => {
-      console.log('Initializing graph...');
-      setIsLoading(true);
-      const initialData = await loadData();
+      try {
+        console.log('Initializing graph...');
+        const initialData = await loadData();
 
-      // Ensure we are still mounted and container exists before proceeding
-      if (!isMounted || !visJsRef.current) {
-        console.log('Initialization aborted: Component unmounted or container missing');
-        return;
-      }
+        // Ensure we are still mounted and container exists before proceeding
+        if (!isMounted) {
+          console.log('Initialization aborted: Component unmounted');
+          return;
+        }
+        
+        if (!visJsRef.current) {
+          console.log('Initialization aborted: Container missing');
+          if (isMounted) setIsLoading(false); // Update loading state
+          return;
+        }
 
-      if (initialData) {
-        // Apply styles based on nodeType when loading
-        const styledNodes = initialData.nodes.map(node => ({
-          ...node,
-          ...getNodeStyle(node.nodeType),
-        }));
-        nodesDataSetRef.current.clear();
-        edgesDataSetRef.current.clear();
-        nodesDataSetRef.current.add(styledNodes);
-        edgesDataSetRef.current.add(initialData.edges);
-      } else {
-        // Handle case where no data is loaded (e.g., show empty graph)
-        nodesDataSetRef.current.clear();
-        edgesDataSetRef.current.clear();
-        console.log("No initial data loaded, starting with an empty graph.");
-      }
+        if (initialData) {
+          console.log('Initial data loaded, applying styles...');
+          // Apply styles based on nodeType when loading
+          const styledNodes = initialData.nodes.map(node => ({
+            ...node,
+            ...getNodeStyle(node.nodeType),
+          }));
+          nodesDataSetRef.current.clear();
+          edgesDataSetRef.current.clear();
+          nodesDataSetRef.current.add(styledNodes);
+          edgesDataSetRef.current.add(initialData.edges);
+        } else {
+          // Handle case where no data is loaded (e.g., show empty graph)
+          nodesDataSetRef.current.clear();
+          edgesDataSetRef.current.clear();
+          console.log("No initial data loaded, starting with an empty graph.");
+        }
 
-      // --- Create Network Instance ---
-      // Check again if container exists and instance isn't already created in this effect run
-      if (visJsRef.current && !network) {
-        const options: Options = {
-          physics: {
-            enabled: true,
-            stabilization: { iterations: 1000, fit: true },
-            solver: 'barnesHut',
-            barnesHut: { gravitationalConstant: -8000, springConstant: 0.04, springLength: 120 }
-          },
-          interaction: {
-            dragNodes: true, dragView: true, zoomView: true, tooltipDelay: 200, hover: true
-          },
-          manipulation: {
-            enabled: false,
-            addEdge: (edgeData, callback) => {
-              const newEdge: NetworkEdge = { ...edgeData, id: uuidv4() };
-              if (newEdge.from === newEdge.to) {
-                console.warn("Cannot connect node to itself.");
-                callback(null);
-              } else {
-                console.log('Adding edge:', newEdge);
-                edgesDataSetRef.current.add(newEdge);
-                callback(newEdge);
-                setInteractionMode('idle');
-                networkInstanceRef.current?.disableEditMode();
+        // --- Create Network Instance ---
+        // Check again if container exists and instance isn't already created in this effect run
+        if (visJsRef.current && !network) {
+          console.log('Creating network instance...');
+          const options: Options = {
+            physics: {
+              enabled: true,
+              stabilization: { iterations: 1000, fit: true },
+              solver: 'barnesHut',
+              barnesHut: { gravitationalConstant: -8000, springConstant: 0.04, springLength: 120 }
+            },
+            interaction: {
+              dragNodes: true, dragView: true, zoomView: true, tooltipDelay: 200, hover: true
+            },
+            manipulation: {
+              enabled: false,
+              addEdge: (edgeData, callback) => {
+                const newEdge: NetworkEdge = { ...edgeData, id: uuidv4() };
+                if (newEdge.from === newEdge.to) {
+                  console.warn("Cannot connect node to itself.");
+                  callback(null);
+                } else {
+                  console.log('Adding edge:', newEdge);
+                  edgesDataSetRef.current.add(newEdge);
+                  callback(newEdge);
+                  setInteractionMode('idle');
+                  networkInstanceRef.current?.disableEditMode();
+                }
+              },
+              editNode: (nodeData, callback) => {
+                console.log('Editing node (raw):', nodeData);
+                const cleanNodeData: Partial<NetworkNode> = {
+                  id: nodeData.id, label: nodeData.label,
+                  // Don't automatically apply style here as it may override dragged node's style
+                };
+                callback(cleanNodeData as NetworkNode);
               }
             },
-            editNode: (nodeData, callback) => {
-              console.log('Editing node (raw):', nodeData);
-              const cleanNodeData: Partial<NetworkNode> = {
-                id: nodeData.id, label: nodeData.label,
-                // Don't automatically apply style here as it may override dragged node's style
-              };
-              callback(cleanNodeData as NetworkNode);
-            }
-          },
-        };
+          };
 
-        try {
-          console.log('Creating network with container:', visJsRef.current);
-          network = new Network(
-            visJsRef.current,
-            { 
-              nodes: nodesDataSetRef.current, 
-              edges: edgesDataSetRef.current 
-            },
-            options
-          );
-          
-          // Store in ref for other methods to access
-          networkInstanceRef.current = network;
-          
-          // Add event listeners here
-          network.on('click', (params) => {
-            console.log('Click event:', params);
-            // Handle node/edge selection, etc.
-          });
+          try {
+            console.log('Creating network with container:', visJsRef.current);
+            network = new Network(
+              visJsRef.current,
+              { 
+                nodes: nodesDataSetRef.current, 
+                edges: edgesDataSetRef.current 
+              },
+              options
+            );
+            
+            // Store in ref for other methods to access
+            networkInstanceRef.current = network;
+            
+            // Add event listeners here
+            network.on('click', (params) => {
+              console.log('Click event:', params);
+              // Handle node/edge selection, etc.
+            });
 
-          // Handle potential DOM errors by setting up error handler
-          network.on('beforeDrawing', () => {
-            // This event fires frequently during rendering
-            // We can use it to detect if the network is still functioning properly
-            if (!visJsRef.current || !document.body.contains(visJsRef.current)) {
-              console.error('DOM inconsistency detected: vis container not in document');
-              // Force a complete remount of the component
-              if (isMounted) {
-                setKey(prev => prev + 1);
+            // Handle potential DOM errors by setting up error handler
+            network.on('beforeDrawing', () => {
+              // This event fires frequently during rendering
+              // We can use it to detect if the network is still functioning properly
+              if (!visJsRef.current || !document.body.contains(visJsRef.current)) {
+                console.error('DOM inconsistency detected: vis container not in document');
+                // Force a complete remount of the component
+                if (isMounted) {
+                  setKey(prev => prev + 1);
+                }
               }
+            });
+            
+            console.log('Network instance created successfully.');
+          } catch (error) {
+            console.error('Error creating network:', error);
+            // If we hit an error during creation, increment the key to force a remount on next render
+            if (isMounted) {
+              setKey(prev => prev + 1);
             }
-          });
-          
-          console.log('Network instance created successfully.');
-        } catch (error) {
-          console.error('Error creating network:', error);
-          // If we hit an error during creation, increment the key to force a remount on next render
-          if (isMounted) {
-            setKey(prev => prev + 1);
           }
         }
-      }
 
-      setIsLoading(false);
+        // Final step: update loading state
+        if (isMounted) {
+          console.log('Initialization complete, setting loading to false');
+          setIsLoading(false);
+        }
+      } catch (error) {
+        console.error('Unexpected error during graph initialization:', error);
+        // Make sure we still update the loading state even if there's an error
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
     };
 
+    // Start the initialization process
     initializeGraph();
 
     // Cleanup function - VERY IMPORTANT for preventing memory leaks and DOM issues
@@ -301,15 +332,29 @@ const NetworkGraph: React.FC = () => {
     event.dataTransfer.effectAllowed = 'copy'; // Show copy cursor
   };
 
-  const handleDragOver = (event: React.DragEvent) => {
-    event.preventDefault(); // Necessary to allow dropping
-    event.dataTransfer.dropEffect = 'copy';
-  };
-
   // Helper function to add a node at specific coordinates
   const handleAddNode = useCallback((nodeType: NodeType, clientX: number, clientY: number) => {
+    console.log('handleAddNode called with:', nodeType, clientX, clientY);
+    
+    if (!networkInstanceRef.current) {
+      console.error('Cannot add node: Network instance not initialized');
+      // Create a fallback node if network isn't ready
+      const newNode: NetworkNode = {
+        id: uuidv4(),
+        label: `New ${nodeType}`,
+        nodeType,
+        x: 0, // Use center if we can't convert coordinates
+        y: 0,
+        ...getNodeStyle(nodeType)
+      };
+      nodesDataSetRef.current?.add(newNode);
+      console.log('Added node at default position:', newNode);
+      return;
+    }
+    
     // Get canvas coordinates from screen coordinates
-    const canvasPosition = networkInstanceRef.current?.DOMtoCanvas({ x: clientX, y: clientY }) || { x: 0, y: 0 };
+    const canvasPosition = networkInstanceRef.current.DOMtoCanvas({ x: clientX, y: clientY });
+    console.log('Converted to canvas position:', canvasPosition);
     
     const newNode: NetworkNode = {
       id: uuidv4(), // Generate a unique ID
@@ -323,16 +368,6 @@ const NetworkGraph: React.FC = () => {
     console.log('Adding node:', newNode);
     nodesDataSetRef.current?.add(newNode);
   }, []);
-
-  const handleDrop = useCallback((event: React.DragEvent) => {
-    event.preventDefault(); // Prevent default behavior
-    const nodeType = event.dataTransfer.getData('application/reactflow') as NodeType;
-    
-    if (nodeTypes.includes(nodeType)) {
-      // Add the node at the drop position
-      handleAddNode(nodeType, event.clientX, event.clientY);
-    }
-  }, [handleAddNode, nodeTypes]);
 
   // Cancel edge creation
   const handleCancelAddEdge = useCallback(() => {
@@ -384,8 +419,12 @@ const NetworkGraph: React.FC = () => {
   // --- Render ---
   return (
     <div className="network-graph-container" style={{ width: '100%', height: '600px', display: 'flex', flexDirection: 'column' }}>
-      {isLoading && <div style={{ padding: '20px', textAlign: 'center' }}>Loading network graph...</div>}
-      
+      {/* Debug info - uncomment for troubleshooting */}
+      <div style={{ background: '#f8f9fa', padding: '4px 8px', fontSize: '12px', color: '#666', borderBottom: '1px solid #ddd' }}>
+        Status: {isLoading ? 'Loading' : 'Ready'} | 
+        Key: {key} | 
+        Network Instance: {networkInstanceRef.current ? 'Initialized' : 'Not Initialized'}
+      </div>
       {/* Controls */}
       <div className="controls" style={{ display: 'flex', padding: '10px', backgroundColor: '#f5f5f5', borderBottom: '1px solid #ddd' }}>
         {/* Node Palette */}
@@ -441,18 +480,37 @@ const NetworkGraph: React.FC = () => {
       
       {/* Graph Visualization Container */}
       <div 
-        style={{ flex: 1, position: 'relative' }}
-        onDragOver={handleDragOver}
-        onDrop={handleDrop}
+        id="network-container"
+        style={{
+          flex: 1, 
+          position: 'relative',
+          border: '1px solid #ddd',
+          backgroundColor: '#f9f9f9'
+        }}
+        onDragOver={(e) => {
+          e.preventDefault();
+          e.dataTransfer.dropEffect = 'copy';
+          console.log('Drag over network container');
+        }}
+        onDrop={(e) => {
+          e.preventDefault();
+          const nodeType = e.dataTransfer.getData('application/reactflow') as NodeType;
+          console.log('Drop detected with node type:', nodeType);
+          
+          if (nodeTypes.includes(nodeType)) {
+            // Add the node at the drop position
+            handleAddNode(nodeType, e.clientX, e.clientY);
+          } else {
+            console.warn('Invalid node type from drop event:', nodeType);
+          }
+        }}
       >
-        {/* Only render the vis container when not loading */}
-        {!isLoading && (
-          <div 
-            ref={visJsRef} 
-            style={{ width: '100%', height: '100%', border: '1px solid #ddd', position: 'absolute', top: 0, left: 0 }} 
-            key={key} // Use key to force remount
-          />
-        )}
+        {/* Always render the vis container - this prevents SSR issues */}
+        <div 
+          ref={visJsRef} 
+          style={{ width: '100%', height: '100%', position: 'absolute', top: 0, left: 0 }} 
+          key={key} // Use key to force remount
+        />
         
         {/* Status overlay */}
         {isLoading && (
