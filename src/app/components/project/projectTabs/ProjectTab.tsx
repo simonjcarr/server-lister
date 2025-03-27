@@ -11,7 +11,9 @@ const ProjectTab = ({ projectId }: { projectId: number }) => {
   })
   return (
     <>
-      <div className="text-gray-600 text-sm pb-2 mb-2 border-b border-gray-700">{data?.description}</div>
+      {isLoading && <p>Loading...</p>}
+      {error && <p>Error: {error.message}</p>}
+      {data && <div className="text-gray-600 text-sm pb-2 mb-2 border-b border-gray-700">{data?.description}</div>}
     </>
   )
 }
