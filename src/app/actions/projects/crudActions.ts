@@ -158,21 +158,40 @@ export async function deleteProject(id: number) {
   }
 }
 
-export async function getPrimaryProjectEngineers(projectId: number) {
+export async function getPrimaryProjectEngineerIDs(projectId: number) {
   try {
     const engineers = await db
       .select({
-        id: users.id,
-        name: users.name,
-        email: users.email,
+        id: primaryProjectEngineers.userId,
       })
-      .from(users)
-      .innerJoin(primaryProjectEngineers, eq(users.id, primaryProjectEngineers.userId))
+      .from(primaryProjectEngineers)
       .where(eq(primaryProjectEngineers.projectId, projectId));
-    return engineers;
+    return engineers.map(pe => pe.id);
   } catch (error: unknown) {
     console.error(`Error fetching primary engineers for project with ID ${projectId}:`, error);
     throw new Error(error instanceof Error ? error.message : 'Failed to fetch primary engineers');
   }
 }
+
+export async function updatePrimaryProjectEngineers(projectId: number, userIds: string[]) {
+  try {
+    await db.delete(primaryProjectEngineers)
+      .where(eq(primaryProjectEngineers.projectId, projectId));
+    
+    await db.insert(primaryProjectEngineers)
+      .values(userIds.map((userId) => ({
+        projectId,
+        userId
+      })))
+    
+    return { success: true, data: userIds };
+  } catch (error: unknown) {
+    console.error(`Error updating primary engineers for project with ID ${projectId}:`, error);
+    return { 
+      success: false, 
+      error: error instanceof Error ? error.message : 'Failed to update primary engineers' 
+    };
+  }
+}
+  
   
