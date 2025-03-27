@@ -5,5 +5,6 @@
 docker run -d \
   --name=drawio \
   -p 8080:8080 \
+  -e DRAWIO_FRAME_ANCESTORS="'self' http://localhost:3000" \
   --restart=always \
   jgraph/drawio
