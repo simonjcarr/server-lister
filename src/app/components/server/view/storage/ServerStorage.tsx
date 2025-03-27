@@ -1,11 +1,33 @@
 import { useQuery } from "@tanstack/react-query"
-import { Empty, Spin, Table } from "antd"
+import { Empty, Flex, Progress, Spin, Table } from "antd"
 import { getServerStorage } from "@/app/actions/scan/crudActions"
+import type { ProgressProps } from 'antd';
 
 type Storage = {
   diskMountPath: string
   totalGB: number
   usedGB: number
+}
+
+const SpaceAvailable = (record: Storage) => {
+  const conicColors: ProgressProps['strokeColor'] = {
+    '0%': '#87d068',
+    '50%': '#ffe58f',
+    '100%': '#ffccc7',
+  };
+  const available = record.totalGB - record.usedGB
+  const percentage = (available / record.totalGB) * 100
+  return (
+    <Flex gap="small">
+      <span>{available.toFixed(2)}</span>
+      <Progress
+        type="circle"
+        percent={percentage}
+        strokeColor={conicColors}
+        size={20}
+      />
+    </Flex>
+  )
 }
 
 const ServerStorage = ({ serverId }: { serverId: number }) => {
@@ -34,7 +56,7 @@ const ServerStorage = ({ serverId }: { serverId: number }) => {
     },
     {
       title: "Available (GB)",
-      render: (text: string, record: Storage) => (record.totalGB - record.usedGB).toFixed(2),
+      render: (text: string, record: Storage) => <SpaceAvailable record={record} />,
       key: "availableGB",
     },
   ]
