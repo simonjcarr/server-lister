@@ -15,11 +15,11 @@ export async function getAllUsers() {
   try {
     const allUsers = await db.select().from(users).orderBy(users.email);
     return allUsers;
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error fetching users:', error);
     return { 
       success: false, 
-      error: error.message || 'Failed to fetch users' 
+      error: error instanceof Error ? error.message : 'Failed to fetch users' 
     };
   }
 }
@@ -35,11 +35,11 @@ export async function getUserById(userId: string) {
   try {
     const user = await db.select().from(users).where(eq(users.id, userId));
     return user;
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error fetching user:', error);
     return { 
       success: false, 
-      error: error.message || 'Failed to fetch user' 
+      error: error instanceof Error ? error.message : 'Failed to fetch user' 
     };
   }
 }
@@ -58,11 +58,11 @@ export async function updateUserRoles(userId: string, roles: string[]) {
     return {
       success: true
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error updating user roles:', error);
     return { 
       success: false, 
-      error: error.message || 'Failed to update user roles' 
+      error: error instanceof Error ? error.message : 'Failed to update user roles' 
     };
   }
 }
