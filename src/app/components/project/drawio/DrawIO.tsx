@@ -1,5 +1,5 @@
 // DrawIO.tsx - Self-hosted DrawIO component
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect } from 'react';
 
 // Self-hosted DrawIO URL with embed mode parameters
 const DRAWIO_URL = 'http://localhost:8080?embed=1&proto=json';
@@ -12,9 +12,10 @@ interface DrawIOEmbedProps {
   diagramId?: string;
 }
 
-function DrawIOEmbed({ initialDiagramXml, onSave, onLoad, diagramId }: DrawIOEmbedProps) {
+function DrawIOEmbed({ initialDiagramXml, onSave, onLoad, diagramId="0" }: DrawIOEmbedProps) {
+  console.log(diagramId)
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
-  const [isFrameReady, setIsFrameReady] = useState(false);
+  // const [isFrameReady, setIsFrameReady] = useState(false);
 
   // Function to save diagram to database
   const saveDiagramToDatabase = (xml: string) => {
@@ -44,7 +45,7 @@ function DrawIOEmbed({ initialDiagramXml, onSave, onLoad, diagramId }: DrawIOEmb
   };
 
   // Post a message to the iframe
-  const postMessage = (message: any) => {
+  const postMessage = (message: unknown) => {
     if (iframeRef.current?.contentWindow) {
       iframeRef.current.contentWindow.postMessage(JSON.stringify(message), '*');
     }
@@ -58,7 +59,7 @@ function DrawIOEmbed({ initialDiagramXml, onSave, onLoad, diagramId }: DrawIOEmb
           // Handle messages from draw.io
           if (event.data === 'ready') {
             console.log('Draw.io is ready');
-            setIsFrameReady(true);
+            // setIsFrameReady(true);
             if (onLoad) onLoad();
           } else if (event.data.startsWith('{')) {
             const msg = JSON.parse(event.data);
