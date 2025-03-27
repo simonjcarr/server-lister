@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query"
-import { Empty, Flex, Progress, Spin, Table } from "antd"
+import { Col, Empty, Progress, Row, Spin, Table } from "antd"
 import { getServerStorage } from "@/app/actions/scan/crudActions"
 import type { ProgressProps } from 'antd';
 
@@ -9,24 +9,27 @@ type Storage = {
   usedGB: number
 }
 
-const SpaceAvailable = (record: Storage) => {
+const SpaceAvailable = ({ record }: { record: Storage }) => {
   const conicColors: ProgressProps['strokeColor'] = {
-    '0%': '#87d068',
-    '50%': '#ffe58f',
-    '100%': '#ffccc7',
+    '0%': '#00ff00',
+    '50%': '#FFBF00',
+    '100%': '#ff0000',
   };
   const available = record.totalGB - record.usedGB
-  const percentage = (available / record.totalGB) * 100
+  const percentage = 100 -(available / record.totalGB) * 100
+  console.log(record.diskMountPath,percentage)
   return (
-    <Flex gap="small">
-      <span>{available.toFixed(2)}</span>
+    <Row>
+      <Col span={16}>{available.toFixed(2)}</Col>
+      <Col span={8}>
       <Progress
         type="circle"
         percent={percentage}
         strokeColor={conicColors}
         size={20}
       />
-    </Flex>
+      </Col>
+    </Row>
   )
 }
 
