@@ -2,6 +2,7 @@
 import React, { Suspense, useState, useEffect } from 'react'
 import { useParams, usePathname } from 'next/navigation'
 import DrawIOEmbed from '@/app/components/project/drawio/DrawIO'
+import ViewProject from '@/app/components/project/ViewProject';
 
 // Dynamically import the NetworkGraph with no SSR to avoid DOM conflicts
 
@@ -19,11 +20,10 @@ const ProjectPage = () => {
   }, [pathname])
   
   return (
-    <div className="project-page" style={{ padding: '20px' }}>
-      <h1 style={{ marginBottom: '20px' }}>Project {id}</h1>
-      <Suspense fallback={<div style={{ padding: '40px', textAlign: 'center', background: '#f5f5f5', border: '1px solid #ddd' }}>Loading network graph...</div>}>
-        <DrawIOEmbed onSave={() => {}} onLoad={() => {}} initialDiagramXml="" />
-      </Suspense>
+    <div className="project-page" >
+        {/* <DrawIOEmbed onSave={() => {}} onLoad={() => {}} initialDiagramXml="" /> */}
+        <ViewProject projectId={Number(id)} />
+      
     </div>
   )
 }
