@@ -1,7 +1,7 @@
 "use server";
 
 import { db } from '@/db';
-import { projects, business, users, primaryProjectEngineers } from '@/db/schema';
+import { projects, business, primaryProjectEngineers } from '@/db/schema';
 import { revalidatePath } from 'next/cache';
 import { eq } from 'drizzle-orm';
 import type { InsertProject } from '@/db/schema';
