@@ -13,6 +13,7 @@ import FormAddLocation from '../../location/FormAddLocation';
 import FormAddProject from '../../project/FormAddProject';
 import FormAddBusiness from '../../business/FormAddBusiness';
 import FormAddOS from '../../os/FormAddOS';
+import ProjectList from '../../project/ProjectList';
 
 
 
@@ -118,11 +119,9 @@ const App: React.FC = () => {
         },
         {
           key: 'project-list',
-          label: 'Project List',
+          label: <ProjectList><div>Project List</div></ProjectList>,
           icon: <FaRegListAlt />,
-          onClick: () => {
-            router.push('/project');
-          },
+          
         }
       ],
     },

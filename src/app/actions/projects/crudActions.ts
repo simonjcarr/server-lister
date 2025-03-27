@@ -1,7 +1,7 @@
 "use server";
 
 import { db } from '@/db';
-import { projects } from '@/db/schema';
+import { projects, business } from '@/db/schema';
 import { revalidatePath } from 'next/cache';
 import { eq } from 'drizzle-orm';
 import type { InsertProject } from '@/db/schema';
@@ -43,13 +43,38 @@ export async function createProject(formData: InsertProject) {
  */
 export async function getProjects() {
   try {
-    const allProjects = await db.select().from(projects).orderBy(projects.name);
+    const allProjects = await db
+    .select({
+      id: projects.id,
+      name: projects.name,
+      description: projects.description,
+      businessName: business.name,
+      businessId: projects.business,
+      code: projects.code,
+      createdAt: projects.createdAt,
+      updatedAt: projects.updatedAt,
+    })
+    .from(projects)
+    .leftJoin(business, eq(projects.business, business.id))
+    .orderBy(projects.name);
     return allProjects
   } catch (error: unknown) {
     console.error('Error fetching projects:', error);
     throw new Error(error instanceof Error ? error.message : 'Failed to fetch projects');
   }
 }
+
+export type ProjectData = {
+  id: number;
+  name: string;
+  description: string | null;
+  businessName: string | null;
+  businessId: number | null;
+  code: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
 
 /**
  * Retrieves a project by ID
