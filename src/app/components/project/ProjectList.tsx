@@ -40,6 +40,7 @@ const ProjectList = ({ children }: { children: React.ReactNode }) => {
           <Table
           onRow={(record: ProjectData) => ({
             onClick: () => {
+              setOpen(false)
               router.push(`/project/${record.id}`)
             }
           })}
