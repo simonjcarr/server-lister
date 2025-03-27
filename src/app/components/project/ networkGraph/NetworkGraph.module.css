@@ -1,0 +1,161 @@
+/* src/components/NetworkGraph.module.css */
+.graphContainerWrapper {
+  display: flex;
+  height: 80vh; /* Adjust height as needed */
+  border: 1px solid #ccc;
+  position: relative; /* Needed for absolute positioning of overlays */
+}
+
+.palette {
+  width: 180px;
+  padding: 10px;
+  border-right: 1px solid #eee;
+  background-color: #f9f9f9;
+  overflow-y: auto;
+  flex-shrink: 0; /* Prevent palette from shrinking */
+}
+
+.palette h3 {
+  margin-top: 0;
+  margin-bottom: 10px;
+  font-size: 1em;
+  text-align: center;
+}
+
+.paletteNode {
+  border: 1px solid #ddd;
+  background-color: #fff;
+  padding: 8px;
+  margin-bottom: 8px;
+  border-radius: 4px;
+  cursor: grab;
+  text-align: center;
+  font-size: 0.9em;
+}
+
+.paletteNode:active {
+  cursor: grabbing;
+}
+
+.cyContainer {
+  flex-grow: 1; /* Take remaining space */
+  position: relative; /* For loading overlay */
+  background-color: #fff; /* Ensure background for drop events */
+}
+
+.loadingOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(255, 255, 255, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 1.2em;
+  z-index: 10;
+}
+
+.controls {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  background-color: rgba(255, 255, 255, 0.9);
+  padding: 8px 12px;
+  border-radius: 5px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  z-index: 5; /* Above graph but below modal */
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.controls button {
+  padding: 8px 15px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9em;
+}
+
+.controls button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.controls .instructions {
+    font-size: 0.8em;
+    color: #555;
+    margin: 0;
+}
+
+/* Edit Modal Styles */
+.editModalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000; /* Ensure it's on top */
+}
+
+.editModal {
+  background-color: white;
+  padding: 20px 30px;
+  border-radius: 8px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  min-width: 300px;
+}
+
+.editModal h3 {
+  margin-top: 0;
+  margin-bottom: 15px;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 10px;
+}
+
+.editModal label {
+  display: block;
+  margin-bottom: 10px;
+  font-weight: bold;
+}
+
+.editModal input[type="text"],
+.editModal select {
+  width: 100%;
+  padding: 8px;
+  margin-top: 4px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-sizing: border-box; /* Include padding in width */
+}
+
+.editModalButtons {
+  margin-top: 20px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.editModalButtons button {
+   padding: 8px 15px;
+   border: none;
+   border-radius: 4px;
+   cursor: pointer;
+}
+
+.editModalButtons button:first-of-type { /* Save button */
+   background-color: #28a745;
+   color: white;
+}
+.editModalButtons button:last-of-type { /* Cancel button */
+   background-color: #6c757d;
+   color: white;
+}
