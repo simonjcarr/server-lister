@@ -5,7 +5,9 @@ import { useParams } from 'next/navigation'
 const ProjectPage = () => {
   const { id } = useParams()
   return (
-    <div>Project {id}</div>
+    <>
+      <div>Project {id}</div>
+    </>
   )
 }
 
