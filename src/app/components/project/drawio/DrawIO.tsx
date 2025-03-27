@@ -117,6 +117,7 @@ function DrawIOEmbed({ initialDiagramXml, onSave, onLoad, diagramId="0" }: DrawI
     return () => {
       window.removeEventListener('message', messageHandler);
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialDiagramXml, onLoad, onSave]);
 
   return (
