@@ -81,7 +81,21 @@ export type ProjectData = {
  */
 export async function getProjectById(id: number) {
   try {
-    const projectData = await db.select().from(projects).where(eq(projects.id, id)).limit(1);
+    const projectData = await db
+    .select({
+      id: projects.id,
+      name: projects.name,
+      description: projects.description,
+      businessName: business.name,
+      businessId: projects.business,
+      code: projects.code,
+      createdAt: projects.createdAt,
+      updatedAt: projects.updatedAt,
+    })
+    .from(projects)
+    .innerJoin(business, eq(projects.business, business.id))
+    .where(eq(projects.id, id))
+    .limit(1);
     if (projectData.length === 0) {
       throw new Error('Project not found');
     }
