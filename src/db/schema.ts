@@ -101,6 +101,8 @@ export const projects = pgTable(
   (table) => [uniqueIndex("unique_project_name_idx").on(table.name)]
 );
 
+
+
 export const insertProjectSchema = createInsertSchema(projects).extend({
   description: z.string().nullable(),
   business: z.number().nullable(),
@@ -115,6 +117,22 @@ export const updateProjectSchema = createUpdateSchema(projects).extend({
 export type InsertProject = z.infer<typeof insertProjectSchema>
 export type SelectProject = z.infer<typeof selectProjectSchema>
 export type UpdateProject = z.infer<typeof updateProjectSchema>
+
+export const primaryProjectUsers = pgTable(
+  "primary_project_users",
+  {
+    userId: text("userId").notNull(),
+    projectId: integer("project_id").notNull(),
+  },
+  (table) => [uniqueIndex("unique_user_project_idx").on(table.userId, table.projectId)]
+)
+
+export const insertPrimaryProjectUserSchema = createInsertSchema(primaryProjectUsers)
+export const selectPrimaryProjectUserSchema = createSelectSchema(primaryProjectUsers)
+export const updatePrimaryProjectUserSchema = createUpdateSchema(primaryProjectUsers)
+export type InsertPrimaryProjectUser = z.infer<typeof insertPrimaryProjectUserSchema>
+export type SelectPrimaryProjectUser = z.infer<typeof selectPrimaryProjectUserSchema>
+export type UpdatePrimaryProjectUser = z.infer<typeof updatePrimaryProjectUserSchema>
 
 export const business = pgTable(
   "business",
