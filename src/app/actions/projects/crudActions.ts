@@ -1,7 +1,7 @@
 "use server";
 
 import { db } from '@/db';
-import { projects, business } from '@/db/schema';
+import { projects, business, users, primaryProjectEngineers } from '@/db/schema';
 import { revalidatePath } from 'next/cache';
 import { eq } from 'drizzle-orm';
 import type { InsertProject } from '@/db/schema';
@@ -157,3 +157,22 @@ export async function deleteProject(id: number) {
     };
   }
 }
+
+export async function getPrimaryProjectEngineers(projectId: number) {
+  try {
+    const engineers = await db
+      .select({
+        id: users.id,
+        name: users.name,
+        email: users.email,
+      })
+      .from(users)
+      .innerJoin(primaryProjectEngineers, eq(users.id, primaryProjectEngineers.userId))
+      .where(eq(primaryProjectEngineers.projectId, projectId));
+    return engineers;
+  } catch (error: unknown) {
+    console.error(`Error fetching primary engineers for project with ID ${projectId}:`, error);
+    throw new Error(error instanceof Error ? error.message : 'Failed to fetch primary engineers');
+  }
+}
+  

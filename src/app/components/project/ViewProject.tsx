@@ -4,6 +4,7 @@ import { getProjectById } from "@/app/actions/projects/crudActions"
 import ClickToCopy from "../utils/ClickToCopy"
 import type { TabsProps } from "antd"
 import ProjectTab from "./projectTabs/ProjectTab"
+import PrimaryEngineerTab from "./projectTabs/primaryEngineer/PrimaryEngineerTab"
 
 const ViewProject = ({projectId}: { projectId: number }) => {
   const { data, error, isLoading } = useQuery({
@@ -21,7 +22,7 @@ const ViewProject = ({projectId}: { projectId: number }) => {
     {
       key: "1",
       label: "Primary Engineers",
-      // children: <ViewProject projectId={projectId} />,
+      children: <PrimaryEngineerTab projectId={projectId} />,
     },
     {
       key: "2",
