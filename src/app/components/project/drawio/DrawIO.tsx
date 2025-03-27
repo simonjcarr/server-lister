@@ -18,7 +18,6 @@ function DrawIOEmbed({ initialDiagramXml, onSave, onLoad, diagramId }: DrawIOEmb
 
   // Function to save diagram to database
   const saveDiagramToDatabase = (xml: string) => {
-    console.log('Saving diagram to database...');
     // This function will be implemented by you to save the XML data to your database
     // Example implementation:
     /*
