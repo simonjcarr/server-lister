@@ -202,31 +202,46 @@ const NetworkGraph: React.FC = () => {
               barnesHut: { gravitationalConstant: -8000, springConstant: 0.04, springLength: 120 }
             },
             interaction: {
-              dragNodes: true, dragView: true, zoomView: true, tooltipDelay: 200, hover: true
+              dragNodes: true, 
+              dragView: true, 
+              zoomView: true, 
+              multiselect: true, 
+              tooltipDelay: 200,
+              hover: true
             },
             manipulation: {
-              enabled: false,
+              enabled: false, 
               addEdge: (edgeData, callback) => {
-                const newEdge: NetworkEdge = { ...edgeData, id: uuidv4() };
+                console.log('Edge creation event:', edgeData);
+                const newEdge: NetworkEdge = { 
+                  ...edgeData, 
+                  id: uuidv4(),
+                  arrows: 'to',
+                  color: { color: '#848484', highlight: '#575757', hover: '#575757' },
+                  width: 1,
+                  smooth: { enabled: true, type: "continuous", roundness: 0.5 }
+                };
+
                 if (newEdge.from === newEdge.to) {
                   console.warn("Cannot connect node to itself.");
-                  callback(null);
+                  callback(null); 
                 } else {
                   console.log('Adding edge:', newEdge);
                   edgesDataSetRef.current.add(newEdge);
-                  callback(newEdge);
-                  setInteractionMode('idle');
-                  networkInstanceRef.current?.disableEditMode();
+                  callback(newEdge); 
+                  
+                  if (networkInstanceRef.current) {
+                    networkInstanceRef.current.disableEditMode();
+                    setInteractionMode('idle');
+                  }
                 }
               },
-              editNode: (nodeData, callback) => {
-                console.log('Editing node (raw):', nodeData);
-                const cleanNodeData: Partial<NetworkNode> = {
-                  id: nodeData.id, label: nodeData.label,
-                  // Don't automatically apply style here as it may override dragged node's style
-                };
-                callback(cleanNodeData as NetworkNode);
-              }
+              editEdge: (edgeData: { from: IdType; to: IdType; id?: IdType }, callback) => {
+                const updatedEdge = { ...edgeData, id: edgeData.id };
+                console.log('Editing edge:', updatedEdge);
+                edgesDataSetRef.current.update(updatedEdge);
+                callback(updatedEdge);
+              },
             },
           };
 
@@ -252,11 +267,8 @@ const NetworkGraph: React.FC = () => {
 
             // Handle potential DOM errors by setting up error handler
             network.on('beforeDrawing', () => {
-              // This event fires frequently during rendering
-              // We can use it to detect if the network is still functioning properly
               if (!visJsRef.current || !document.body.contains(visJsRef.current)) {
                 console.error('DOM inconsistency detected: vis container not in document');
-                // Force a complete remount of the component
                 if (isMounted) {
                   setKey(prev => prev + 1);
                 }
@@ -266,7 +278,6 @@ const NetworkGraph: React.FC = () => {
             console.log('Network instance created successfully.');
           } catch (error) {
             console.error('Error creating network:', error);
-            // If we hit an error during creation, increment the key to force a remount on next render
             if (isMounted) {
               setKey(prev => prev + 1);
             }
@@ -280,7 +291,6 @@ const NetworkGraph: React.FC = () => {
         }
       } catch (error) {
         console.error('Unexpected error during graph initialization:', error);
-        // Make sure we still update the loading state even if there's an error
         if (isMounted) {
           setIsLoading(false);
         }
@@ -295,25 +305,19 @@ const NetworkGraph: React.FC = () => {
       console.log('Cleaning up network resources...');
       isMounted = false;
       
-      // First set the ref to null to prevent other code from using it
       const networkInstance = networkInstanceRef.current;
       networkInstanceRef.current = null;
       
-      // Then properly destroy the network instance
       if (networkInstance) {
         try {
           networkInstance.destroy();
           console.log('Network instance destroyed.');
         } catch (error) {
           console.error('Error destroying network instance:', error);
-          // If we hit an error during cleanup, increment the key to force a complete
-          // remount on next render cycle
           setKey(prev => prev + 1);
         }
       }
 
-      // Explicitly clear the container's HTML to prevent React/DOM conflicts
-      // Use the captured ref value from when the effect ran
       if (visJsContainer) {
         try {
           visJsContainer.innerHTML = '';
@@ -323,27 +327,25 @@ const NetworkGraph: React.FC = () => {
         }
       }
     };
-  }, [key]); // Use key as a dependency to force remount
+  }, [key]); 
 
   // --- Interaction Handlers ---
 
   const handleDragStart = (event: React.DragEvent, nodeType: NodeType) => {
-    event.dataTransfer.setData('application/reactflow', nodeType); // Use a specific data type
-    event.dataTransfer.effectAllowed = 'copy'; // Show copy cursor
+    event.dataTransfer.setData('application/reactflow', nodeType); 
+    event.dataTransfer.effectAllowed = 'copy'; 
   };
 
-  // Helper function to add a node at specific coordinates
   const handleAddNode = useCallback((nodeType: NodeType, clientX: number, clientY: number) => {
     console.log('handleAddNode called with:', nodeType, clientX, clientY);
     
     if (!networkInstanceRef.current) {
       console.error('Cannot add node: Network instance not initialized');
-      // Create a fallback node if network isn't ready
       const newNode: NetworkNode = {
         id: uuidv4(),
         label: `New ${nodeType}`,
         nodeType,
-        x: 0, // Use center if we can't convert coordinates
+        x: 0, 
         y: 0,
         ...getNodeStyle(nodeType)
       };
@@ -352,44 +354,38 @@ const NetworkGraph: React.FC = () => {
       return;
     }
     
-    // Get canvas coordinates from screen coordinates
     const canvasPosition = networkInstanceRef.current.DOMtoCanvas({ x: clientX, y: clientY });
     console.log('Converted to canvas position:', canvasPosition);
     
     const newNode: NetworkNode = {
-      id: uuidv4(), // Generate a unique ID
+      id: uuidv4(), 
       label: `New ${nodeType}`,
       nodeType,
       x: canvasPosition.x,
       y: canvasPosition.y,
-      ...getNodeStyle(nodeType) // Apply style based on type
+      ...getNodeStyle(nodeType) 
     };
     
     console.log('Adding node:', newNode);
     nodesDataSetRef.current?.add(newNode);
   }, []);
 
-  // Cancel edge creation
-  const handleCancelAddEdge = useCallback(() => {
-    if (networkInstanceRef.current) {
+  const handleStartAddEdge = useCallback(() => {
+    if (!networkInstanceRef.current) {
+      console.error('Cannot start edge creation: Network not initialized');
+      return;
+    }
+
+    if (interactionMode === 'addingEdge') {
       networkInstanceRef.current.disableEditMode();
       setInteractionMode('idle');
+      console.log('Edge creation mode canceled');
+    } else {
+      networkInstanceRef.current.addEdgeMode();
+      setInteractionMode('addingEdge');
+      console.log('Edge creation mode started - click on a source node, then click on a target node');
     }
-  }, []);
-
-  // Start adding an edge or cancel if already in edge mode
-  const handleStartAddEdge = useCallback(() => {
-    if (networkInstanceRef.current) {
-      if (interactionMode === 'addingEdge') {
-        // Cancel edge creation if already in progress
-        handleCancelAddEdge();
-      } else {
-        // Start edge creation
-        networkInstanceRef.current.addEdgeMode();
-        setInteractionMode('addingEdge');
-      }
-    }
-  }, [interactionMode, handleCancelAddEdge]);
+  }, [interactionMode]);
 
   const handleSaveGraph = useCallback(async () => {
     setIsSaving(true);
@@ -403,14 +399,11 @@ const NetworkGraph: React.FC = () => {
       
       if (success) {
         console.log('Graph saved successfully!');
-        // Maybe show a success toast/notification here
       } else {
         console.error('Failed to save graph data.');
-        // Maybe show an error toast/notification here
       }
     } catch (error) {
       console.error('Error while saving graph:', error);
-      // Maybe show an error toast/notification here
     } finally {
       setIsSaving(false);
     }
@@ -429,9 +422,7 @@ const NetworkGraph: React.FC = () => {
       <div className="controls" style={{ display: 'flex', padding: '10px', backgroundColor: '#f5f5f5', borderBottom: '1px solid #ddd' }}>
         {/* Node Palette */}
         {nodeTypes.map((type) => {
-          // Get the style for this node type
           const style = getNodeStyle(type);
-          // Extract background color safely
           let bgColor = '#e0e0e0';
           if (typeof style.color === 'string') {
             bgColor = style.color;
@@ -456,26 +447,72 @@ const NetworkGraph: React.FC = () => {
             </div>
           );
         })}
-        {/* Buttons */}
-        <button onClick={handleStartAddEdge} style={{
-          marginLeft: 'auto', padding: '5px 10px',
-          backgroundColor: interactionMode === 'addingEdge' ? '#ffc107' : '#e0e0e0',
-          border: '1px solid #aaa', borderRadius: '4px', cursor: 'pointer'
-        }}
-          title={interactionMode === 'addingEdge' ? "Cancel adding edge" : "Add an edge between two nodes"} >
-          {interactionMode === 'addingEdge' ? 'Cancel' : 'Add Edge'}
-        </button>
+
+        {/* Connection and Save Controls */}
+        <div style={{
+          marginLeft: 'auto',
+          display: 'flex',
+          gap: '10px',
+          alignItems: 'center'
+        }}>
+          {/* Add Edge Button - Made more prominent */}
+          <button 
+            onClick={handleStartAddEdge} 
+            style={{
+              padding: '6px 12px',
+              fontWeight: 'bold',
+              backgroundColor: interactionMode === 'addingEdge' ? '#ffc107' : '#4CAF50',
+              color: 'white',
+              border: interactionMode === 'addingEdge' ? '2px solid #e0a800' : '2px solid #388E3C',
+              borderRadius: '4px', 
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '5px'
+            }}
+            title={interactionMode === 'addingEdge' ? "Cancel adding edge" : "Add a connection between nodes"}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M5 12h14"></path>
+              <path d="M12 5v14"></path>
+            </svg>
+            {interactionMode === 'addingEdge' ? 'Cancel' : 'Add Connection'}
+          </button>
+
+          {/* Save Button */}
+          <button 
+            onClick={handleSaveGraph} 
+            disabled={isSaving || isLoading} 
+            style={{
+              padding: '6px 12px',
+              backgroundColor: '#2196F3', 
+              color: 'white', 
+              border: '2px solid #0b7dda',
+              borderRadius: '4px', 
+              cursor: 'pointer', 
+              opacity: (isSaving || isLoading) ? 0.6 : 1
+            }}
+          >
+            {isSaving ? 'Saving...' : 'Save'}
+          </button>
+        </div>
+
+        {/* Edge creation mode indicator */}
         {interactionMode === 'addingEdge' && (
-          <div style={{ marginLeft: '5px', color: '#ffc107', fontStyle: 'italic' }}>
-            Click on a node, then click on another node to connect them
+          <div style={{ 
+            position: 'absolute',
+            top: '52px',
+            right: '10px',
+            padding: '5px 10px',
+            backgroundColor: '#fff3cd', 
+            border: '1px solid #ffeeba',
+            borderRadius: '4px',
+            color: '#856404',
+            zIndex: 10
+          }}>
+            Click on a source node, then click on a target node
           </div>
         )}
-        <button onClick={handleSaveGraph} disabled={isSaving || isLoading} style={{
-          padding: '5px 10px', backgroundColor: '#4CAF50', color: 'white', border: '1px solid #388E3C',
-          borderRadius: '4px', cursor: 'pointer', opacity: (isSaving || isLoading) ? 0.6 : 1
-        }} >
-          {isSaving ? 'Saving...' : 'Save'}
-        </button>
       </div>
       
       {/* Graph Visualization Container */}
@@ -485,7 +522,8 @@ const NetworkGraph: React.FC = () => {
           flex: 1, 
           position: 'relative',
           border: '1px solid #ddd',
-          backgroundColor: '#f9f9f9'
+          backgroundColor: '#f9f9f9',
+          cursor: interactionMode === 'addingEdge' ? 'crosshair' : 'default'
         }}
         onDragOver={(e) => {
           e.preventDefault();
@@ -498,7 +536,6 @@ const NetworkGraph: React.FC = () => {
           console.log('Drop detected with node type:', nodeType);
           
           if (nodeTypes.includes(nodeType)) {
-            // Add the node at the drop position
             handleAddNode(nodeType, e.clientX, e.clientY);
           } else {
             console.warn('Invalid node type from drop event:', nodeType);
@@ -509,7 +546,7 @@ const NetworkGraph: React.FC = () => {
         <div 
           ref={visJsRef} 
           style={{ width: '100%', height: '100%', position: 'absolute', top: 0, left: 0 }} 
-          key={key} // Use key to force remount
+          key={key} 
         />
         
         {/* Status overlay */}
@@ -520,6 +557,18 @@ const NetworkGraph: React.FC = () => {
             backgroundColor: 'rgba(255, 255, 255, 0.7)', zIndex: 5
           }}>
             Loading graph data...
+          </div>
+        )}
+        {interactionMode === 'addingEdge' && !isLoading && (
+          <div style={{ 
+            position: 'absolute', top: '10px', left: '10px', right: '10px',
+            padding: '8px', borderRadius: '4px',
+            backgroundColor: 'rgba(255, 193, 7, 0.2)', 
+            border: '1px solid #ffc107',
+            zIndex: 5, textAlign: 'center',
+            pointerEvents: 'none' 
+          }}>
+            <strong>Edge Creation Mode</strong>: Click on a source node, then click on a target node to connect them
           </div>
         )}
       </div>
