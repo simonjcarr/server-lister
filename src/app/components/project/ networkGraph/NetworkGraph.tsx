@@ -49,9 +49,13 @@ export interface PaletteNode {
   label: string; // Label shown in the palette
 }
 
-const NetworkGraph = () => {
-  
+// --- Props Interface ---
+interface NetworkGraphProps {
+  initialData?: GraphState | null;
+  onSave: (data: GraphState) => Promise<void>;
+}
 
+const NetworkGraph: React.FC<NetworkGraphProps> = ({ initialData: propInitialData, onSave }) => {
   // --- Register Cytoscape extensions ---
   if (typeof window !== 'undefined') {
     try {
@@ -64,15 +68,7 @@ const NetworkGraph = () => {
     }
   }
 
-  // --- Props Interface ---
-  interface NetworkGraphProps {
-    initialData?: GraphState | null;
-    onSave: (data: GraphState) => Promise<void>;
-  }
-
-  // --- Stubbed Data Functions (Keep as before) ---
-  const loadData = async (): Promise<GraphState | null> => { return null};
-  const saveData = async (data: GraphState): Promise<void> => {  };
+  // --- Component Configuration ---
 
 
   // --- Node Palette Configuration ---
@@ -175,7 +171,8 @@ const NetworkGraph = () => {
       },
     },
     // --- Edge Handles Styles (unchanged) ---
-    { selector: '.eh-handle',
+    {
+      selector: '.eh-handle',
       style: {
         'background-color': 'red',
         'width': 12,
@@ -186,15 +183,23 @@ const NetworkGraph = () => {
         'border-opacity': 0,
       },
     },
-    { selector: '.eh-source',
+    {
+      selector: '.eh-source',
       style: {
-      'line-color': 'red',
-      'target-arrow-color': 'red',
-      'target-arrow-shape': 'triangle' as const, // Add here too
-    }
-     },
-    { selector: '.eh-target', style: { /* ... */ } },
-    { selector: '.eh-preview, .eh-ghost-edge', style: { /* ... */ } },
+        'line-color': 'red',
+        'target-arrow-color': 'red',
+        'target-arrow-shape': 'triangle' as const, // Add here too
+      }
+    },
+    { selector: '.eh-target', style: {
+      'border-width': 2,
+      'border-color': '#00c853',
+    } },
+    { selector: '.eh-preview, .eh-ghost-edge', style: {
+      'line-color': '#777',
+      'target-arrow-color': '#777',
+      'source-arrow-color': '#777',
+    } },
     // --- Selection Styles ---
     {
       selector: 'node:selected',
@@ -241,8 +246,7 @@ const NetworkGraph = () => {
   }
 
 
-  // --- The React Component (Structure remains largely the same) ---
-  const NetworkGraph: React.FC<NetworkGraphProps> = ({ initialData: propInitialData, onSave }) => {
+  // --- Component State and Refs ---
     const cyContainerRef = useRef<HTMLDivElement>(null);
     const cyInstanceRef = useRef<Core | null>(null);
     const ehInstanceRef = useRef<EdgeHandlesInstance | null>(null);
@@ -258,14 +262,13 @@ const NetworkGraph = () => {
 
       const initializeGraph = async () => {
         setIsLoading(true);
-        let dataToLoad: GraphState | null = propInitialData ?? null;
+        // Use the initialData from props (if any)
+        const dataToLoad: GraphState | null = propInitialData ?? null;
 
-        if (!dataToLoad) {
-          try { dataToLoad = await loadData(); }
-          catch (error) { console.error("Error loading initial data:", error); }
+        if (!cyContainerRef.current) {
+          setIsLoading(false);
+          return; // Exit if no container
         }
-
-        if (cyContainerRef.current) {
           const elements: GraphElementDefinition[] = [];
           if (dataToLoad) {
             elements.push(...dataToLoad.nodes.map(n => ({ data: n, group: 'nodes' as const })));
@@ -290,14 +293,31 @@ const NetworkGraph = () => {
           cyInstanceRef.current = cy;
 
           // Initialize edge handles (keep as before)
-          ehInstanceRef.current = cy.edgehandles({ /* ... edgehandles options ... */
-            ghost: true,
+          // Initialize edge handles with proper types that match the TypeScript definitions
+          // We need to use 'as any' to bypass TypeScript errors for supported properties
+          // that aren't properly included in the type definitions
+          const edgeHandlesOptions: any = {
+            // Properties that are in the TypeScript definition
+            canConnect: (source: NodeSingular, target: NodeSingular) => !source.same(target), // Disallow self-loops
+            edgeParams: (source: NodeSingular, target: NodeSingular) => ({
+              data: {
+                // Edge data
+              }
+            }),
+            hoverDelay: 150,
+            snap: true,
+            snapThreshold: 50,
+            snapFrequency: 15,
+            noEdgeEventsInDraw: true,
+            disableBrowserGestures: true,
+            
+            // The following properties are used in the library but not in the type definition
             handleNodes: 'node',
             handleSize: 10,
             handleColor: '#ff0000',
             edgeType: () => 'flat',
             loopAllowed: () => false,
-            complete: (sourceNode, targetNode, addedEles) => {
+            complete: (sourceNode: NodeSingular, targetNode: NodeSingular, addedEles: any) => {
               const newEdge = addedEles.first();
               if (newEdge.isEdge()) {
                 const edgeData: EdgeData = {
@@ -309,10 +329,11 @@ const NetworkGraph = () => {
                 console.log('Edge created:', edgeData);
               }
             },
-          });
+          };
+          
+          ehInstanceRef.current = cy.edgehandles(edgeHandlesOptions);
 
-
-          // --- Event Listeners (Keep as before) ---
+          // --- Event Listeners ---
           cy.on('dblclick', 'node', (event) => { handleEditNode(event.target); });
 
           const handleResize = () => { cy?.resize(); cy?.fit(undefined, 50); };
@@ -326,7 +347,6 @@ const NetworkGraph = () => {
             ehInstanceRef.current = null;
             window.removeEventListener('resize', handleResize);
           };
-        }
       };
 
       initializeGraph().finally(() => setIsLoading(false));
@@ -342,10 +362,18 @@ const NetworkGraph = () => {
     }, [propInitialData]);
 
 
-    // --- Drag and Drop Handlers (Keep as before) ---
-    const handleDragStart = (event: React.DragEvent<HTMLDivElement>, nodeType: NodeType) => { /* ... */ };
-    const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => { /* ... */ };
-    const handleDrop = (event: React.DragEvent<HTMLDivElement>) => { /* ... Logic to add node ... */
+    // --- Drag and Drop Handlers ---
+    const handleDragStart = (event: React.DragEvent<HTMLDivElement>, nodeType: NodeType) => {
+      event.dataTransfer.setData('application/reactflow', nodeType);
+      event.dataTransfer.effectAllowed = 'move';
+    };
+    
+    const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
+      event.preventDefault();
+      event.dataTransfer.dropEffect = 'move';
+    };
+    
+    const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
       event.preventDefault();
       const cy = cyInstanceRef.current;
       if (!cy || !cyContainerRef.current) return;
@@ -369,10 +397,23 @@ const NetworkGraph = () => {
       console.log('Node added:', newNodeData);
     };
 
-    // --- Node Editing Handlers (Keep as before) ---
-    const handleEditNode = (node: NodeSingular) => { /* ... */ };
-    const handleEditFormChange = (event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => { /* ... */ };
-    const handleCancelEdit = () => { /* ... */ };
+    // --- Node Editing Handlers ---
+    const handleEditNode = (node: NodeSingular) => {
+      setEditingNode(node);
+      setEditFormData({
+        label: node.data('label') || '',
+        type: node.data('type') || 'other',
+      });
+    };
+    
+    const handleEditFormChange = (event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+      const { name, value } = event.target;
+      setEditFormData(prev => ({ ...prev, [name]: value }));
+    };
+    
+    const handleCancelEdit = () => {
+      setEditingNode(null);
+    };
     const handleSaveEdit = () => {
       if (!editingNode || !cyInstanceRef.current) return;
 
@@ -389,8 +430,26 @@ const NetworkGraph = () => {
     };
 
 
-    // --- Saving Handler (Keep as before) ---
-    const handleSaveGraph = useCallback(async () => { /* ... */ }, [onSave]);
+    // --- Saving Handler ---
+    const handleSaveGraph = useCallback(async () => {
+      if (!cyInstanceRef.current) return;
+      
+      setIsSaving(true);
+      try {
+        const cy = cyInstanceRef.current;
+        
+        const nodes = cy.nodes().map(node => node.data() as NodeData);
+        const edges = cy.edges().map(edge => edge.data() as EdgeData);
+        
+        const graphData: GraphState = { nodes, edges };
+        await onSave(graphData);
+        console.log('Graph saved successfully');
+      } catch (error) {
+        console.error('Error saving graph:', error);
+      } finally {
+        setIsSaving(false);
+      }
+    }, [onSave]);
 
 
     return (
@@ -477,4 +536,4 @@ const NetworkGraph = () => {
     );
   }
 
-  export default NetworkGraph
+export default NetworkGraph;
