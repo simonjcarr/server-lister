@@ -1,6 +1,6 @@
 'use client'; // This component uses browser APIs and state, so it must be a Client Component
 
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { DataSet } from 'vis-data/peer'; // Use peer build for better tree shaking
 import { Network } from 'vis-network/peer';
 import type { Node, Edge, Options, IdType, Color, Font } from 'vis-network/peer'; // Added Color, Font types
@@ -93,22 +93,22 @@ const getNodeStyle = (nodeType: NodeType): Partial<NetworkNode> => {
   switch (nodeType) {
     case 'server':
       // Using object for color to potentially define border/highlight later
-      return { shape: 'box', color: { background: '#4CAF50', border: '#2E7D32' }, font: { color: '#ffffff' } };
+      return { shape: 'box', color: { background: '#4CAF50', border: '#2E7D32' } as Color, font: { color: '#ffffff' } as Font };
     case 'client':
       // Using string for color
-      return { shape: 'dot', color: '#2196F3', size: 15 }; // No font defined here
+      return { shape: 'dot', color: '#2196F3' as Color, size: 15 }; // No font defined here
     case 'router':
-      return { shape: 'diamond', color: { background: '#FF9800', border: '#EF6C00' }, size: 20 }; // No font defined here
+      return { shape: 'diamond', color: { background: '#FF9800', border: '#EF6C00' } as Color, size: 20 }; // No font defined here
     case 'firewall':
-      return { shape: 'triangle', color: { background: '#F44336', border: '#C62828' }, size: 20 }; // No font defined here
+      return { shape: 'triangle', color: { background: '#F44336', border: '#C62828' } as Color, size: 20 }; // No font defined here
     case 'switch':
       // Mixed usage for demo
-      return { shape: 'box', color: '#9C27B0', size: 18, font: { color: '#ffffff' } };
+      return { shape: 'box', color: '#9C27B0' as Color, size: 18, font: { color: '#ffffff' } as Font };
     case 'cloud':
-      return { shape: 'ellipse', color: { background: '#607D8B', border: '#455A64' }, label: 'Cloud' }; // No font defined here
+      return { shape: 'ellipse', color: { background: '#607D8B', border: '#455A64' } as Color, label: 'Cloud' }; // No font defined here
     case 'other':
     default:
-      return { shape: 'ellipse', color: { background: '#9E9E9E', border: '#616161' } }; // No font defined here
+      return { shape: 'ellipse', color: { background: '#9E9E9E', border: '#616161' } as Color }; // No font defined here
   }
 };
 
@@ -123,21 +123,26 @@ const NetworkGraph: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [interactionMode, setInteractionMode] = useState<'idle' | 'addingEdge'>('idle');
+  const [key, setKey] = useState(0); // New state to force remount
 
   // Define Node Types for the draggable palette
-  const nodeTypes: NodeType[] = ['server', 'client', 'router', 'firewall', 'switch', 'cloud', 'other'];
+  const nodeTypes = useMemo<NodeType[]>(() => 
+    ['server', 'client', 'router', 'firewall', 'switch', 'cloud', 'other'], 
+  []);
 
   // --- Initialization ---
   useEffect(() => {
     // Avoid duplicate initialization if refs are already populated
-    // This can sometimes happen with StrictMode or HMR
     if (networkInstanceRef.current || !visJsRef.current) {
-      // console.log('Skipping initialization - already initialized or container missing');
-      // return; // Or decide how to handle re-init if needed
+      console.log('Skipping initialization - already initialized or container missing');
+      return; // Early return to prevent duplicate initialization
     }
 
     let isMounted = true; // Flag to prevent state updates on unmounted component
     let network: Network | null = null; // Hold network instance locally in effect scope
+    
+    // Capture the ref value to use in cleanup function
+    const visJsContainer = visJsRef.current;
 
     const initializeGraph = async () => {
       console.log('Initializing graph...');
@@ -199,259 +204,266 @@ const NetworkGraph: React.FC = () => {
               console.log('Editing node (raw):', nodeData);
               const cleanNodeData: Partial<NetworkNode> = {
                 id: nodeData.id, label: nodeData.label,
-                nodeType: nodeData.nodeType as NodeType,
-                x: nodeData.x, y: nodeData.y,
+                // Don't automatically apply style here as it may override dragged node's style
               };
-              const nodeType = cleanNodeData.nodeType && nodeTypes.includes(cleanNodeData.nodeType)
-                ? cleanNodeData.nodeType : 'other';
-              const updatedNode = {
-                ...cleanNodeData, nodeType: nodeType,
-                ...getNodeStyle(nodeType)
-              } as NetworkNode;
-              nodesDataSetRef.current.update(updatedNode);
-              callback(updatedNode);
-            },
-            initiallyActive: false, addNode: false, editEdge: true,
-            deleteNode: true, deleteEdge: true
-          },
-          nodes: {
-            font: { size: 14, color: '#333' }, borderWidth: 1,
-            shapeProperties: { useBorderWithImage: true }
-          },
-          edges: {
-            arrows: 'to', smooth: { enabled: true, type: "continuous", roundness: 0.5 },
-            color: { color: '#848484', highlight: '#575757', hover: '#575757' },
-            width: 1, hoverWidth: 1.5
+              callback(cleanNodeData as NetworkNode);
+            }
           },
         };
 
-        // Create the Network instance
-        network = new Network(
-          visJsRef.current,
-          { nodes: nodesDataSetRef.current, edges: edgesDataSetRef.current },
-          options
-        );
-        networkInstanceRef.current = network; // Store in ref
-        console.log('Network instance created.');
+        try {
+          console.log('Creating network with container:', visJsRef.current);
+          network = new Network(
+            visJsRef.current,
+            { 
+              nodes: nodesDataSetRef.current, 
+              edges: edgesDataSetRef.current 
+            },
+            options
+          );
+          
+          // Store in ref for other methods to access
+          networkInstanceRef.current = network;
+          
+          // Add event listeners here
+          network.on('click', (params) => {
+            console.log('Click event:', params);
+            // Handle node/edge selection, etc.
+          });
 
-        // --- Event Listeners ---
-        network.on('doubleClick', (params) => {
-          if (params.nodes.length > 0) {
-            const nodeId = params.nodes[0];
-            handleEditNode(nodeId);
+          // Handle potential DOM errors by setting up error handler
+          network.on('beforeDrawing', () => {
+            // This event fires frequently during rendering
+            // We can use it to detect if the network is still functioning properly
+            if (!visJsRef.current || !document.body.contains(visJsRef.current)) {
+              console.error('DOM inconsistency detected: vis container not in document');
+              // Force a complete remount of the component
+              if (isMounted) {
+                setKey(prev => prev + 1);
+              }
+            }
+          });
+          
+          console.log('Network instance created successfully.');
+        } catch (error) {
+          console.error('Error creating network:', error);
+          // If we hit an error during creation, increment the key to force a remount on next render
+          if (isMounted) {
+            setKey(prev => prev + 1);
           }
-        });
-
-        // --- Post-Initialization ---
-        network.once('stabilizationIterationsDone', () => {
-          console.log("Initial stabilization finished.");
-          // Check if instance still exists before setting options
-          if (networkInstanceRef.current) {
-            networkInstanceRef.current.setOptions({ physics: { enabled: false } });
-            console.log("Physics disabled for manual positioning.");
-          }
-        });
-
-      } // End if(visJsRef.current && !network)
-
-      if (isMounted) {
-        setIsLoading(false);
+        }
       }
-    }; // End initializeGraph async function
+
+      setIsLoading(false);
+    };
 
     initializeGraph();
 
-    // --- Cleanup Function ---
+    // Cleanup function - VERY IMPORTANT for preventing memory leaks and DOM issues
     return () => {
-      console.log('Running cleanup...');
-      isMounted = false; // Mark as unmounted
-
-      // Use the ref to access the instance created in this effect run
-      const currentNetworkInstance = networkInstanceRef.current;
-
-      if (currentNetworkInstance) {
-        console.log('Destroying network instance...');
-        currentNetworkInstance.destroy();
-        networkInstanceRef.current = null; // Clear the ref
-        console.log('Network destroyed');
-
-        // *** START OF FIX for removeChild error ***
-        // Explicitly clear the container div's content AFTER destroying the network.
-        // This helps prevent React's cleanup from conflicting with vis.js's cleanup,
-        // especially relevant in React StrictMode's double invocation.
-        if (visJsRef.current) {
-          visJsRef.current.innerHTML = ''; // Clear children managed by vis.js
-          console.log('Vis container cleared');
+      console.log('Cleaning up network resources...');
+      isMounted = false;
+      
+      // First set the ref to null to prevent other code from using it
+      const networkInstance = networkInstanceRef.current;
+      networkInstanceRef.current = null;
+      
+      // Then properly destroy the network instance
+      if (networkInstance) {
+        try {
+          networkInstance.destroy();
+          console.log('Network instance destroyed.');
+        } catch (error) {
+          console.error('Error destroying network instance:', error);
+          // If we hit an error during cleanup, increment the key to force a complete
+          // remount on next render cycle
+          setKey(prev => prev + 1);
         }
-        // *** END OF FIX ***
+      }
 
-      } else {
-        console.log('Cleanup: No network instance found to destroy.');
+      // Explicitly clear the container's HTML to prevent React/DOM conflicts
+      // Use the captured ref value from when the effect ran
+      if (visJsContainer) {
+        try {
+          visJsContainer.innerHTML = '';
+          console.log('Vis container HTML cleared');
+        } catch (e) {
+          console.error('Error clearing vis container:', e);
+        }
       }
     };
-  }, []); // IMPORTANT: Empty dependency array ensures this runs only once on mount and cleanup on unmount
+  }, [key]); // Use key as a dependency to force remount
 
-  // --- Interaction Handlers --- (Remain the same as previous version)
+  // --- Interaction Handlers ---
 
   const handleDragStart = (event: React.DragEvent, nodeType: NodeType) => {
     event.dataTransfer.setData('application/reactflow', nodeType); // Use a specific data type
-    event.dataTransfer.effectAllowed = 'move';
+    event.dataTransfer.effectAllowed = 'copy'; // Show copy cursor
   };
 
   const handleDragOver = (event: React.DragEvent) => {
     event.preventDefault(); // Necessary to allow dropping
-    event.dataTransfer.dropEffect = 'move';
+    event.dataTransfer.dropEffect = 'copy';
   };
+
+  // Helper function to add a node at specific coordinates
+  const handleAddNode = useCallback((nodeType: NodeType, clientX: number, clientY: number) => {
+    // Get canvas coordinates from screen coordinates
+    const canvasPosition = networkInstanceRef.current?.DOMtoCanvas({ x: clientX, y: clientY }) || { x: 0, y: 0 };
+    
+    const newNode: NetworkNode = {
+      id: uuidv4(), // Generate a unique ID
+      label: `New ${nodeType}`,
+      nodeType,
+      x: canvasPosition.x,
+      y: canvasPosition.y,
+      ...getNodeStyle(nodeType) // Apply style based on type
+    };
+    
+    console.log('Adding node:', newNode);
+    nodesDataSetRef.current?.add(newNode);
+  }, []);
 
   const handleDrop = useCallback((event: React.DragEvent) => {
-    event.preventDefault();
+    event.preventDefault(); // Prevent default behavior
     const nodeType = event.dataTransfer.getData('application/reactflow') as NodeType;
-    const network = networkInstanceRef.current;
-
-    if (!nodeType || !network || !visJsRef.current) {
-      console.error("Drop failed: Missing nodeType, network instance, or container ref.");
-      return;
+    
+    if (nodeTypes.includes(nodeType)) {
+      // Add the node at the drop position
+      handleAddNode(nodeType, event.clientX, event.clientY);
     }
-    const canvasRect = visJsRef.current.getBoundingClientRect();
-    const pointerX = event.clientX - canvasRect.left;
-    const pointerY = event.clientY - canvasRect.top;
-    const position = network.DOMtoCanvas({ x: pointerX, y: pointerY });
-    const newNode: NetworkNode = {
-      id: uuidv4(),
-      label: `New ${nodeType.charAt(0).toUpperCase() + nodeType.slice(1)}`,
-      nodeType: nodeType, x: position.x, y: position.y,
-      ...getNodeStyle(nodeType),
-    };
-    nodesDataSetRef.current.add(newNode);
-  }, []);
+  }, [handleAddNode, nodeTypes]);
 
-  const handleEditNode = useCallback((nodeId: IdType) => {
-    const node = nodesDataSetRef.current.get(nodeId);
-    if (!node) return;
-    const newLabel = prompt(`Edit label for node "${node.label || node.id}":`, node.label || '');
-    if (newLabel === null) return;
-
-    let newNodeType = node.nodeType;
-    const typeInput = prompt(`Edit type (${nodeTypes.join('/')}):`, node.nodeType);
-    if (typeInput !== null && nodeTypes.includes(typeInput as NodeType)) {
-      newNodeType = typeInput as NodeType;
-    } else if (typeInput !== null) {
-      alert(`Invalid type "${typeInput}". Keeping original type "${newNodeType}".`);
-    }
-
-    const updatedNodeData: Partial<NetworkNode> = {
-      id: nodeId, label: newLabel, nodeType: newNodeType, x: node.x, y: node.y
-    };
-    const finalNode = { ...updatedNodeData, ...getNodeStyle(newNodeType) } as NetworkNode;
-    nodesDataSetRef.current.update(finalNode);
-    console.log(`Node ${nodeId} updated:`, finalNode);
-  }, []);
-
-  const toggleAddEdgeMode = () => {
-    const network = networkInstanceRef.current;
-    if (!network) return;
-    if (interactionMode === 'addingEdge') {
-      network.disableEditMode();
+  // Cancel edge creation
+  const handleCancelAddEdge = useCallback(() => {
+    if (networkInstanceRef.current) {
+      networkInstanceRef.current.disableEditMode();
       setInteractionMode('idle');
-    } else {
-      network.disableEditMode(); // Ensure other modes off first
-      network.addEdgeMode();
-      setInteractionMode('addingEdge');
     }
-  };
-
-  const handleSave = useCallback(async () => {
-    if (!nodesDataSetRef.current || !edgesDataSetRef.current) {
-      console.error("Cannot save: DataSets not initialized."); return;
-    }
-    const network = networkInstanceRef.current;
-    if (!network) {
-      console.error("Cannot save: Network not initialized."); return;
-    }
-    setIsSaving(true);
-    network.storePositions(); // Capture positions
-    const nodePositions = network.getPositions();
-    const nodesToSave = nodesDataSetRef.current.map((node: NetworkNode) => {
-      const position = nodePositions[node.id];
-      const cleanNode: NetworkNode = {
-        id: node.id, label: node.label || '', nodeType: node.nodeType,
-        x: position?.x ?? node.x ?? 0, y: position?.y ?? node.y ?? 0,
-      };
-      delete cleanNode.color; delete cleanNode.font; delete cleanNode.shape; delete cleanNode.size;
-      return cleanNode;
-    });
-    const edgesToSave = edgesDataSetRef.current.map((edge: NetworkEdge) => {
-      const cleanEdge: NetworkEdge = { id: edge.id, from: edge.from, to: edge.to };
-      delete cleanEdge.color; delete cleanEdge.width; delete cleanEdge.arrows; delete cleanEdge.smooth;
-      return cleanEdge;
-    });
-    const currentGraphData: GraphData = { nodes: nodesToSave, edges: edgesToSave };
-    const success = await saveData(currentGraphData);
-    alert(success ? 'Graph saved successfully!' : 'Failed to save graph.');
-    setIsSaving(false);
   }, []);
 
+  // Start adding an edge or cancel if already in edge mode
+  const handleStartAddEdge = useCallback(() => {
+    if (networkInstanceRef.current) {
+      if (interactionMode === 'addingEdge') {
+        // Cancel edge creation if already in progress
+        handleCancelAddEdge();
+      } else {
+        // Start edge creation
+        networkInstanceRef.current.addEdgeMode();
+        setInteractionMode('addingEdge');
+      }
+    }
+  }, [interactionMode, handleCancelAddEdge]);
+
+  const handleSaveGraph = useCallback(async () => {
+    setIsSaving(true);
+    
+    try {
+      const nodes = nodesDataSetRef.current.get() as NetworkNode[];
+      const edges = edgesDataSetRef.current.get() as NetworkEdge[];
+      
+      const graphData: GraphData = { nodes, edges };
+      const success = await saveData(graphData);
+      
+      if (success) {
+        console.log('Graph saved successfully!');
+        // Maybe show a success toast/notification here
+      } else {
+        console.error('Failed to save graph data.');
+        // Maybe show an error toast/notification here
+      }
+    } catch (error) {
+      console.error('Error while saving graph:', error);
+      // Maybe show an error toast/notification here
+    } finally {
+      setIsSaving(false);
+    }
+  }, []);
 
   // --- Render ---
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 100px)', border: '1px solid #ccc', borderRadius: '8px', overflow: 'hidden' }}>
-      {/* Toolbar */}
-      <div style={{ padding: '10px', borderBottom: '1px solid #ccc', background: '#f5f5f5', display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
-        <span>Add Node:</span>
+    <div className="network-graph-container" style={{ width: '100%', height: '600px', display: 'flex', flexDirection: 'column' }}>
+      {isLoading && <div style={{ padding: '20px', textAlign: 'center' }}>Loading network graph...</div>}
+      
+      {/* Controls */}
+      <div className="controls" style={{ display: 'flex', padding: '10px', backgroundColor: '#f5f5f5', borderBottom: '1px solid #ddd' }}>
+        {/* Node Palette */}
         {nodeTypes.map((type) => {
-          const nodeStyleDetails = getNodeStyle(type);
-          const colorProp = nodeStyleDetails.color;
-          const fontProp = nodeStyleDetails.font;
-          let displayBackgroundColor: string | undefined = '#eee';
-          if (typeof colorProp === 'string') { displayBackgroundColor = colorProp; }
-          else if (typeof colorProp === 'object' && colorProp?.background) { displayBackgroundColor = colorProp.background; }
-          let displayFontColor: string | undefined = '#333';
-          if (typeof fontProp === 'object' && typeof fontProp?.color === 'string') { displayFontColor = fontProp.color; }
-
+          // Get the style for this node type
+          const style = getNodeStyle(type);
+          // Extract background color safely
+          let bgColor = '#e0e0e0';
+          if (typeof style.color === 'string') {
+            bgColor = style.color;
+          } else if (style.color && typeof style.color === 'object' && 'background' in style.color) {
+            bgColor = style.color.background as string;
+          }
+          
           return (
-            <div key={type} draggable onDragStart={(e) => handleDragStart(e, type)}
+            <div
+              key={type}
+              draggable
+              onDragStart={(e) => handleDragStart(e, type)}
               style={{
-                padding: '5px 10px', border: '1px solid #aaa', borderRadius: '4px', cursor: 'grab',
-                backgroundColor: displayBackgroundColor, color: displayFontColor,
-                fontSize: '12px', textAlign: 'center', minWidth: '60px', userSelect: 'none'
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                width: '60px', height: '30px', margin: '0 5px', padding: '5px',
+                backgroundColor: bgColor, border: '1px solid #aaa',
+                borderRadius: '4px', cursor: 'grab'
               }}
-              title={`Drag to add a ${type}`} >
+              title={`Drag to add a new ${type}`}
+            >
               {type.charAt(0).toUpperCase() + type.slice(1)}
             </div>
           );
         })}
         {/* Buttons */}
-        <button onClick={toggleAddEdgeMode} style={{
+        <button onClick={handleStartAddEdge} style={{
           marginLeft: 'auto', padding: '5px 10px',
           backgroundColor: interactionMode === 'addingEdge' ? '#ffc107' : '#e0e0e0',
           border: '1px solid #aaa', borderRadius: '4px', cursor: 'pointer'
         }}
           title={interactionMode === 'addingEdge' ? "Cancel adding edge" : "Add an edge between two nodes"} >
-          {interactionMode === 'addingEdge' ? 'Adding Edge...' : 'Add Edge'}
+          {interactionMode === 'addingEdge' ? 'Cancel' : 'Add Edge'}
         </button>
-        <button onClick={handleSave} disabled={isSaving || isLoading} style={{
+        {interactionMode === 'addingEdge' && (
+          <div style={{ marginLeft: '5px', color: '#ffc107', fontStyle: 'italic' }}>
+            Click on a node, then click on another node to connect them
+          </div>
+        )}
+        <button onClick={handleSaveGraph} disabled={isSaving || isLoading} style={{
           padding: '5px 10px', backgroundColor: '#4CAF50', color: 'white', border: '1px solid #388E3C',
           borderRadius: '4px', cursor: 'pointer', opacity: (isSaving || isLoading) ? 0.6 : 1
         }} >
-          {isSaving ? 'Saving...' : 'Save Graph'}
+          {isSaving ? 'Saving...' : 'Save'}
         </button>
       </div>
-
-      {/* Network Canvas */}
-      <div ref={visJsRef} style={{ flexGrow: 1, position: 'relative', backgroundColor: '#f9f9f9' }}
-        onDragOver={handleDragOver} onDrop={handleDrop} >
+      
+      {/* Graph Visualization Container */}
+      <div 
+        style={{ flex: 1, position: 'relative' }}
+        onDragOver={handleDragOver}
+        onDrop={handleDrop}
+      >
+        {/* Only render the vis container when not loading */}
+        {!isLoading && (
+          <div 
+            ref={visJsRef} 
+            style={{ width: '100%', height: '100%', border: '1px solid #ddd', position: 'absolute', top: 0, left: 0 }} 
+            key={key} // Use key to force remount
+          />
+        )}
+        
+        {/* Status overlay */}
         {isLoading && (
-          <div style={{
-            position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', color: '#555',
-            fontSize: '1.2em', background: 'rgba(255, 255, 255, 0.8)', padding: '10px 20px', borderRadius: '5px'
+          <div style={{ 
+            position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+            display: 'flex', justifyContent: 'center', alignItems: 'center',
+            backgroundColor: 'rgba(255, 255, 255, 0.7)', zIndex: 5
           }}>
-            Loading Network...
+            Loading graph data...
           </div>
         )}
-      </div>
-      {/* Footer/Tip */}
-      <div style={{ padding: '5px', fontSize: '12px', background: '#f0f0f0', borderTop: '1px solid #ccc', textAlign: 'center' }}>
-        Tip: Drag nodes from toolbar. Double-click node to edit. Use 'Add Edge' button. Select + Delete key to remove.
       </div>
     </div>
   );
