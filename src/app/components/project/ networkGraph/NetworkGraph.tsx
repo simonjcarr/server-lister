@@ -71,8 +71,8 @@ const NetworkGraph = () => {
   }
 
   // --- Stubbed Data Functions (Keep as before) ---
-  const loadData = async (): Promise<GraphState | null> => { /* ... */ };
-  const saveData = async (data: GraphState): Promise<void> => { /* ... */ };
+  const loadData = async (): Promise<GraphState | null> => { return null};
+  const saveData = async (data: GraphState): Promise<void> => {  };
 
 
   // --- Node Palette Configuration ---
@@ -130,20 +130,20 @@ const NetworkGraph = () => {
       selector: 'node',
       style: {
         'label': 'data(label)',
-        'text-valign': 'bottom',
-        'text-halign': 'center',
+        'text-valign': 'bottom' as const,
+        'text-halign': 'center' as const,
         'font-size': '10px',
         'color': '#333',
         'text-margin-y': 5, // Space between icon and label
         'width': NODE_SIZE,
         'height': NODE_SIZE,
         'background-color': '#ccc', // Fallback/base color
-        'background-fit': 'contain', // Scale icon down to fit node
+        'background-fit': 'contain' as const, // Scale icon down to fit node
         'background-clip': 'none', // Draw background over border
         'background-opacity': 1, // Ensure background color is visible unless overridden
         'border-width': 2,
         'border-color': '#666',
-        'shape': 'ellipse', // Default shape remains ellipse
+        'shape': 'ellipse' as const, // Default shape remains ellipse
       },
     },
     // --- Icon Styles using Data URIs ---
@@ -165,18 +165,34 @@ const NetworkGraph = () => {
         'width': 2,
         'line-color': '#bbb', // Lighter default edge
         'target-arrow-color': '#bbb',
-        'target-arrow-shape': 'triangle',
-        'curve-style': 'bezier',
+        'target-arrow-shape': 'triangle' as const,
+        'curve-style': 'bezier' as const,
         'label': 'data(label)',
         'font-size': '9px',
         'color': '#555',
-        'text-rotation': 'autorotate',
+        'text-rotation': 'autorotate' as const,
         'text-margin-y': -10
       },
     },
     // --- Edge Handles Styles (unchanged) ---
-    { selector: '.eh-handle', style: { /* ... */ } },
-    { selector: '.eh-source', style: { /* ... */ } },
+    { selector: '.eh-handle',
+      style: {
+        'background-color': 'red',
+        'width': 12,
+        'height': 12,
+        'shape': 'ellipse' as const, // Apply here too
+        'overlay-opacity': 0,
+        'border-width': 12,
+        'border-opacity': 0,
+      },
+    },
+    { selector: '.eh-source',
+      style: {
+      'line-color': 'red',
+      'target-arrow-color': 'red',
+      'target-arrow-shape': 'triangle' as const, // Add here too
+    }
+     },
     { selector: '.eh-target', style: { /* ... */ } },
     { selector: '.eh-preview, .eh-ghost-edge', style: { /* ... */ } },
     // --- Selection Styles ---
@@ -275,7 +291,7 @@ const NetworkGraph = () => {
 
           // Initialize edge handles (keep as before)
           ehInstanceRef.current = cy.edgehandles({ /* ... edgehandles options ... */
-            preview: true,
+            ghost: true,
             handleNodes: 'node',
             handleSize: 10,
             handleColor: '#ff0000',
