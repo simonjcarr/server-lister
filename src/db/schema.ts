@@ -118,8 +118,8 @@ export type InsertProject = z.infer<typeof insertProjectSchema>
 export type SelectProject = z.infer<typeof selectProjectSchema>
 export type UpdateProject = z.infer<typeof updateProjectSchema>
 
-export const primaryProjectUsers = pgTable(
-  "primary_project_users",
+export const primaryProjectEngineers = pgTable(
+  "primary_project_engineers",
   {
     userId: text("userId").notNull(),
     projectId: integer("project_id").notNull(),
@@ -127,12 +127,12 @@ export const primaryProjectUsers = pgTable(
   (table) => [uniqueIndex("unique_user_project_idx").on(table.userId, table.projectId)]
 )
 
-export const insertPrimaryProjectUserSchema = createInsertSchema(primaryProjectUsers)
-export const selectPrimaryProjectUserSchema = createSelectSchema(primaryProjectUsers)
-export const updatePrimaryProjectUserSchema = createUpdateSchema(primaryProjectUsers)
-export type InsertPrimaryProjectUser = z.infer<typeof insertPrimaryProjectUserSchema>
-export type SelectPrimaryProjectUser = z.infer<typeof selectPrimaryProjectUserSchema>
-export type UpdatePrimaryProjectUser = z.infer<typeof updatePrimaryProjectUserSchema>
+export const insertPrimaryProjectEngineerSchema = createInsertSchema(primaryProjectEngineers)
+export const selectPrimaryProjectEngineerSchema = createSelectSchema(primaryProjectEngineers)
+export const updatePrimaryProjectEngineerSchema = createUpdateSchema(primaryProjectEngineers)
+export type InsertPrimaryProjectEngineer = z.infer<typeof insertPrimaryProjectEngineerSchema>
+export type SelectPrimaryProjectEngineer = z.infer<typeof selectPrimaryProjectEngineerSchema>
+export type UpdatePrimaryProjectEngineer = z.infer<typeof updatePrimaryProjectEngineerSchema>
 
 export const business = pgTable(
   "business",
