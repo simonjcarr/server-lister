@@ -1,0 +1,14 @@
+version: '3'
+services:
+  drawio:
+    image: jgraph/drawio
+    container_name: drawio
+    ports:
+      - "8080:8080"
+    environment:
+      - DRAWIO_FRAME_ANCESTORS="'self' http://localhost:3000"
+      # This is important - enable the full editor UI for embedding
+      - DRAWIO_BASE_URL="https://app.diagrams.net"
+      - DRAWIO_CONFIG_ROOT_KEY="ddd" 
+      - DRAWIO_CSP_HEADER="frame-ancestors 'self' http://localhost:3000"
+    restart: unless-stopped
