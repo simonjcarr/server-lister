@@ -18,12 +18,12 @@ import ProjectList from '../../project/ProjectList';
 
 
 // Create a NavContext to share the onClose function
-export const NavContext = React.createContext<{ onClose: () => void }>({ onClose: () => {} });
+export const NavContext = React.createContext<{ onClose: () => void }>({ onClose: () => { } });
 
 // Create a NavLink component that closes the drawer when clicked
 export const NavLink: React.FC<{ href: string; children: React.ReactNode }> = ({ href, children }) => {
   const { onClose } = React.useContext(NavContext);
-  
+
   return (
     <Link href={href} onClick={onClose}>
       {children}
@@ -63,7 +63,7 @@ const App: React.FC = () => {
               key: 'os-add',
               label: <FormAddOS><div>Add OS</div></FormAddOS>,
               icon: <MdAddBox />,
-              
+
             },
             {
               key: 'os-list',
@@ -95,7 +95,7 @@ const App: React.FC = () => {
           key: 'location-add',
           label: <FormAddLocation><div>Add Location</div></FormAddLocation>,
           icon: <MdAddBox />,
-          
+
         },
         {
           key: 'location-list',
@@ -121,7 +121,7 @@ const App: React.FC = () => {
           key: 'project-list',
           label: <ProjectList><div>Project List</div></ProjectList>,
           icon: <FaRegListAlt />,
-          
+
         }
       ],
     },
@@ -187,7 +187,7 @@ const App: React.FC = () => {
       },
     }
   ]
-  if(session?.user?.roles?.includes('admin')) {
+  if (session?.user?.roles?.includes('admin')) {
     items.unshift({
       key: 'admin',
       label: 'Admin',
@@ -236,8 +236,8 @@ const App: React.FC = () => {
       ],
     })
   }
-  const [ open, setOpen] = useState(false);
-  const [ placement ] = useState<DrawerProps['placement']>('left');
+  const [open, setOpen] = useState(false);
+  const [placement] = useState<DrawerProps['placement']>('left');
 
   const showDrawer = () => {
     setOpen(true);

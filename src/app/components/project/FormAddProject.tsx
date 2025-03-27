@@ -46,79 +46,79 @@ function FormAddProject({ children }: { children: React.ReactNode }) {
 
   return (
     <>
-    <span onClick={() => setOpen(true)}>{children}</span>
-    <Drawer title="Add New Project" open={open} onClose={() => setOpen(false)} placement="right" >
-    <Card
-      className="dark:bg-gray-800 dark:border-gray-700"
-      styles={{
-        header: { color: 'inherit' },
-        body: { color: 'inherit' }
-      }}
-    >
-      <Form
-        form={form}
-        layout="vertical"
-        onFinish={onFinish}
-        autoComplete="off"
-        className="dark:text-white"
-      >
-        <Form.Item
-          name="name"
-          label="Project Name"
-          rules={[{ required: true, message: 'Please enter the project name' }]}
-          className="dark:text-white"
+      <span onClick={() => setOpen(true)}>{children}</span>
+      <Drawer title="Add New Project" open={open} onClose={() => setOpen(false)} placement="right" >
+        <Card
+          className="dark:bg-gray-800 dark:border-gray-700"
+          styles={{
+            header: { color: 'inherit' },
+            body: { color: 'inherit' }
+          }}
         >
-          <Input placeholder="Enter project name" className="dark:bg-gray-700 dark:text-white dark:border-gray-600" />
-        </Form.Item>
-
-        <Form.Item
-          name="description"
-          label="Description"
-          className="dark:text-white"
-        >
-          <Input.TextArea 
-            placeholder="Enter project description" 
-            rows={4}
-            className="dark:bg-gray-700 dark:text-white dark:border-gray-600"
-          />
-        </Form.Item>
-
-        <Form.Item
-          name="business"
-          label="Business"
-          className="dark:text-white"
-        >
-          <Select
-            placeholder="Select a business"
-            loading={isLoadingBusinesses}
-            allowClear
-            className="dark:bg-gray-700 dark:text-white dark:border-gray-600"
-            dropdownStyle={{ backgroundColor: 'var(--bg-dropdown)', color: 'var(--text-dropdown)' }}
+          <Form
+            form={form}
+            layout="vertical"
+            onFinish={onFinish}
+            autoComplete="off"
+            className="dark:text-white"
           >
-            {businesses?.map((business) => (
-              <Select.Option key={business.id} value={business.id}>
-                {business.name}
-              </Select.Option>
-            ))}
-          </Select>
-        </Form.Item>
+            <Form.Item
+              name="name"
+              label="Project Name"
+              rules={[{ required: true, message: 'Please enter the project name' }]}
+              className="dark:text-white"
+            >
+              <Input placeholder="Enter project name" className="dark:bg-gray-700 dark:text-white dark:border-gray-600" />
+            </Form.Item>
 
-        <Form.Item
-          name="code"
-          label="Project Code"
-          className="dark:text-white"
-        >
-          <Input placeholder="Enter project code" className="dark:bg-gray-700 dark:text-white dark:border-gray-600" />
-        </Form.Item>
+            <Form.Item
+              name="description"
+              label="Description"
+              className="dark:text-white"
+            >
+              <Input.TextArea
+                placeholder="Enter project description"
+                rows={4}
+                className="dark:bg-gray-700 dark:text-white dark:border-gray-600"
+              />
+            </Form.Item>
 
-        <Form.Item>
-          <Button type="primary" htmlType="submit" loading={mutation.isPending}>
-            Create Project
-          </Button>
-        </Form.Item>
-      </Form>
-    </Card>
-    </Drawer>
+            <Form.Item
+              name="business"
+              label="Business"
+              className="dark:text-white"
+            >
+              <Select
+                placeholder="Select a business"
+                loading={isLoadingBusinesses}
+                allowClear
+                className="dark:bg-gray-700 dark:text-white dark:border-gray-600"
+                dropdownStyle={{ backgroundColor: 'var(--bg-dropdown)', color: 'var(--text-dropdown)' }}
+              >
+                {businesses?.map((business) => (
+                  <Select.Option key={business.id} value={business.id}>
+                    {business.name}
+                  </Select.Option>
+                ))}
+              </Select>
+            </Form.Item>
+
+            <Form.Item
+              name="code"
+              label="Project Code"
+              className="dark:text-white"
+            >
+              <Input placeholder="Enter project code" className="dark:bg-gray-700 dark:text-white dark:border-gray-600" />
+            </Form.Item>
+
+            <Form.Item>
+              <Button type="primary" htmlType="submit" loading={mutation.isPending}>
+                Create Project
+              </Button>
+            </Form.Item>
+          </Form>
+        </Card>
+      </Drawer>
     </>
   );
 }
