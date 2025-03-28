@@ -15,7 +15,7 @@ const OpenDrawing = ({
   drawingSelected: (id: number) => void 
 }) => {
   const [open, setOpen] = useState(false);
-  const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
+  const [viewMode, setViewMode] = useState<'table' | 'grid'>('grid');
 
   const handleViewModeChange = (mode: 'table' | 'grid') => {
     setViewMode(mode);
