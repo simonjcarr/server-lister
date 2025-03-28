@@ -113,34 +113,7 @@ const DrawingPreview: React.FC<DrawingPreviewProps> = ({ drawing, onEdit, onClos
   };
 
   return (
-    <Card
-      title={drawing.name}
-      extra={
-        <Space>
-          <Button type="primary" icon={<EditOutlined />} onClick={onEdit}>
-            Edit Drawing
-          </Button>
-          {onDelete && (
-            <Popconfirm
-              title="Delete Drawing"
-              description="Are you sure you want to delete this drawing? This action cannot be undone."
-              onConfirm={() => onDelete(drawing.id)}
-              okText="Delete"
-              cancelText="Cancel"
-              okButtonProps={{ danger: true }}
-              disabled={isDeleting}
-            >
-              <Button danger icon={<DeleteOutlined />} loading={isDeleting}>
-                {isDeleting ? 'Deleting...' : 'Delete'}
-              </Button>
-            </Popconfirm>
-          )}
-          <Button type="default" onClick={onClose}>
-            Close
-          </Button>
-        </Space>
-      }
-    >
+    <>
       <div style={{ marginBottom: 20 }}>
         {/* Description */}
         {drawing.description && (
@@ -303,7 +276,7 @@ const DrawingPreview: React.FC<DrawingPreviewProps> = ({ drawing, onEdit, onClos
           </div>
         )}
       </div>
-    </Card>
+    </>
   );
 };
 

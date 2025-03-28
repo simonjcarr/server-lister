@@ -1,4 +1,5 @@
-import { Alert, Button, Card, Spin, App } from "antd"
+import React from "react"
+import { Alert, Button, Card, Spin, App, Space, Popconfirm, Dropdown, Menu } from "antd"
 import NewDrawing from "./NewDrawing"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { useEffect, useState } from "react"
@@ -7,7 +8,7 @@ import EditDrawing from "./EditDrawing"
 import { updateDrawingXML, updateDrawingWebp, getDrawing, getDrawingsByIds, deleteDrawing } from "@/app/actions/drawings/crudDrawings"
 import DrawIOEmbed from "./DrawIO"
 import { SelectDrawing } from "@/db/schema"
-import { EditOutlined } from "@ant-design/icons"
+import { EditOutlined, DeleteOutlined, EllipsisOutlined, SettingOutlined, CloseOutlined } from "@ant-design/icons"
 import DrawingPreview from "./DrawingPreview"
 
 const DrawingsComponent = ({ drawingIds, drawingId, drawingUpdated }: { 
@@ -57,6 +58,9 @@ const DrawingsComponent = ({ drawingIds, drawingId, drawingUpdated }: {
     enabled: !!openDrawingId
   })
 
+  // Reference for the Edit Drawing button click
+  const [triggerEditDrawing, setTriggerEditDrawing] = useState<boolean>(false);
+
   const deleteMutation = useMutation({
     mutationFn: async (drawingId: number) => {
       return await deleteDrawing(drawingId)
@@ -86,6 +90,9 @@ const DrawingsComponent = ({ drawingIds, drawingId, drawingUpdated }: {
       message.error("Failed to delete drawing. Please try again.")
     }
   })
+
+  // State to control the visibility of the EditDrawing modal
+  // const [showEditDrawingModal, setShowEditDrawingModal] = useState(false);
 
   const mutate = useMutation({
     mutationFn: async (xml: string) => {
@@ -189,6 +196,7 @@ const DrawingsComponent = ({ drawingIds, drawingId, drawingUpdated }: {
   const selectedDrawing = openDrawingId ? (data || findSelectedDrawing()) : null
 
   return (
+    <>
     <Card 
       title={
         currentTitle ||
@@ -206,20 +214,48 @@ const DrawingsComponent = ({ drawingIds, drawingId, drawingUpdated }: {
               <Button type="default">New Drawing</Button>
             </NewDrawing>
           }
-          {openDrawingId && !isEditing && 
-            <EditDrawing 
-              drawing={findSelectedDrawing() || null} 
-              drawingUpdated={drawingUpdated}
+          {openDrawingId && !isEditing && (
+            <Dropdown
+              menu={{
+                items: [
+                  {
+                    key: 'properties',
+                    icon: <SettingOutlined />,
+                    label: 'Properties',
+                    onClick: () => setTriggerEditDrawing(prev => !prev)
+                  },
+                  {
+                    key: 'edit',
+                    icon: <EditOutlined />,
+                    label: 'Edit Drawing',
+                    onClick: handleEditDrawing
+                  },
+                  {
+                    key: 'delete',
+                    icon: <DeleteOutlined />,
+                    label: 'Delete',
+                    danger: true,
+                    onClick: () => {
+                      // First confirm before deletion
+                      if (window.confirm('Are you sure you want to delete this drawing? This action cannot be undone.')) {
+                        deleteMutation.mutate(openDrawingId);
+                      }
+                    }
+                  },
+                  {
+                    key: 'close',
+                    icon: <CloseOutlined />,
+                    label: 'Close',
+                    onClick: closeDrawing
+                  },
+                ],
+              }}
+              placement="bottomRight"
+              trigger={['click']}
             >
-              <Button 
-                type="default" 
-                icon={<EditOutlined />} 
-                style={{ marginRight: 8 }}
-              >
-                Properties
-              </Button>
-            </EditDrawing>
-          }
+              <Button icon={<EllipsisOutlined />}>Actions</Button>
+            </Dropdown>
+          )}
           {openDrawingId && isEditing && 
             <Button type="default" onClick={closeDrawing}>
               Close Drawing
@@ -236,8 +272,6 @@ const DrawingsComponent = ({ drawingIds, drawingId, drawingUpdated }: {
           drawing={selectedDrawing || null}
           onEdit={handleEditDrawing}
           onClose={closeDrawing}
-          onDelete={(id) => deleteMutation.mutate(id)}
-          isDeleting={deleteMutation.isPending}
         />
       )}
       
@@ -250,6 +284,28 @@ const DrawingsComponent = ({ drawingIds, drawingId, drawingUpdated }: {
         />
       )}
     </Card>
+
+    {/* Hidden button to trigger EditDrawing modal */}
+    <div style={{ display: 'none' }}>
+      <EditDrawing
+        drawing={findSelectedDrawing() || null}
+        drawingUpdated={(drawing) => {
+          drawingUpdated(drawing);
+        }}
+      >
+        <button onClick={() => {}} ref={(btn) => {
+          // When triggerEditDrawing changes, simulate a click on this button
+          if (btn && triggerEditDrawing) {
+            btn.click();
+            // Reset the trigger after use
+            setTriggerEditDrawing(false);
+          }
+        }}>
+          Properties
+        </button>
+      </EditDrawing>
+    </div>
+    </>
   )
 }
 
