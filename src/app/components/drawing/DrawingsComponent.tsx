@@ -189,6 +189,11 @@ const DrawingsComponent = ({ drawingIds, drawingId, drawingUpdated }: {
               </Button>
             </EditDrawing>
           }
+          {openDrawingId && isEditing && 
+            <Button type="default" onClick={closeDrawing}>
+              Close Drawing
+            </Button>
+          }
         </>
       }
     >
