@@ -1,8 +1,9 @@
 "use client"
-import { Drawer, Form, Input, Button } from "antd"
+import { Drawer, Form, Input, Button, Select, Spin, Divider } from "antd"
 import { useState, useEffect } from "react"
-import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query"
 import { updateDrawing } from "@/app/actions/drawings/crudDrawings"
+import { getAllServers, getDrawingServerIds, updateDrawingServers } from "@/app/actions/drawings/serverDrawings/serverDrawingActions"
 import { SelectDrawing } from "@/db/schema"
 
 const EditDrawing = ({
@@ -17,6 +18,21 @@ const EditDrawing = ({
   const [open, setOpen] = useState(false)
   const [form] = Form.useForm()
   const queryClient = useQueryClient()
+  const [selectedServerIds, setSelectedServerIds] = useState<number[]>([])
+
+  // Query to fetch all available servers for selection
+  const { data: serversData, isLoading: serversLoading } = useQuery({
+    queryKey: ['servers-for-selection'],
+    queryFn: getAllServers,
+    enabled: open
+  })
+
+  // Query to fetch server IDs currently linked to this drawing
+  const { data: linkedServerIds, isLoading: linkedServersLoading } = useQuery({
+    queryKey: ['drawing-server-ids', drawing?.id],
+    queryFn: () => drawing ? getDrawingServerIds(drawing.id) : Promise.resolve([]),
+    enabled: !!drawing && open
+  })
 
   useEffect(() => {
     if (drawing && open) {
@@ -27,7 +43,14 @@ const EditDrawing = ({
       })
     }
   }, [drawing, form, open])
+  
+  useEffect(() => {
+    if (linkedServerIds) {
+      setSelectedServerIds(linkedServerIds)
+    }
+  }, [linkedServerIds])
 
+  // Mutation for updating drawing properties
   const mutation = useMutation({
     mutationFn: async (values: { name: string; description: string | null }) => {
       if (!drawing) return null
@@ -43,17 +66,30 @@ const EditDrawing = ({
         updatedAt: new Date()
       })
     },
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       if (data) {
-        setOpen(false)
-        drawingUpdated(data)
-        // Invalidate specific drawing query
-        queryClient.invalidateQueries({ queryKey: ["drawing", drawing?.id] })
-        
-        // Also invalidate the list query in the parent component to update the drawings list
-        // We need to use a partial key match since we don't have access to the exact drawingIds array
-        queryClient.invalidateQueries({ queryKey: ["drawings"] })
+        // After drawing is updated, update server associations
+        await serversMutation.mutateAsync(drawing.id)
       }
+    }
+  })
+
+  // Mutation for updating server associations
+  const serversMutation = useMutation({
+    mutationFn: async (drawingId: number) => {
+      return await updateDrawingServers(drawingId, selectedServerIds)
+    },
+    onSuccess: () => {
+      setOpen(false)
+      if (drawing) {
+        drawingUpdated(drawing)
+      }
+      // Invalidate specific drawing query
+      queryClient.invalidateQueries({ queryKey: ["drawing", drawing?.id] })
+      
+      // Also invalidate related queries
+      queryClient.invalidateQueries({ queryKey: ["drawings"] })
+      queryClient.invalidateQueries({ queryKey: ["drawing-server-ids", drawing?.id] })
     }
   })
 
@@ -97,11 +133,46 @@ const EditDrawing = ({
           <Form.Item name="description" label="Description">
             <Input.TextArea />
           </Form.Item>
+          
+          <Divider>Associated Servers</Divider>
+          
+          <div className="mb-4">
+            <label className="block text-sm font-medium mb-1">Link Servers to Drawing</label>
+            {(serversLoading || linkedServersLoading) ? (
+              <div className="flex justify-center items-center py-4">
+                <Spin size="small" /> <span className="ml-2">Loading servers...</span>
+              </div>
+            ) : (
+              <Select
+                mode="multiple"
+                placeholder="Select servers to associate with this drawing"
+                style={{ width: '100%' }}
+                value={selectedServerIds}
+                onChange={(values) => setSelectedServerIds(values)}
+                optionFilterProp="label"
+                options={serversData?.map(server => ({
+                  value: server.id,
+                  label: (
+                    <div>
+                      <div className="font-medium">{server.hostname}</div>
+                      {server.ipv4 && <div className="text-xs text-gray-500">{server.ipv4}</div>}
+                      {server.description && <div className="text-xs text-gray-500">{server.description}</div>}
+                    </div>
+                  )
+                }))}
+                optionRender={(option) => option.label}
+              />
+            )}
+            <div className="text-xs text-gray-500 mt-1">
+              Select multiple servers that should be associated with this diagram
+            </div>
+          </div>
+          
           <Form.Item>
             <Button 
               type="primary" 
               htmlType="submit" 
-              loading={mutation.isPending}
+              loading={mutation.isPending || serversMutation.isPending}
             >
               Save Changes
             </Button>
