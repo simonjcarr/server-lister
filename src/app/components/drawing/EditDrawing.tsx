@@ -37,7 +37,10 @@ const EditDrawing = ({
         description: values.description,
         // We need to keep the existing values for these fields
         xml: drawing.xml,
-        svg: drawing.svg
+        svg: drawing.svg,
+        // Include the date fields required by InsertDrawing type
+        createdAt: drawing.createdAt,
+        updatedAt: new Date()
       })
     },
     onSuccess: (data) => {
