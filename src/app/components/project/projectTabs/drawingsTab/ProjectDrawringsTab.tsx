@@ -14,6 +14,7 @@ const ProjectDrawingsTab = ({projectId}: {projectId: number}) => {
   const [openDrawingId, setOpenDrawingId] = useState<number | null>(null)
   const [initialXml, setInitialXml] = useState<string | null>(null)
   const [cardTitle, setCardTitle] = useState<string | null>(null)
+  
   const {data, error, isLoading} = useQuery({
     queryKey: ["projectDrawing", projectId],
     queryFn: () => getProjectDrawing(openDrawingId || 0),
@@ -54,11 +55,28 @@ const ProjectDrawingsTab = ({projectId}: {projectId: number}) => {
     mutate.mutate(xml)
   }
 
+  const closeDrawing = () => {
+    setOpenDrawingId(null)
+    setInitialXml(null)
+    setCardTitle(null)
+  }
+
   return (
-    <Card title={cardTitle || <OpenDrawing projectId={projectId} drawingSelected={drawingSelected}><Button type="default">Open Drawing</Button></OpenDrawing>} extra={<NewDrawing projectId={projectId} drawingSelected={drawingSelected}><Button type="default">New Drawing</Button></NewDrawing>}>
+    <Card title={
+      cardTitle || 
+        <OpenDrawing projectId={projectId} drawingSelected={drawingSelected}>
+        <Button type="default">Open Drawing</Button>
+        </OpenDrawing>} 
+        extra={
+          <>
+            {!openDrawingId && <NewDrawing projectId={projectId} drawingSelected={drawingSelected}><Button type="default">New Drawing</Button></NewDrawing>}
+            {openDrawingId && <Button type="default" onClick={closeDrawing}>Close Drawing</Button>}
+          </>
+        }>
       {isLoading && <Spin />}
       {error && <Alert message="Error loading drawing" type="error" />}
       {data && !!openDrawingId && initialXml && <DrawIOEmbed onLoad={onLoad} onSave={onSave} initialDiagramXml={initialXml || ""} />}
+      {data && !!openDrawingId && !initialXml && <DrawIOEmbed onLoad={onLoad} onSave={onSave} initialDiagramXml={initialXml || ""} />}
     </Card>
   )
 }

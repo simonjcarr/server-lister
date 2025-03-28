@@ -8,7 +8,6 @@ const OpenDrawing = ({ children, projectId, drawingSelected }: { children: React
   const { data, error, isLoading } = useQuery({
     queryKey: ["projectDrawing", projectId],
     queryFn: () => getProjectDrawings(projectId),
-    staleTime: 60 * 1000
   })
   return (
     <>
