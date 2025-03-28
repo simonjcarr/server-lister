@@ -3,9 +3,11 @@ import NewDrawing from "./NewDrawing"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { useEffect, useState } from "react"
 import OpenDrawing from "./OpenDrawing"
+import EditDrawing from "./EditDrawing"
 import { updateDrawingXML, getDrawing } from "@/app/actions/drawings/crudDrawings"
 import DrawIOEmbed from "./DrawIO"
 import { SelectDrawing } from "@/db/schema"
+import { EditOutlined } from "@ant-design/icons"
 
 const DrawingsComponent = ({ drawingsAvailable, drawingId, drawingUpdated }: {  drawingsAvailable: SelectDrawing[], drawingId: number | null, drawingUpdated: (drawing: SelectDrawing) => void }) => {
   const queryClient = useQueryClient()
@@ -113,7 +115,14 @@ const DrawingsComponent = ({ drawingsAvailable, drawingId, drawingUpdated }: {  
       extra={
         <>
           {!openDrawingId && <NewDrawing drawingUpdated={drawingUpdated}><Button type="default">New Drawing</Button></NewDrawing>}
-          {openDrawingId && <Button type="default" onClick={closeDrawing}>Close Drawing</Button>}
+          {openDrawingId && (
+            <>
+              <EditDrawing drawing={findSelectedDrawing()} drawingUpdated={drawingUpdated}>
+                <Button type="default" icon={<EditOutlined />} style={{ marginRight: 8 }}>Edit</Button>
+              </EditDrawing>
+              <Button type="default" onClick={closeDrawing}>Close Drawing</Button>
+            </>
+          )}
         </>
       }>
       {isLoading && <Spin />}
