@@ -5,36 +5,38 @@ import { useEffect, useState } from "react"
 import OpenDrawing from "./OpenDrawing"
 import { updateDrawingXML, getDrawing } from "@/app/actions/drawings/crudDrawings"
 import DrawIOEmbed from "./DrawIO"
+import { SelectDrawing } from "@/db/schema"
 
 
 
 
-const DrawingsComponent = ({ projectId }: { projectId: number }) => {
+const DrawingsComponent = ({ drawingsAvailable, drawingId, drawingUpdated }: {  drawingsAvailable: SelectDrawing[], drawingId: number | null, drawingUpdated: (drawing: SelectDrawing) => void }) => {
   const queryClient = useQueryClient()
   const [openDrawingId, setOpenDrawingId] = useState<number | null>(null)
   const [initialXml, setInitialXml] = useState<string | null>(null)
   const [cardTitle, setCardTitle] = useState<string | null>(null)
 
   const { data, error, isLoading } = useQuery({
-    queryKey: ["projectDrawing", projectId],
-    queryFn: () => getDrawing(openDrawingId || 0),
+    queryKey: ["drawing", drawingId],
+    queryFn: () => getDrawing(drawingId || 0),
     staleTime: 60 * 1000,
-    enabled: !!openDrawingId
+    enabled: !!drawingId
   })
 
   const mutate = useMutation({
     mutationFn: async (xml: string) => {
-      return await updateDrawingXML(openDrawingId || 0, xml)
+      if (!drawingId) return
+      return await updateDrawingXML(drawingId, xml)
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["projectDrawing", projectId] })
+      queryClient.invalidateQueries({ queryKey: ["drawing", drawingId] })
     }
   })
   const drawingSelected = (id: number) => {
     setOpenDrawingId(id)
     setInitialXml(null)
     setCardTitle(null)
-    queryClient.invalidateQueries({ queryKey: ["projectDrawing", projectId] })
+    queryClient.invalidateQueries({ queryKey: ["drawing", id] })
 
     console.log(id)
   }
@@ -64,12 +66,12 @@ const DrawingsComponent = ({ projectId }: { projectId: number }) => {
   return (
     <Card title={
       cardTitle ||
-      <OpenDrawing projectId={projectId} drawingSelected={drawingSelected}>
+      <OpenDrawing drawingsAvailable={drawingsAvailable} drawingSelected={drawingSelected}>
         <Button type="default">Open Drawing</Button>
       </OpenDrawing>}
       extra={
         <>
-          {!openDrawingId && <NewDrawing projectId={projectId} drawingSelected={drawingSelected}><Button type="default">New Drawing</Button></NewDrawing>}
+          {!openDrawingId && <NewDrawing drawingUpdated={drawingUpdated}><Button type="default">New Drawing</Button></NewDrawing>}
           {openDrawingId && <Button type="default" onClick={closeDrawing}>Close Drawing</Button>}
         </>
       }>

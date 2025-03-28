@@ -1,14 +1,9 @@
 import React, { useState } from 'react'
-import { useQuery } from "@tanstack/react-query"
-import { getProjectDrawings } from "@/app/actions/projects/crudActions"
 import { Button, Drawer, Table } from "antd"
+import { SelectDrawing } from '@/db/schema'
 
-const OpenDrawing = ({ children, projectId, drawingSelected }: { children: React.ReactNode, projectId: number, drawingSelected: (id: number) => void }) => {
+const OpenDrawing = ({ children, drawingsAvailable, drawingSelected }: { children: React.ReactNode, drawingsAvailable: SelectDrawing[], drawingSelected: (id: number) => void }) => {
   const [open, setOpen] = useState(false)
-  const { data, error, isLoading } = useQuery({
-    queryKey: ["projectDrawing", projectId],
-    queryFn: () => getProjectDrawings(projectId),
-  })
   return (
     <>
       <span onClick={() => setOpen(true)}>{children}</span>
@@ -23,9 +18,7 @@ const OpenDrawing = ({ children, projectId, drawingSelected }: { children: React
         }
         destroyOnClose
       >
-        {isLoading && <div>Loading...</div>}
-        {error && <div>{error instanceof Error ? error.message : 'Failed to fetch drawing'}</div>}
-        {data && Array.isArray(data) && (
+        {drawingsAvailable && Array.isArray(drawingsAvailable) && (
           <Table
             columns={[
               {
@@ -34,7 +27,7 @@ const OpenDrawing = ({ children, projectId, drawingSelected }: { children: React
                 
               },
             ]}
-            dataSource={data.map((drawing) => ({
+            dataSource={drawingsAvailable.map((drawing) => ({
               id: drawing.id,
               name: drawing.name,
               key: drawing.id,

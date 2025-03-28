@@ -181,8 +181,8 @@ export const projectDrawings = pgTable(
   "project_drawings",
   {
     id: serial("id").primaryKey(),
-    projectId: integer("project_id").notNull(),
-    drawingId: integer("drawing_id").notNull(),
+    projectId: integer("project_id").notNull().references(() => projects.id, { onDelete: 'cascade' }),
+    drawingId: integer("drawing_id").notNull().references(() => drawings.id, { onDelete: 'cascade' }),
   },
   (table) => [uniqueIndex("unique_project_drawing_idx").on(table.projectId, table.drawingId)]
 )
@@ -198,7 +198,6 @@ export const drawings = pgTable(
   "drawings",
   {
     id: serial("id").primaryKey(),
-    projectId: integer("project_id").notNull(),
     name: text("name").notNull(),
     description: text("description"),
     svg: text("svg"),
@@ -208,7 +207,6 @@ export const drawings = pgTable(
   },
   (table) => [
     index("drawings_name_idx").on(table.name),
-    uniqueIndex("unique_drawing_idx").on(table.projectId, table.name),
   ]
 )
 

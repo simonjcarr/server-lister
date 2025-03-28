@@ -1,27 +1,22 @@
 "use client"
 import { Drawer, Form, Input, Button } from "antd"
 import { useState } from "react"
-import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { useMutation } from "@tanstack/react-query"
 import { createDrawing } from "@/app/actions/drawings/crudDrawings"
-import { InsertDrawing } from "@/db/schema"
-const NewDrawing = ({children, projectId, drawingSelected}: {children: React.ReactNode, projectId: number, drawingSelected?: (id: number) => void}) => {
+import { InsertDrawing, SelectDrawing } from "@/db/schema"
+const NewDrawing = ({children, drawingUpdated}: {children: React.ReactNode, drawingUpdated: (drawing: SelectDrawing) => void}) => {
   const [open, setOpen] = useState(false)
-  const queryClient = useQueryClient()
   const mutation = useMutation({
     mutationFn: async (formData: InsertDrawing) => {
       return await createDrawing(formData)
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['drawings', projectId] })
+    onSuccess: (data) => {
       setOpen(false)
+      drawingUpdated(data)
     }
   })
   const handleCreate = async (formData: InsertDrawing) => {
-    const result = await mutation.mutateAsync({...formData, projectId})
-    setOpen(false)
-    if (result?.id && drawingSelected) {
-      drawingSelected(result.id)
-    }
+    await mutation.mutateAsync({...formData})
   }
   return (
     <>
@@ -39,7 +34,6 @@ const NewDrawing = ({children, projectId, drawingSelected}: {children: React.Rea
     >
       <div className="text-gray-600 text-sm mb-2">This will create a new empty drawing in the project</div>
       <Form onFinish={handleCreate} layout="vertical">
-        <input type="hidden" name="projectId" value={projectId} />
         <Form.Item name="name" label="Drawing Name" rules={[{ required: true }]}>
           <Input />
         </Form.Item>
