@@ -1,21 +1,21 @@
 import { Alert, Button, Card, Spin } from "antd"
-import NewDrawing from "../../../drawing/NewDrawing"
+import NewDrawing from "./NewDrawing"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { useEffect, useState } from "react"
-import OpenDrawing from "./OpenDrawing"
+import OpenDrawing from "../project/projectTabs/drawingsTab/OpenDrawing"
 import { updateDrawingXML, getDrawing } from "@/app/actions/drawings/crudDrawings"
-import DrawIOEmbed from "../../drawio/DrawIO"
+import DrawIOEmbed from "../project/drawio/DrawIO"
 
 
 
 
-const ProjectDrawingsTab = ({projectId}: {projectId: number}) => {
+const DrawingsComponent = ({ projectId }: { projectId: number }) => {
   const queryClient = useQueryClient()
   const [openDrawingId, setOpenDrawingId] = useState<number | null>(null)
   const [initialXml, setInitialXml] = useState<string | null>(null)
   const [cardTitle, setCardTitle] = useState<string | null>(null)
-  
-  const {data, error, isLoading} = useQuery({
+
+  const { data, error, isLoading } = useQuery({
     queryKey: ["projectDrawing", projectId],
     queryFn: () => getDrawing(openDrawingId || 0),
     staleTime: 60 * 1000,
@@ -35,12 +35,12 @@ const ProjectDrawingsTab = ({projectId}: {projectId: number}) => {
     setInitialXml(null)
     setCardTitle(null)
     queryClient.invalidateQueries({ queryKey: ["projectDrawing", projectId] })
-    
+
     console.log(id)
   }
 
   useEffect(() => {
-    if(!openDrawingId) return
+    if (!openDrawingId) return
     setCardTitle(data?.name || "")
     setInitialXml(data?.xml || null)
   }, [openDrawingId, data])
@@ -63,16 +63,16 @@ const ProjectDrawingsTab = ({projectId}: {projectId: number}) => {
 
   return (
     <Card title={
-      cardTitle || 
-        <OpenDrawing projectId={projectId} drawingSelected={drawingSelected}>
+      cardTitle ||
+      <OpenDrawing projectId={projectId} drawingSelected={drawingSelected}>
         <Button type="default">Open Drawing</Button>
-        </OpenDrawing>} 
-        extra={
-          <>
-            {!openDrawingId && <NewDrawing projectId={projectId} drawingSelected={drawingSelected}><Button type="default">New Drawing</Button></NewDrawing>}
-            {openDrawingId && <Button type="default" onClick={closeDrawing}>Close Drawing</Button>}
-          </>
-        }>
+      </OpenDrawing>}
+      extra={
+        <>
+          {!openDrawingId && <NewDrawing projectId={projectId} drawingSelected={drawingSelected}><Button type="default">New Drawing</Button></NewDrawing>}
+          {openDrawingId && <Button type="default" onClick={closeDrawing}>Close Drawing</Button>}
+        </>
+      }>
       {isLoading && <Spin />}
       {error && <Alert message="Error loading drawing" type="error" />}
       {data && !!openDrawingId && initialXml && <DrawIOEmbed onLoad={onLoad} onSave={onSave} initialDiagramXml={initialXml || ""} />}
@@ -81,4 +81,4 @@ const ProjectDrawingsTab = ({projectId}: {projectId: number}) => {
   )
 }
 
-export default ProjectDrawingsTab
+export default DrawingsComponent
