@@ -5,6 +5,7 @@ import ClickToCopy from "../utils/ClickToCopy"
 import type { TabsProps } from "antd"
 import ProjectTab from "./projectTabs/projectTab/ProjectTab"
 import PrimaryEngineerTab from "./projectTabs/primaryEngineerTab/PrimaryEngineerTab"
+import ProjectDrawringsTab from "./projectTabs/drawingsTab/ProjectDrawringsTab"
 
 const ViewProject = ({projectId}: { projectId: number }) => {
   const { data, error, isLoading } = useQuery({
@@ -27,7 +28,7 @@ const ViewProject = ({projectId}: { projectId: number }) => {
     {
       key: "2",
       label: "Drawings",
-      // children: <ViewBusiness businessId={data?.businessId ?? 0} />,
+      children: <ProjectDrawringsTab projectId={projectId} />,
     },
     {
       key: "3",
