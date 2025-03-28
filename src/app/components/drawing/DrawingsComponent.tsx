@@ -256,11 +256,20 @@ const DrawingsComponent = ({ drawingIds, drawingId, drawingUpdated }: {
               <Button icon={<EllipsisOutlined />}>Actions</Button>
             </Dropdown>
           )}
-          {openDrawingId && isEditing && 
-            <Button type="default" onClick={closeDrawing}>
-              Close Drawing
-            </Button>
-          }
+          {openDrawingId && isEditing && (
+            <Space>
+              <Button 
+                type="default" 
+                onClick={() => setIsEditing(false)}
+                icon={<EditOutlined />}
+              >
+                Back to Preview
+              </Button>
+              <Button type="default" onClick={closeDrawing}>
+                Close Drawing
+              </Button>
+            </Space>
+          )}
         </>
       }
     >
