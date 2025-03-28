@@ -2,21 +2,21 @@
 import { Drawer, Form, Input, Button } from "antd"
 import { useState } from "react"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { createDrawing } from "@/app/actions/projects/crudActions"
-import { InsertProjectDrawing } from "@/db/schema"
+import { createDrawing } from "@/app/actions/drawings/crudDrawings"
+import { InsertDrawing } from "@/db/schema"
 const NewDrawing = ({children, projectId, drawingSelected}: {children: React.ReactNode, projectId: number, drawingSelected?: (id: number) => void}) => {
   const [open, setOpen] = useState(false)
   const queryClient = useQueryClient()
   const mutation = useMutation({
-    mutationFn: async (formData: InsertProjectDrawing) => {
+    mutationFn: async (formData: InsertDrawing) => {
       return await createDrawing(formData)
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['projectDrawings', projectId] })
+      queryClient.invalidateQueries({ queryKey: ['drawings', projectId] })
       setOpen(false)
     }
   })
-  const handleCreate = async (formData: InsertProjectDrawing) => {
+  const handleCreate = async (formData: InsertDrawing) => {
     const result = await mutation.mutateAsync({...formData, projectId})
     setOpen(false)
     if (result?.id && drawingSelected) {

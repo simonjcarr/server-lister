@@ -89,7 +89,6 @@ function DrawIOEmbed({ initialDiagramXml, onSave, onLoad }: DrawIOEmbedProps) {
                 console.log('SVG export received');
                 // Save the SVG data to your database
                 // saveSvgToDatabase(msg.data);
-                console.log('SVG data:', msg.data);
               }
             }
 
