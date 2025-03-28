@@ -12,6 +12,7 @@ import DrawIOEmbed from "../../drawio/DrawIO"
 const ProjectDrawingsTab = ({projectId}: {projectId: number}) => {
   const queryClient = useQueryClient()
   const [openDrawingId, setOpenDrawingId] = useState<number | null>(null)
+  const [initialXml, setInitialXml] = useState<string | null>(null)
   const [cardTitle, setCardTitle] = useState<string | null>(null)
   const {data, error, isLoading} = useQuery({
     queryKey: ["projectDrawing", projectId],
@@ -29,19 +30,23 @@ const ProjectDrawingsTab = ({projectId}: {projectId: number}) => {
     }
   })
   const drawingSelected = (id: number) => {
-    queryClient.invalidateQueries({ queryKey: ["projectDrawing", projectId] })
     setOpenDrawingId(id)
+    setInitialXml(null)
+    setCardTitle(null)
+    queryClient.invalidateQueries({ queryKey: ["projectDrawing", projectId] })
+    
     console.log(id)
   }
 
   useEffect(() => {
     if(!openDrawingId) return
     setCardTitle(data?.name || "")
+    setInitialXml(data?.xml || null)
   }, [openDrawingId, data])
 
   const onLoad = () => {
     console.log('Drawing loaded')
-    return data?.xml || ""
+    return initialXml || ""
   }
 
   const onSave = (xml: string) => {
@@ -53,7 +58,7 @@ const ProjectDrawingsTab = ({projectId}: {projectId: number}) => {
     <Card title={cardTitle || <OpenDrawing projectId={projectId} drawingSelected={drawingSelected}><Button type="default">Open Drawing</Button></OpenDrawing>} extra={<NewDrawing projectId={projectId} drawingSelected={drawingSelected}><Button type="default">New Drawing</Button></NewDrawing>}>
       {isLoading && <Spin />}
       {error && <Alert message="Error loading drawing" type="error" />}
-      {data && !!openDrawingId && <DrawIOEmbed onLoad={onLoad} onSave={onSave} initialDiagramXml={data.xml} />}
+      {data && !!openDrawingId && initialXml && <DrawIOEmbed onLoad={onLoad} onSave={onSave} initialDiagramXml={initialXml || ""} />}
     </Card>
   )
 }
