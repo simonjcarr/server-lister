@@ -29,11 +29,6 @@ const ViewProject = ({projectId}: { projectId: number }) => {
       label: "Documents",
       // children: <ViewBusiness businessId={data?.businessId ?? 0} />,
     },
-    {
-      key: "3",
-      label: "Drawings",
-      // children: <ViewBusiness businessId={data?.businessId ?? 0} />,
-    }
   ]
   return (
     <Card 
