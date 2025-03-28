@@ -68,6 +68,22 @@ export async function updateDrawingXML(drawingId: number, xml: string) {
   }
 }
 
+export async function updateDrawingWebp(drawingId: number, webp: string) {
+  try {
+    const result = await db
+      .update(drawings)
+      .set({ webp })
+      .where(eq(drawings.id, drawingId))
+      .returning();
+    return result[0];
+  } catch (error: unknown) {
+    console.error(`Error updating drawing webp with ID ${drawingId}:`, error);
+    throw new Error(
+      error instanceof Error ? error.message : "Failed to update drawing webp"
+    );
+  }
+}
+
 export const getDrawing = async (drawingId: number) => {
   try {
     const result = await db

@@ -1,10 +1,10 @@
 import { Alert, Button, Card, Spin } from "antd"
 import NewDrawing from "./NewDrawing"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 import OpenDrawing from "./OpenDrawing"
 import EditDrawing from "./EditDrawing"
-import { updateDrawingXML, getDrawing, getDrawingsByIds } from "@/app/actions/drawings/crudDrawings"
+import { updateDrawingXML, updateDrawingWebp, getDrawing, getDrawingsByIds } from "@/app/actions/drawings/crudDrawings"
 import DrawIOEmbed from "./DrawIO"
 import { SelectDrawing } from "@/db/schema"
 import { EditOutlined } from "@ant-design/icons"
@@ -69,16 +69,33 @@ const DrawingsComponent = ({ drawingIds, drawingId, drawingUpdated }: { drawingI
     }
   })
 
+  const webpMutate = useMutation({
+    mutationFn: async (webp: string) => {
+      if (!openDrawingId) return
+      return await updateDrawingWebp(openDrawingId, webp)
+    },
+    onSuccess: (updatedDrawing) => {
+      console.log("Drawing WebP updated successfully", updatedDrawing)
+      // No need to invalidate queries as the WebP doesn't affect the UI
+    }
+  })
+
   const drawingSelected = (id: number) => {
     console.log("Drawing selected with id:", id)
+    // Clear state first before changing the drawing
+    setInitialXml(null)
+    
     const selectedDrawing = drawingsAvailable.find(d => d.id === id)
     if (selectedDrawing) {
       console.log("Found drawing in available list:", selectedDrawing.name)
       setCardTitle(selectedDrawing.name)
     }
-    setOpenDrawingId(id)
-    setInitialXml(null)
+    
+    // Invalidate queries before changing the ID to ensure proper fetch
     queryClient.invalidateQueries({ queryKey: ["drawing", id] })
+    
+    // Then set the new drawing ID
+    setOpenDrawingId(id)
   }
 
   useEffect(() => {
@@ -88,7 +105,10 @@ const DrawingsComponent = ({ drawingIds, drawingId, drawingUpdated }: { drawingI
       setCardTitle(data.name)
     }
     if (data?.xml) {
+      console.log("Setting initialXml from query data, length:", data.xml.length)
       setInitialXml(data.xml)
+    } else {
+      console.log("No XML available in the fetched data")
     }
   }, [data])
 
@@ -104,16 +124,31 @@ const DrawingsComponent = ({ drawingIds, drawingId, drawingUpdated }: { drawingI
     }
   }, [drawingId, drawingsAvailable, openDrawingId])
 
-  const onLoad = () => {
-    console.log("onLoad", data?.name, "initialXml length:", initialXml?.length || 0)
+  const onLoad = (): string => {
+    console.log("onLoad called", data?.name, "initialXml length:", initialXml?.length || 0)
     // Return the existing XML if available, otherwise an empty string
     // which will cause DrawIO to create a new blank diagram
-    return initialXml || ""
+    if (initialXml) {
+      console.log("Returning initialXml from state")
+      return initialXml
+    }
+    console.log("No initialXml available, returning empty string")
+    return ""
   }
 
   const onSave = (xml: string) => {
     console.log("Saving drawing", openDrawingId)
     mutate.mutate(xml)
+    // WebP export will be handled by the DrawIOEmbed component's onExport callback
+  }
+
+  const onExport = (webpBase64: string) => {
+    console.log("WebP export received, length:", webpBase64.length)
+    
+    // Save the WebP data to the database
+    if (webpBase64 && openDrawingId) {
+      webpMutate.mutate(webpBase64)
+    }
   }
 
   const closeDrawing = () => {
@@ -146,7 +181,14 @@ const DrawingsComponent = ({ drawingIds, drawingId, drawingUpdated }: { drawingI
       }>
       {(isLoadingDrawings || isLoadingSingleDrawing) && <Spin />}
       {error && <Alert message="Error loading drawing" type="error" />}
-      {!!openDrawingId && <DrawIOEmbed onLoad={onLoad} onSave={onSave} drawingId={openDrawingId} />}
+      {!!openDrawingId && !isLoadingSingleDrawing && (
+        <DrawIOEmbed 
+          onLoad={onLoad} 
+          onSave={onSave} 
+          onExport={onExport} 
+          drawingId={openDrawingId} 
+        />
+      )}
     </Card>
   )
 }

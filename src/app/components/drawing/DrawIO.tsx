@@ -11,10 +11,11 @@ const DRAWIO_URL = process.env.DRAWIO_URL ?
 interface DrawIOEmbedProps {
   drawingId: number;
   onSave?: (xml: string) => void;
-  onLoad?: () => void;
+  onLoad?: () => string;
+  onExport?: (webpBase64: string) => void;
 }
 
-function DrawIOEmbed({ drawingId, onSave, onLoad }: DrawIOEmbedProps) {
+function DrawIOEmbed({ drawingId, onSave, onLoad, onExport }: DrawIOEmbedProps) {
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
   // const [isFrameReady, setIsFrameReady] = useState(false);
 
@@ -67,8 +68,14 @@ function DrawIOEmbed({ drawingId, onSave, onLoad }: DrawIOEmbedProps) {
     }
   };
 
+  // Log when XML data changes
+  useEffect(() => {
+    console.log('XML data from query changed:', xml ? `XML present (${xml.length} chars)` : 'No XML');
+  }, [xml]);
+
   // Setup communication with Draw.io
   useEffect(() => {
+    console.log('Setting up Draw.io communication, XML available:', !!xml);
     let isFirstInit = true;
     
     const messageHandler = (event: MessageEvent) => {
@@ -79,7 +86,8 @@ function DrawIOEmbed({ drawingId, onSave, onLoad }: DrawIOEmbedProps) {
             console.log('Draw.io is ready - sending init message');
             // This ensures we properly initialize communication with the editor
             postMessage({ action: 'init' });
-            if (onLoad) onLoad();
+            
+            // We don't call onLoad() here anymore, we'll use it during the init event
           } else if (event.data.startsWith('{')) {
             const msg = JSON.parse(event.data);
             console.log('Message from Draw.io:', msg);
@@ -91,25 +99,42 @@ function DrawIOEmbed({ drawingId, onSave, onLoad }: DrawIOEmbedProps) {
             if (msg.event === 'init') {
               // Only process the init event once
               if (isFirstInit) {
-                isFirstInit = false;
+                // Note: We'll set isFirstInit to false after we confirm the diagram is loaded
+                // Get initial XML from onLoad callback
+                let initialXml = null;
+                
+                if (onLoad) {
+                  console.log('Getting XML from onLoad callback');
+                  initialXml = onLoad();
+                } else if (xml) {
+                  console.log('Getting XML from query result');
+                  initialXml = xml;
+                }
+                
+                console.log('initialXml available:', !!initialXml, 'length:', initialXml?.length || 0);
+                
                 // Load the diagram if we have initial XML
-                if (xml) {
+                if (initialXml && initialXml.length > 0) {
                   console.log('Loading existing XML into the editor');
                   postMessage({
                     action: 'load',
-                    xml,
+                    xml: initialXml,
                     autosave: 0,   // Disable autosave functionality
                     modified: false,
                     noSaveBtn: 0,  // Show the save button
                     noExitBtn: 1,  // Hide the exit button
                     saveAndExit: 0 // Don't show save and exit button
                   });
+                  // We've successfully loaded the diagram
+                  isFirstInit = false;
                 } else {
                   console.log('No existing XML, showing template dialog');
                   // If no initial diagram, show the template dialog
                   postMessage({ 
                     action: 'template'
                   });
+                  // We've shown the template dialog
+                  isFirstInit = false;
                 }
               }
             }
@@ -119,6 +144,19 @@ function DrawIOEmbed({ drawingId, onSave, onLoad }: DrawIOEmbedProps) {
                 console.log('SVG export received');
                 // Save the SVG data to your database
                 // saveSvgToDatabase(msg.data);
+              } else if ((msg.format === 'png' || msg.format === 'xmlpng' || msg.format === 'webp') && msg.data) {
+                console.log('Image export received:', msg.format, 'data length:', typeof msg.data === 'string' ? msg.data.length : 'not a string');
+                // Check if the data is base64
+                if (onExport && typeof msg.data === 'string') {
+                  // Ensure it's properly formatted as a base64 data URL for WebP
+                  let dataUrl = msg.data;
+                  // If it's not already a data URL, make it one
+                  if (!dataUrl.startsWith('data:')) {
+                    dataUrl = `data:image/png;base64,${dataUrl}`;
+                  }
+                  console.log('Sending WebP data to onExport');
+                  onExport(dataUrl);
+                }
               }
             }
 
@@ -127,7 +165,16 @@ function DrawIOEmbed({ drawingId, onSave, onLoad }: DrawIOEmbedProps) {
               console.log('Save diagram');
               saveDiagramToDatabase(msg.xml);
               
-              // Export the diagram as SVG (for preview purposes)
+              // Export the diagram as WebP
+              postMessage({
+                action: 'export',
+                format: 'png',  // Use png format which we'll convert to WebP
+                xml: msg.xml,
+                spin: 'Exporting',
+                dpi: 300  // Higher quality
+              });
+              
+              // Also export SVG for preview purposes
               postMessage({
                 action: 'export',
                 format: 'svg',
