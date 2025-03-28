@@ -4,24 +4,38 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { useEffect, useState } from "react"
 import OpenDrawing from "./OpenDrawing"
 import EditDrawing from "./EditDrawing"
-import { updateDrawingXML, getDrawing } from "@/app/actions/drawings/crudDrawings"
+import { updateDrawingXML, getDrawing, getDrawingsByIds } from "@/app/actions/drawings/crudDrawings"
 import DrawIOEmbed from "./DrawIO"
 import { SelectDrawing } from "@/db/schema"
 import { EditOutlined } from "@ant-design/icons"
 
-const DrawingsComponent = ({ drawingsAvailable, drawingId, drawingUpdated }: {  drawingsAvailable: SelectDrawing[], drawingId: number | null, drawingUpdated: (drawing: SelectDrawing) => void }) => {
+const DrawingsComponent = ({ drawingIds, drawingId, drawingUpdated }: { drawingIds: number[], drawingId: number | null, drawingUpdated: (drawing: SelectDrawing) => void }) => {
   const queryClient = useQueryClient()
   const [openDrawingId, setOpenDrawingId] = useState<number | null>(drawingId)
   const [initialXml, setInitialXml] = useState<string | null>(null)
   const [cardTitle, setCardTitle] = useState<string | null>(null)
 
+  // Fetch all drawings by their IDs
+  const { data: drawingsAvailable = [], isLoading: isLoadingDrawings } = useQuery({
+    queryKey: ["drawings", drawingIds],
+    queryFn: async () => {
+      try {
+        return await getDrawingsByIds(drawingIds)
+      } catch (error) {
+        console.error("Error fetching drawings:", error)
+        return []
+      }
+    },
+    enabled: drawingIds.length > 0
+  })
+  
   const findSelectedDrawing = () => {
     const id = openDrawingId || drawingId
-    if (!id || !drawingsAvailable) return null
+    if (!id || !drawingsAvailable.length) return null
     return drawingsAvailable.find(drawing => drawing.id === id)
   }
 
-  const { data, error, isLoading } = useQuery({
+  const { data, error, isLoading: isLoadingSingleDrawing } = useQuery({
     queryKey: ["drawing", openDrawingId],
     queryFn: async () => {
       if (!openDrawingId) return null
@@ -109,7 +123,7 @@ const DrawingsComponent = ({ drawingsAvailable, drawingId, drawingUpdated }: {  
   return (
     <Card title={
       currentTitle ||
-      <OpenDrawing drawingsAvailable={drawingsAvailable} drawingSelected={drawingSelected}>
+      <OpenDrawing drawingsAvailable={drawingsAvailable || []} drawingSelected={drawingSelected}>
         <Button type="default">Open Drawing</Button>
       </OpenDrawing>}
       extra={
@@ -125,10 +139,10 @@ const DrawingsComponent = ({ drawingsAvailable, drawingId, drawingUpdated }: {  
           )}
         </>
       }>
-      {isLoading && <Spin />}
+      {(isLoadingDrawings || isLoadingSingleDrawing) && <Spin />}
       {error && <Alert message="Error loading drawing" type="error" />}
-      {drawingsAvailable && !!openDrawingId && initialXml && <DrawIOEmbed onLoad={onLoad} onSave={onSave} drawingId={openDrawingId} />}
-      {drawingsAvailable && !!openDrawingId && !initialXml && data && <DrawIOEmbed onLoad={onLoad} onSave={onSave} drawingId={openDrawingId} />}
+      {!!openDrawingId && initialXml && <DrawIOEmbed onLoad={onLoad} onSave={onSave} drawingId={openDrawingId} />}
+      {!!openDrawingId && !initialXml && data && <DrawIOEmbed onLoad={onLoad} onSave={onSave} drawingId={openDrawingId} />}
     </Card>
   )
 }

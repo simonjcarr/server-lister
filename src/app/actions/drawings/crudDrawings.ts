@@ -1,7 +1,7 @@
 'use server'
 import { db } from "@/db";
 import { drawings, InsertDrawing } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 
 export async function createDrawing(formData: InsertDrawing) {
   try {
@@ -79,6 +79,23 @@ export const getDrawing = async (drawingId: number) => {
     console.error(`Error getting drawing with ID ${drawingId}:`, error);
     throw new Error(
       error instanceof Error ? error.message : "Failed to get drawing"
+    );
+  }
+}
+
+export const getDrawingsByIds = async (drawingIds: number[]) => {
+  try {
+    if (!drawingIds.length) return [];
+    
+    const result = await db
+      .select()
+      .from(drawings)
+      .where(inArray(drawings.id, drawingIds));
+    return result;
+  } catch (error: unknown) {
+    console.error(`Error getting drawings with IDs ${drawingIds}:`, error);
+    throw new Error(
+      error instanceof Error ? error.message : "Failed to get drawings by IDs"
     );
   }
 }
