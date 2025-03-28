@@ -1,10 +1,10 @@
-import { Alert, Button, Card, Spin } from "antd"
+import { Alert, Button, Card, Spin, App } from "antd"
 import NewDrawing from "./NewDrawing"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { useEffect, useState } from "react"
 import OpenDrawing from "./OpenDrawing"
 import EditDrawing from "./EditDrawing"
-import { updateDrawingXML, updateDrawingWebp, getDrawing, getDrawingsByIds } from "@/app/actions/drawings/crudDrawings"
+import { updateDrawingXML, updateDrawingWebp, getDrawing, getDrawingsByIds, deleteDrawing } from "@/app/actions/drawings/crudDrawings"
 import DrawIOEmbed from "./DrawIO"
 import { SelectDrawing } from "@/db/schema"
 import { EditOutlined } from "@ant-design/icons"
@@ -15,6 +15,7 @@ const DrawingsComponent = ({ drawingIds, drawingId, drawingUpdated }: {
   drawingId: number | null, 
   drawingUpdated: (drawing: SelectDrawing) => void 
 }) => {
+  const { message } = App.useApp();
   const queryClient = useQueryClient()
   const [openDrawingId, setOpenDrawingId] = useState<number | null>(drawingId)
   const [initialXml, setInitialXml] = useState<string | null>(null)
@@ -54,6 +55,36 @@ const DrawingsComponent = ({ drawingIds, drawingId, drawingUpdated }: {
       }
     },
     enabled: !!openDrawingId
+  })
+
+  const deleteMutation = useMutation({
+    mutationFn: async (drawingId: number) => {
+      return await deleteDrawing(drawingId)
+    },
+    onSuccess: (deletedDrawing) => {
+      // Invalidate queries to update the UI
+      queryClient.invalidateQueries({ queryKey: ["drawings", drawingIds] })
+      
+      // Close the drawing preview since it's been deleted
+      setOpenDrawingId(null)
+      setInitialXml(null)
+      setCardTitle(null)
+      setIsEditing(false)
+      
+      // Show success message
+      message.success(`Drawing "${deletedDrawing?.name || 'Drawing'}" has been deleted`)
+      
+      // Notify parent component that a drawing was updated (deleted in this case)
+      if (deletedDrawing) {
+        // Use null as ID to indicate deletion
+        const notificationDrawing = { ...deletedDrawing, id: -1 } as SelectDrawing
+        drawingUpdated(notificationDrawing)
+      }
+    },
+    onError: (error) => {
+      console.error("Error deleting drawing:", error)
+      message.error("Failed to delete drawing. Please try again.")
+    }
   })
 
   const mutate = useMutation({
@@ -205,6 +236,8 @@ const DrawingsComponent = ({ drawingIds, drawingId, drawingUpdated }: {
           drawing={selectedDrawing || null}
           onEdit={handleEditDrawing}
           onClose={closeDrawing}
+          onDelete={(id) => deleteMutation.mutate(id)}
+          isDeleting={deleteMutation.isPending}
         />
       )}
       
