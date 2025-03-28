@@ -69,6 +69,10 @@ const EditDrawing = ({
     onSuccess: async (data) => {
       if (data) {
         // After drawing is updated, update server associations
+        if (!drawing) {
+          console.error("Drawing not found when updating server associations")
+          return
+        }
         await serversMutation.mutateAsync(drawing.id)
       }
     }
