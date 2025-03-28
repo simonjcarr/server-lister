@@ -1,7 +1,7 @@
 "use server";
 
 import { db } from '@/db';
-import { projects, business, primaryProjectEngineers } from '@/db/schema';
+import { projects, business, primaryProjectEngineers, users } from '@/db/schema';
 import { revalidatePath } from 'next/cache';
 import { eq } from 'drizzle-orm';
 import type { InsertProject } from '@/db/schema';
@@ -158,6 +158,25 @@ export async function deleteProject(id: number) {
   }
 }
 
+export async function getPrimaryProjectEngineers(projectId: number) {
+  try {
+    const engineers = await db
+      .select({
+        id: primaryProjectEngineers.userId,
+        name: users.name,
+        email: users.email,
+        projectId: primaryProjectEngineers.projectId
+      })
+      .from(primaryProjectEngineers)
+      .innerJoin(users, eq(primaryProjectEngineers.userId, users.id))
+      .where(eq(primaryProjectEngineers.projectId, projectId));
+    return engineers;
+  } catch (error: unknown) {
+    console.error(`Error fetching primary engineers for project with ID ${projectId}:`, error);
+    throw new Error(error instanceof Error ? error.message : 'Failed to fetch primary engineers');
+  }
+}
+
 export async function getPrimaryProjectEngineerIDs(projectId: number) {
   try {
     const engineers = await db
@@ -182,15 +201,12 @@ export async function updatePrimaryProjectEngineers(projectId: number, userIds: 
       .values(userIds.map((userId) => ({
         projectId,
         userId
-      })))
+      }))).returning();
     
-    return { success: true, data: userIds };
+    return true;
   } catch (error: unknown) {
     console.error(`Error updating primary engineers for project with ID ${projectId}:`, error);
-    return { 
-      success: false, 
-      error: error instanceof Error ? error.message : 'Failed to update primary engineers' 
-    };
+    throw new Error(error instanceof Error ? error.message : 'Failed to update primary engineers');
   }
 }
   
