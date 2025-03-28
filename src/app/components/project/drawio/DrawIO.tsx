@@ -62,6 +62,9 @@ function DrawIOEmbed({ initialDiagramXml, onSave, onLoad }: DrawIOEmbedProps) {
             const msg = JSON.parse(event.data);
             console.log('Message from Draw.io:', msg);
 
+            if (msg.event === 'change') {
+              console.log('Diagram changed', msg.xml);
+            }
             // Handle init event - draw.io is initialized and ready to receive commands
             if (msg.event === 'init') {
               // Load the diagram if we have initial XML
@@ -69,7 +72,8 @@ function DrawIOEmbed({ initialDiagramXml, onSave, onLoad }: DrawIOEmbedProps) {
                 postMessage({
                   action: 'load',
                   xml: initialDiagramXml,
-                  autosave: 1,   // Enable autosave functionality
+                  autosave: 0,   // Enable autosave functionality
+                  modified: false,
                   noSaveBtn: 0,  // Show the save button
                   noExitBtn: 1,  // Hide the exit button
                   saveAndExit: 0 // Don't show save and exit button
@@ -80,9 +84,25 @@ function DrawIOEmbed({ initialDiagramXml, onSave, onLoad }: DrawIOEmbedProps) {
               }
             }
             
+            if (msg.event === 'export') {
+              if (msg.format === 'svg' && msg.data) {
+                console.log('SVG export received');
+                // Save the SVG data to your database
+                // saveSvgToDatabase(msg.data);
+                console.log('SVG data:', msg.data);
+              }
+            }
+
             // Handle save event - user clicked save
             if (msg.event === 'save') {
               saveDiagramToDatabase(msg.xml);
+              postMessage({
+                action: 'export',
+                format: 'svg',
+                xml: msg.xml
+              });
+              
+              // saveDiagramToDatabase(msg.xml);
               
               // Notify draw.io that save was successful and reset the modified state
               postMessage({
@@ -95,7 +115,7 @@ function DrawIOEmbed({ initialDiagramXml, onSave, onLoad }: DrawIOEmbedProps) {
             // Handle autosave event
             if (msg.event === 'autosave') {
               console.log('Autosave triggered');
-              saveDiagramToDatabase(msg.xml);
+              // saveDiagramToDatabase(msg.xml);
             }
             
             // Handle exit event
