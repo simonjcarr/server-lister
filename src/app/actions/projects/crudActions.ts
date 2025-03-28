@@ -1,7 +1,7 @@
 "use server";
 
 import { db } from '@/db';
-import { projects, business, primaryProjectEngineers, users, drawings } from '@/db/schema';
+import { projects, business, primaryProjectEngineers, users, drawings, projectDrawings } from '@/db/schema';
 import { revalidatePath } from 'next/cache';
 import { eq } from 'drizzle-orm';
 import type { InsertProject } from '@/db/schema';
@@ -214,15 +214,19 @@ export async function updatePrimaryProjectEngineers(projectId: number, userIds: 
   
 export async function getProjectDrawings(projectId: number) {
   try {
-    const drawingsResult = await db
-      .select({
-        id: drawings.id,
-        name: drawings.name,
-        projectId: drawings.projectId
-      })
-      .from(drawings)
-      .where(eq(drawings.projectId, projectId));
-    return drawingsResult;
+    return await db
+    .select({
+      id: drawings.id,
+      name: drawings.name,
+      description: drawings.description,
+      xml: drawings.xml,
+      svg: drawings.svg,
+      createdAt: drawings.createdAt,
+      updatedAt: drawings.updatedAt
+    })
+    .from(projectDrawings)
+    .where(eq(projectDrawings.projectId, projectId))
+    .innerJoin(drawings, eq(projectDrawings.drawingId, drawings.id));
   } catch (error: unknown) {
     console.error(`Error fetching drawings for project with ID ${projectId}:`, error);
     throw new Error(error instanceof Error ? error.message : 'Failed to fetch drawings');
@@ -239,6 +243,22 @@ export async function getProjectDrawing(drawingId: number) {
   } catch (error: unknown) {
     console.error(`Error fetching drawing with ID ${drawingId}:`, error);
     throw new Error(error instanceof Error ? error.message : 'Failed to fetch drawing');
+  }
+}
+
+export async function createProjectDrawing(drawingId: number, projectId: number) {
+  try {
+    const result = await db
+      .insert(projectDrawings)
+      .values({
+        projectId,
+        drawingId,
+      })
+      .returning();
+    return result[0];
+  } catch (error: unknown) {
+    console.error(`Error creating project drawing with ID ${drawingId}:`, error);
+    throw new Error(error instanceof Error ? error.message : 'Failed to create project drawing');
   }
 }
 

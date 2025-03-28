@@ -1,19 +1,42 @@
+"use client"
 import { Card, Tabs } from "antd"
-import { useQuery } from "@tanstack/react-query"
-import { getProjectById } from "@/app/actions/projects/crudActions"
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
+import { createProjectDrawing, getProjectById, getProjectDrawings } from "@/app/actions/projects/crudActions"
 import ClickToCopy from "../utils/ClickToCopy"
 import type { TabsProps } from "antd"
 import ProjectTab from "./projectTabs/projectTab/ProjectTab"
 import PrimaryEngineerTab from "./projectTabs/primaryEngineerTab/PrimaryEngineerTab"
 import DrawingsComponent from "../drawing/DrawingsComponent"
+import { SelectDrawing } from "@/db/schema"
 
 const ViewProject = ({ projectId }: { projectId: number }) => {
+  const queryClient = useQueryClient()
   const { data, error, isLoading } = useQuery({
     queryKey: ["project", projectId],
     queryFn: () => getProjectById(projectId),
     enabled: !!projectId,
     staleTime: 60 * 1000
   })
+
+  const { data: drawings } = useQuery({
+    queryKey: ["project", "drawings", projectId],
+    queryFn: () => getProjectDrawings(projectId),
+    enabled: !!projectId,
+  })
+
+  const mutation = useMutation({
+    mutationFn: (drawingId: number) => createProjectDrawing(drawingId, projectId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["project", "drawings", projectId]})
+    }
+  })
+
+  const drawingUpdated = (drawing: SelectDrawing) => {
+    mutation.mutate(drawing.id)
+  }
+    
+  
+
   const items: TabsProps['items'] = [
     {
       key: "0",
@@ -28,7 +51,7 @@ const ViewProject = ({ projectId }: { projectId: number }) => {
     {
       key: "2",
       label: "Drawings",
-      children: <DrawingsComponent projectId={projectId} />,
+      children: <DrawingsComponent drawingsAvailable={drawings || []} drawingId={null} drawingUpdated={drawingUpdated} />,
     },
     {
       key: "3",
