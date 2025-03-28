@@ -146,7 +146,11 @@ export const projectLinks = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
   },
-  (table) => [uniqueIndex("unique_project_link_idx").on(table.projectId, table.link)]
+  (table) => [
+    index("project_links_name_idx").on(table.name),
+    uniqueIndex("unique_project_link_idx").on(table.projectId, table.link),
+    uniqueIndex("unique_project_link_name_idx").on(table.projectId, table.name),
+  ]
 )
 
 export const insertProjectLinkSchema = createInsertSchema(projectLinks)
@@ -184,7 +188,10 @@ export const projectDrawings = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
   },
-  (table) => [uniqueIndex("unique_project_drawing_idx").on(table.projectId, table.name)]
+  (table) => [
+    index("project_drawings_name_idx").on(table.name),
+    uniqueIndex("unique_project_drawing_idx").on(table.projectId, table.name),
+  ]
 )
 
 export const insertProjectDrawingSchema = createInsertSchema(projectDrawings)
