@@ -699,6 +699,25 @@ export type InsertOS = z.infer<typeof insertOSSchema>
 export type SelectOS = z.infer<typeof selectOSSchema>
 export type UpdateOS = z.infer<typeof updateOSSchema>
 
+export const serverDrawings = pgTable(
+  "server_drawings",
+  {
+    id: serial("id").primaryKey(),
+    serverId: integer("server_id").notNull().references(() => servers.id, { onDelete: 'cascade' }),
+    drawingId: integer("drawing_id").notNull().references(() => drawings.id, { onDelete: 'cascade' }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
+  },
+  (table) => [uniqueIndex("unique_server_drawing_idx").on(table.serverId, table.drawingId)]
+)
+
+export const insertServerDrawingSchema = createInsertSchema(serverDrawings)
+export const selectServerDrawingSchema = createSelectSchema(serverDrawings)
+export const updateServerDrawingSchema = createUpdateSchema(serverDrawings)
+export type InsertServerDrawing = z.infer<typeof insertServerDrawingSchema>
+export type SelectServerDrawing = z.infer<typeof selectServerDrawingSchema>
+export type UpdateServerDrawing = z.infer<typeof updateServerDrawingSchema>
+
 export const osPatchVersions = pgTable(
   "os_patch_versions",
   {
