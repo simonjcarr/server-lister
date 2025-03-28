@@ -8,7 +8,7 @@ import EditDrawing from "./EditDrawing"
 import { updateDrawingXML, updateDrawingWebp, getDrawing, getDrawingsByIds, deleteDrawing } from "@/app/actions/drawings/crudDrawings"
 import DrawIOEmbed from "./DrawIO"
 import { SelectDrawing } from "@/db/schema"
-import { EditOutlined, DeleteOutlined, EllipsisOutlined, SettingOutlined, CloseOutlined } from "@ant-design/icons"
+import { EditOutlined, DeleteOutlined, EllipsisOutlined, SettingOutlined, CloseOutlined, FolderOpenOutlined, PlusOutlined } from "@ant-design/icons"
 import DrawingPreview from "./DrawingPreview"
 
 const DrawingsComponent = ({ drawingIds, drawingId, drawingUpdated }: { 
@@ -204,14 +204,14 @@ const DrawingsComponent = ({ drawingIds, drawingId, drawingUpdated }: {
           drawingsAvailable={drawingsAvailable || []} 
           drawingSelected={drawingSelected}
         >
-          <Button type="default">Open Drawing</Button>
+          <Button type="default" icon={<FolderOpenOutlined />}>Open Drawing</Button>
         </OpenDrawing>
       }
       extra={
         <>
           {!openDrawingId && 
             <NewDrawing drawingUpdated={drawingUpdated}>
-              <Button type="default">New Drawing</Button>
+              <Button type="default" icon={<PlusOutlined />}>New Drawing</Button>
             </NewDrawing>
           }
           {openDrawingId && !isEditing && (
@@ -265,7 +265,7 @@ const DrawingsComponent = ({ drawingIds, drawingId, drawingUpdated }: {
               >
                 Back to Preview
               </Button>
-              <Button type="default" onClick={closeDrawing}>
+              <Button type="default" onClick={closeDrawing} icon={<CloseOutlined />}>
                 Close Drawing
               </Button>
             </Space>
