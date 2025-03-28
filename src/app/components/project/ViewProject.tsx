@@ -5,9 +5,9 @@ import ClickToCopy from "../utils/ClickToCopy"
 import type { TabsProps } from "antd"
 import ProjectTab from "./projectTabs/projectTab/ProjectTab"
 import PrimaryEngineerTab from "./projectTabs/primaryEngineerTab/PrimaryEngineerTab"
-import ProjectDrawingsTab from "./projectTabs/drawingsTab/DrawingsComponent"
+import DrawingsComponent from "../drawing/DrawingsComponent"
 
-const ViewProject = ({projectId}: { projectId: number }) => {
+const ViewProject = ({ projectId }: { projectId: number }) => {
   const { data, error, isLoading } = useQuery({
     queryKey: ["project", projectId],
     queryFn: () => getProjectById(projectId),
@@ -28,7 +28,7 @@ const ViewProject = ({projectId}: { projectId: number }) => {
     {
       key: "2",
       label: "Drawings",
-      children: <ProjectDrawingsTab projectId={projectId} />,
+      children: <DrawingsComponent projectId={projectId} />,
     },
     {
       key: "3",
@@ -37,21 +37,21 @@ const ViewProject = ({projectId}: { projectId: number }) => {
     },
   ]
   return (
-    <Card 
-    title={`Project: ${data?.name} | Business: ${data?.businessName}`} 
-    extra={(
-    <div className="flex items-center gap-2">
-      <div className="text-gray-600 text-sm">Booking Code:</div>
-      <ClickToCopy text={data?.code ?? ""} />
-      </div>
-    )}>
+    <Card
+      title={`Project: ${data?.name} | Business: ${data?.businessName}`}
+      extra={(
+        <div className="flex items-center gap-2">
+          <div className="text-gray-600 text-sm">Booking Code:</div>
+          <ClickToCopy text={data?.code ?? ""} />
+        </div>
+      )}>
       {isLoading && <p>Loading...</p>}
       {error && <p>Error: {error.message}</p>}
       {data && (
         <>
           <Tabs className="max-h-[90vh]" tabPosition="top" items={items} defaultActiveKey="0" />
-          
-          
+
+
         </>
       )}
     </Card>
