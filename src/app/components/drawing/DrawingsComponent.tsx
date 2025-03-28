@@ -30,6 +30,7 @@ const DrawingsComponent = ({ drawingsAvailable, drawingId, drawingUpdated }: {  
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["drawing", drawingId] })
+      drawingUpdated(data as SelectDrawing)
     }
   })
   const drawingSelected = (id: number) => {
