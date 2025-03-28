@@ -47,7 +47,12 @@ const EditDrawing = ({
       if (data) {
         setOpen(false)
         drawingUpdated(data)
+        // Invalidate specific drawing query
         queryClient.invalidateQueries({ queryKey: ["drawing", drawing?.id] })
+        
+        // Also invalidate the list query in the parent component to update the drawings list
+        // We need to use a partial key match since we don't have access to the exact drawingIds array
+        queryClient.invalidateQueries({ queryKey: ["drawings"] })
       }
     }
   })

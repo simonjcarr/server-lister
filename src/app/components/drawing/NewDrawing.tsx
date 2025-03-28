@@ -1,11 +1,12 @@
 "use client"
 import { Drawer, Form, Input, Button } from "antd"
 import { useState } from "react"
-import { useMutation } from "@tanstack/react-query"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { createDrawing } from "@/app/actions/drawings/crudDrawings"
 import { InsertDrawing, SelectDrawing } from "@/db/schema"
 const NewDrawing = ({children, drawingUpdated}: {children: React.ReactNode, drawingUpdated: (drawing: SelectDrawing) => void}) => {
   const [open, setOpen] = useState(false)
+  const queryClient = useQueryClient()
   const mutation = useMutation({
     mutationFn: async (formData: InsertDrawing) => {
       return await createDrawing(formData)
@@ -13,6 +14,8 @@ const NewDrawing = ({children, drawingUpdated}: {children: React.ReactNode, draw
     onSuccess: (data) => {
       setOpen(false)
       drawingUpdated(data)
+      // Invalidate the drawings list query to update it with the new drawing
+      queryClient.invalidateQueries({ queryKey: ["drawings"] })
     }
   })
   const handleCreate = async (formData: InsertDrawing) => {
