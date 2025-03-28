@@ -4,10 +4,9 @@ import { db } from "@/db";
 import { 
   servers, 
   serverDrawings, 
-  InsertServerDrawing,
   drawings
 } from "@/db/schema";
-import { and, eq, inArray } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 
 // Get all servers (for dropdown selection)
 export async function getAllServers() {
@@ -114,6 +113,8 @@ export async function getServerDrawings(serverId: number) {
         name: drawings.name,
         description: drawings.description,
         svg: drawings.svg,
+        webp: drawings.webp,
+        xml: drawings.xml,
         createdAt: drawings.createdAt,
         updatedAt: drawings.updatedAt
       })

@@ -10,6 +10,7 @@ import ServerSoftware from "./software/ServerSoftware"
 import ServerServices from "./services/ServerServices"
 import ServerUsers from "./users/ServerUsers"
 import ServerOS from "./os/ServerOS"
+import ServerDrawings from "./drawings/ServerDrawings"
 
 const ViewServerTabs = ({ serverId }: { serverId: number }) => {
   const { data, error, isLoading } = useQuery({
@@ -28,6 +29,7 @@ const ViewServerTabs = ({ serverId }: { serverId: number }) => {
     { key: 'services', label: 'Services', children: <ServerServices serverId={serverId} /> },
     { key: 'users', label: 'Users', children: <ServerUsers serverId={serverId} /> },
     { key: 'software', label: 'Software', children: <ServerSoftware serverId={serverId} /> },
+    { key: 'drawings', label: 'Drawings', children: <ServerDrawings serverId={serverId} /> },
     { key: 'notes', label: 'Notes', children: <ViewServerNotes serverId={serverId} /> },
   ]
   return (
