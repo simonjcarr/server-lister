@@ -1,10 +1,10 @@
 "use server";
 
 import { db } from '@/db';
-import { projects, business, primaryProjectEngineers, users } from '@/db/schema';
+import { projects, business, primaryProjectEngineers, users, projectDrawings } from '@/db/schema';
 import { revalidatePath } from 'next/cache';
 import { eq } from 'drizzle-orm';
-import type { InsertProject } from '@/db/schema';
+import type { InsertProject, InsertProjectDrawing } from '@/db/schema';
 
 export interface ProjectFormData {
   name: string;
@@ -209,5 +209,68 @@ export async function updatePrimaryProjectEngineers(projectId: number, userIds: 
     throw new Error(error instanceof Error ? error.message : 'Failed to update primary engineers');
   }
 }
+
+export async function createDrawing(formData: InsertProjectDrawing) {
+  try {
+    const result = await db.insert(projectDrawings).values({...formData, createdAt: new Date(), updatedAt: new Date()}).returning();
+    return result[0];
+  } catch (error: unknown) {
+    console.error(`Error creating drawing:`, error);
+    throw new Error(error instanceof Error ? error.message : 'Failed to create drawing');
+  }
+}
+
+export async function updateDrawing(drawingId: number, formData: InsertProjectDrawing) {
+  try {
+    const result = await db.update(projectDrawings).set(formData).where(eq(projectDrawings.id, drawingId)).returning();
+    return result[0];
+  } catch (error: unknown) {
+    console.error(`Error updating drawing with ID ${drawingId}:`, error);
+    throw new Error(error instanceof Error ? error.message : 'Failed to update drawing');
+  }
+}
+  
+export async function deleteDrawing(drawingId: number) {
+  try {
+    const result = await db.delete(projectDrawings).where(eq(projectDrawings.id, drawingId)).returning();
+    return result[0];
+  } catch (error: unknown) {
+    console.error(`Error deleting drawing with ID ${drawingId}:`, error);
+    throw new Error(error instanceof Error ? error.message : 'Failed to delete drawing');
+  }
+}
+  
+export async function getProjectDrawings(projectId: number) {
+  try {
+    const drawings = await db
+      .select({
+        id: projectDrawings.id,
+        name: projectDrawings.name,
+        projectId: projectDrawings.projectId
+      })
+      .from(projectDrawings)
+      .where(eq(projectDrawings.projectId, projectId));
+    return drawings;
+  } catch (error: unknown) {
+    console.error(`Error fetching drawings for project with ID ${projectId}:`, error);
+    throw new Error(error instanceof Error ? error.message : 'Failed to fetch drawings');
+  }
+}
+
+export async function getProjectDrawing(drawingId: number) {
+  try {
+    const drawing = await db
+      .select()
+      .from(projectDrawings)
+      .where(eq(projectDrawings.id, drawingId));
+    return drawing[0];
+  } catch (error: unknown) {
+    console.error(`Error fetching drawing with ID ${drawingId}:`, error);
+    throw new Error(error instanceof Error ? error.message : 'Failed to fetch drawing');
+  }
+}
+  
+  
+  
   
   
