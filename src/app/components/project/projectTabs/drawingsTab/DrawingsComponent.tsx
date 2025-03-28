@@ -1,9 +1,9 @@
 import { Alert, Button, Card, Spin } from "antd"
-import NewDrawing from "./NewDrawing"
+import NewDrawing from "../../../drawing/NewDrawing"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { useEffect, useState } from "react"
 import OpenDrawing from "./OpenDrawing"
-import { getProjectDrawing,  updateProjectDrawingXML } from "@/app/actions/projects/crudActions"
+import { updateDrawingXML, getDrawing } from "@/app/actions/drawings/crudDrawings"
 import DrawIOEmbed from "../../drawio/DrawIO"
 
 
@@ -17,14 +17,14 @@ const ProjectDrawingsTab = ({projectId}: {projectId: number}) => {
   
   const {data, error, isLoading} = useQuery({
     queryKey: ["projectDrawing", projectId],
-    queryFn: () => getProjectDrawing(openDrawingId || 0),
+    queryFn: () => getDrawing(openDrawingId || 0),
     staleTime: 60 * 1000,
     enabled: !!openDrawingId
   })
 
   const mutate = useMutation({
     mutationFn: async (xml: string) => {
-      return await updateProjectDrawingXML(openDrawingId || 0, xml)
+      return await updateDrawingXML(openDrawingId || 0, xml)
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["projectDrawing", projectId] })

@@ -182,17 +182,9 @@ export const projectDrawings = pgTable(
   {
     id: serial("id").primaryKey(),
     projectId: integer("project_id").notNull(),
-    name: text("name").notNull(),
-    description: text("description"),
-    svg: text("svg"),
-    xml: text("xml"),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
-    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
+    drawingId: integer("drawing_id").notNull(),
   },
-  (table) => [
-    index("project_drawings_name_idx").on(table.name),
-    uniqueIndex("unique_project_drawing_idx").on(table.projectId, table.name),
-  ]
+  (table) => [uniqueIndex("unique_project_drawing_idx").on(table.projectId, table.drawingId)]
 )
 
 export const insertProjectDrawingSchema = createInsertSchema(projectDrawings)
@@ -201,6 +193,31 @@ export const updateProjectDrawingSchema = createUpdateSchema(projectDrawings)
 export type InsertProjectDrawing = z.infer<typeof insertProjectDrawingSchema>
 export type SelectProjectDrawing = z.infer<typeof selectProjectDrawingSchema>
 export type UpdateProjectDrawing = z.infer<typeof updateProjectDrawingSchema>
+
+export const drawings = pgTable(
+  "drawings",
+  {
+    id: serial("id").primaryKey(),
+    projectId: integer("project_id").notNull(),
+    name: text("name").notNull(),
+    description: text("description"),
+    svg: text("svg"),
+    xml: text("xml"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
+  },
+  (table) => [
+    index("drawings_name_idx").on(table.name),
+    uniqueIndex("unique_drawing_idx").on(table.projectId, table.name),
+  ]
+)
+
+export const insertDrawingSchema = createInsertSchema(drawings)
+export const selectDrawingSchema = createSelectSchema(drawings)
+export const updateDrawingSchema = createUpdateSchema(drawings)
+export type InsertDrawing = z.infer<typeof insertDrawingSchema>
+export type SelectDrawing = z.infer<typeof selectDrawingSchema>
+export type UpdateDrawing = z.infer<typeof updateDrawingSchema>
 
 export const business = pgTable(
   "business",
