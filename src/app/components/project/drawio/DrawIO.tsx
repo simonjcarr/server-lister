@@ -2,18 +2,15 @@
 import React, { useRef, useEffect } from 'react';
 
 // Self-hosted DrawIO URL with embed mode parameters
-const DRAWIO_URL = 'http://localhost:8080?embed=1&proto=json';
+const DRAWIO_URL = `${process.env.DRAWIO_URL}?embed=1&proto=json` || 'http://localhost:8080?embed=1&proto=json';
 
 interface DrawIOEmbedProps {
-  initialDiagramXml?: string;
+  initialDiagramXml?: string | null;
   onSave?: (xml: string) => void;
   onLoad?: () => void;
-  // Optional database ID for the diagram
-  diagramId?: string;
 }
 
-function DrawIOEmbed({ initialDiagramXml, onSave, onLoad, diagramId="0" }: DrawIOEmbedProps) {
-  console.log(diagramId)
+function DrawIOEmbed({ initialDiagramXml, onSave, onLoad }: DrawIOEmbedProps) {
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
   // const [isFrameReady, setIsFrameReady] = useState(false);
 
