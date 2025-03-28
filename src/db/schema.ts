@@ -184,6 +184,7 @@ export const projectDrawings = pgTable(
     projectId: integer("project_id").notNull(),
     name: text("name").notNull(),
     description: text("description"),
+    svg: text("svg"),
     xml: text("xml"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
