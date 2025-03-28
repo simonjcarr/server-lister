@@ -1,5 +1,5 @@
 import React from 'react';
-import FormAddProject from '@/app/components/project/drawio/DrawIO';
+import FormAddProject from '@/app/components/drawing/DrawIO';
 
 export default function AddProjectPage() {
   return (

@@ -2,9 +2,9 @@ import { Alert, Button, Card, Spin } from "antd"
 import NewDrawing from "./NewDrawing"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { useEffect, useState } from "react"
-import OpenDrawing from "../project/projectTabs/drawingsTab/OpenDrawing"
+import OpenDrawing from "./OpenDrawing"
 import { updateDrawingXML, getDrawing } from "@/app/actions/drawings/crudDrawings"
-import DrawIOEmbed from "../project/drawio/DrawIO"
+import DrawIOEmbed from "./DrawIO"
 
 
 
