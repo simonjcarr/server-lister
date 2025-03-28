@@ -8,7 +8,8 @@ const OpenDrawing = ({ children, drawingsAvailable, drawingSelected }: { childre
     <>
       <span onClick={() => setOpen(true)}>{children}</span>
       <Drawer
-        title="Drawing"
+        title="Drawings"
+        width={600}
         open={open}
         onClose={() => setOpen(false)}
         footer={null}
@@ -22,9 +23,10 @@ const OpenDrawing = ({ children, drawingsAvailable, drawingSelected }: { childre
           <Table
             columns={[
               {
-                title: "Name",
+                title: "Title",
                 dataIndex: "name",
-                
+                sorter: (a, b) => a.name.localeCompare(b.name),
+                defaultSortOrder: 'ascend',
               },
             ]}
             dataSource={drawingsAvailable.map((drawing) => ({
@@ -33,9 +35,11 @@ const OpenDrawing = ({ children, drawingsAvailable, drawingSelected }: { childre
               key: drawing.id,
             }))}
             rowKey="id"
+            size='small'
             onRow={(record) => ({
-              onClick: () => drawingSelected(record.id),
+              onClick: () => { drawingSelected(record.id); setOpen(false) },
             })}
+            rowClassName={() => 'cursor-pointer'}
           />
         )}
       </Drawer>

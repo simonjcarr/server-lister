@@ -19,7 +19,6 @@ const DrawingsComponent = ({ drawingsAvailable, drawingId, drawingUpdated }: {  
   const { data, error, isLoading } = useQuery({
     queryKey: ["drawing", drawingId],
     queryFn: () => getDrawing(drawingId || 0),
-    staleTime: 60 * 1000,
     enabled: !!drawingId
   })
 
@@ -36,25 +35,26 @@ const DrawingsComponent = ({ drawingsAvailable, drawingId, drawingUpdated }: {  
   const drawingSelected = (id: number) => {
     setOpenDrawingId(id)
     setInitialXml(null)
-    setCardTitle(null)
+    setCardTitle(data?.name || "")
     queryClient.invalidateQueries({ queryKey: ["drawing", id] })
-
-    console.log(id)
   }
 
   useEffect(() => {
-    if (!openDrawingId) return
+    setCardTitle(data?.name || "")
+  }, [data])
+
+  useEffect(() => {
+    // if (!openDrawingId) return
     setCardTitle(data?.name || "")
     setInitialXml(data?.xml || null)
-  }, [openDrawingId, data])
+  }, [openDrawingId, drawingId, data])
 
   const onLoad = () => {
-    console.log('Drawing loaded')
+    console.log("onLoad", data?.name)
     return initialXml || ""
   }
 
   const onSave = (xml: string) => {
-    console.log('Drawing saved', xml)
     mutate.mutate(xml)
   }
 
