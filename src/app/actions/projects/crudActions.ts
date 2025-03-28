@@ -233,6 +233,23 @@ export async function getProjectDrawings(projectId: number) {
   }
 }
 
+export async function getProjectDrawingIds(projectId: number) {
+  try {
+    const result = await db
+    .select({
+      id: drawings.id
+    })
+    .from(projectDrawings)
+    .where(eq(projectDrawings.projectId, projectId))
+    .innerJoin(drawings, eq(projectDrawings.drawingId, drawings.id));
+    
+    return result.map(drawing => drawing.id);
+  } catch (error: unknown) {
+    console.error(`Error fetching drawing IDs for project with ID ${projectId}:`, error);
+    throw new Error(error instanceof Error ? error.message : 'Failed to fetch drawing IDs');
+  }
+}
+
 export async function getProjectDrawing(drawingId: number) {
   try {
     const drawing = await db
