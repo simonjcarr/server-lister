@@ -269,6 +269,16 @@ export async function getProjectDrawing(drawingId: number) {
     throw new Error(error instanceof Error ? error.message : 'Failed to fetch drawing');
   }
 }
+
+export async function updateProjectDrawingXML(drawingId: number, xml: string) {
+  try {
+    const result = await db.update(projectDrawings).set({xml}).where(eq(projectDrawings.id, drawingId)).returning();
+    return result[0];
+  } catch (error: unknown) {
+    console.error(`Error updating drawing with ID ${drawingId}:`, error);
+    throw new Error(error instanceof Error ? error.message : 'Failed to update drawing');
+  }
+}
   
   
   

@@ -1,10 +1,11 @@
 import { Alert, Button, Card, Spin } from "antd"
 import NewDrawing from "./NewDrawing"
-import { useQuery, useQueryClient } from "@tanstack/react-query"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { useEffect, useState } from "react"
 import OpenDrawing from "./OpenDrawing"
-import { getProjectDrawing } from "@/app/actions/projects/crudActions"
+import { getProjectDrawing,  updateProjectDrawingXML } from "@/app/actions/projects/crudActions"
 import DrawIOEmbed from "../../drawio/DrawIO"
+
 
 
 
@@ -17,6 +18,15 @@ const ProjectDrawingsTab = ({projectId}: {projectId: number}) => {
     queryFn: () => getProjectDrawing(openDrawingId || 0),
     staleTime: 60 * 1000,
     enabled: !!openDrawingId
+  })
+
+  const mutate = useMutation({
+    mutationFn: async (xml: string) => {
+      return await updateProjectDrawingXML(openDrawingId || 0, xml)
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["projectDrawing", projectId] })
+    }
   })
   const drawingSelected = (id: number) => {
     queryClient.invalidateQueries({ queryKey: ["projectDrawing", projectId] })
@@ -31,10 +41,12 @@ const ProjectDrawingsTab = ({projectId}: {projectId: number}) => {
 
   const onLoad = () => {
     console.log('Drawing loaded')
+    return data?.xml || ""
   }
 
   const onSave = (xml: string) => {
     console.log('Drawing saved', xml)
+    mutate.mutate(xml)
   }
 
   return (
