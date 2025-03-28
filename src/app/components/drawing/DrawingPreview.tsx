@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { Button, Card, Empty, Space, Typography, List, Tag, Spin, Divider, Collapse, Radio, Table, Row, Col } from 'antd';
-import { EditOutlined, CloudServerOutlined, LinkOutlined, DatabaseOutlined, AppstoreOutlined, UnorderedListOutlined, TableOutlined } from '@ant-design/icons';
+import { Button, Card, Empty, Space, Typography, List, Tag, Spin, Divider, Collapse, Radio, Table, Row, Col, Popconfirm, message } from 'antd';
+import { EditOutlined, CloudServerOutlined, LinkOutlined, DatabaseOutlined, AppstoreOutlined, UnorderedListOutlined, TableOutlined, DeleteOutlined } from '@ant-design/icons';
 import { SelectDrawing } from '@/db/schema';
 import { useQuery } from '@tanstack/react-query';
 import { getDrawingServers } from '@/app/actions/drawings/serverDrawings/serverDrawingActions';
@@ -12,9 +12,11 @@ interface DrawingPreviewProps {
   drawing: SelectDrawing | null;
   onEdit: () => void;
   onClose: () => void;
+  onDelete?: (drawingId: number) => void;
+  isDeleting?: boolean;
 }
 
-const DrawingPreview: React.FC<DrawingPreviewProps> = ({ drawing, onEdit, onClose }) => {
+const DrawingPreview: React.FC<DrawingPreviewProps> = ({ drawing, onEdit, onClose, onDelete, isDeleting = false }) => {
   if (!drawing) {
     return <Empty description="No drawing selected" />;
   }
@@ -118,6 +120,21 @@ const DrawingPreview: React.FC<DrawingPreviewProps> = ({ drawing, onEdit, onClos
           <Button type="primary" icon={<EditOutlined />} onClick={onEdit}>
             Edit Drawing
           </Button>
+          {onDelete && (
+            <Popconfirm
+              title="Delete Drawing"
+              description="Are you sure you want to delete this drawing? This action cannot be undone."
+              onConfirm={() => onDelete(drawing.id)}
+              okText="Delete"
+              cancelText="Cancel"
+              okButtonProps={{ danger: true }}
+              disabled={isDeleting}
+            >
+              <Button danger icon={<DeleteOutlined />} loading={isDeleting}>
+                {isDeleting ? 'Deleting...' : 'Delete'}
+              </Button>
+            </Popconfirm>
+          )}
           <Button type="default" onClick={onClose}>
             Close
           </Button>

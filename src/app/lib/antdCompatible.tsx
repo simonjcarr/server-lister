@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { StyleProvider, legacyLogicalPropertiesTransformer } from '@ant-design/cssinjs';
+import { App } from 'antd';
 
 // Following the official approach at https://u.ant.design/v5-for-19
 export function AntdCompatibilityProvider({ children }: { children: React.ReactNode }) {
@@ -32,7 +33,9 @@ export function AntdCompatibilityProvider({ children }: { children: React.ReactN
       hashPriority="high"
       transformers={[legacyLogicalPropertiesTransformer]}
     >
-      {children}
+      <App>
+        {children}
+      </App>
     </StyleProvider>
   );
 }
