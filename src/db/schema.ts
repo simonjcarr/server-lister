@@ -202,6 +202,7 @@ export const drawings = pgTable(
     description: text("description"),
     svg: text("svg"),
     xml: text("xml"),
+    webp: text("webp"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
   },
