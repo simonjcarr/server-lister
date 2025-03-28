@@ -106,6 +106,8 @@ const DrawingsComponent = ({ drawingIds, drawingId, drawingUpdated }: { drawingI
 
   const onLoad = () => {
     console.log("onLoad", data?.name, "initialXml length:", initialXml?.length || 0)
+    // Return the existing XML if available, otherwise an empty string
+    // which will cause DrawIO to create a new blank diagram
     return initialXml || ""
   }
 
@@ -144,8 +146,7 @@ const DrawingsComponent = ({ drawingIds, drawingId, drawingUpdated }: { drawingI
       }>
       {(isLoadingDrawings || isLoadingSingleDrawing) && <Spin />}
       {error && <Alert message="Error loading drawing" type="error" />}
-      {!!openDrawingId && initialXml && <DrawIOEmbed onLoad={onLoad} onSave={onSave} drawingId={openDrawingId} />}
-      {!!openDrawingId && !initialXml && data && <DrawIOEmbed onLoad={onLoad} onSave={onSave} drawingId={openDrawingId} />}
+      {!!openDrawingId && <DrawIOEmbed onLoad={onLoad} onSave={onSave} drawingId={openDrawingId} />}
     </Card>
   )
 }
