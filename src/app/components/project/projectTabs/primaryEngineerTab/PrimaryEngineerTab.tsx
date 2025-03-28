@@ -9,7 +9,7 @@ import type { TransferProps } from 'antd'
 const PrimaryEngineers = ({ projectId }: { projectId: number }) => {
   const queryClient = useQueryClient()
   const { data, isLoading: primaryEngineerLoading, error: primaryEngineerError } = useQuery({
-    queryKey: ["primaryProjectEngineers", projectId],
+    queryKey: ["primaryProjectEngineers", "ids", projectId],
     queryFn: () => getPrimaryProjectEngineerIDs(projectId),
     enabled: !!projectId,
     staleTime: 60 * 1000
@@ -31,15 +31,22 @@ const PrimaryEngineers = ({ projectId }: { projectId: number }) => {
   })
 
   const { mutate: updatePrimaryEngineers, error: updatePrimaryEngineersError } = useMutation({
-    mutationFn: (userIds: string[]) => updatePrimaryProjectEngineers(projectId, userIds),
+    mutationFn: async (userIds: string[]) => {
+      return await updatePrimaryProjectEngineers(projectId, userIds)
+    } ,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["primaryProjectEngineers", projectId] });
+      console.log("invalidating queries")
+      queryClient.invalidateQueries({ queryKey: ["primaryProjectEngineers", "ids", projectId], exact: true });
+      queryClient.invalidateQueries({ queryKey: ["primaryProjectEngineers", "list", projectId], exact: true });
+    },
+    onError: (error) => {
+      console.error("Mutation failed:", error);
     }
   })
 
-  const onChange: TransferProps['onChange'] = (nextTargetKeys) => {
+  const onChange: TransferProps['onChange'] = async (nextTargetKeys) => {
     setTargetKeys(nextTargetKeys.map((k) => k.toString()));
-    updatePrimaryEngineers(nextTargetKeys.map((k) => k.toString()));
+    await updatePrimaryEngineers(nextTargetKeys.map((k) => k.toString()));
   };
   
   return (
@@ -50,8 +57,8 @@ const PrimaryEngineers = ({ projectId }: { projectId: number }) => {
         <Card title="Primary engineers">
           {updatePrimaryEngineersError && <p>Error: {updatePrimaryEngineersError.message}</p>}
           <Transfer
-            // listStyle={{ width: 400}}
-            titles={['All', 'Primary']}
+            listStyle={{ width: 400}}
+            titles={['All Users', 'Primary Engineers']}
             dataSource={allUsers.map(u => ({key: u.id.toString(), title: u.name || '' }))}
             targetKeys={targetKeys}
             onChange={onChange}

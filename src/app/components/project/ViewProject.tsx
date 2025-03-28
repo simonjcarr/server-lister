@@ -3,8 +3,8 @@ import { useQuery } from "@tanstack/react-query"
 import { getProjectById } from "@/app/actions/projects/crudActions"
 import ClickToCopy from "../utils/ClickToCopy"
 import type { TabsProps } from "antd"
-import ProjectTab from "./projectTabs/ProjectTab"
-import PrimaryEngineerTab from "./projectTabs/primaryEngineer/PrimaryEngineerTab"
+import ProjectTab from "./projectTabs/projectTab/ProjectTab"
+import PrimaryEngineerTab from "./projectTabs/primaryEngineerTab/PrimaryEngineerTab"
 
 const ViewProject = ({projectId}: { projectId: number }) => {
   const { data, error, isLoading } = useQuery({
