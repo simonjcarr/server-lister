@@ -1,7 +1,7 @@
 import { Alert, Button, Card, Spin } from "antd"
 import NewDrawing from "./NewDrawing"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { useEffect, useState, useRef } from "react"
+import { useEffect, useState } from "react"
 import OpenDrawing from "./OpenDrawing"
 import EditDrawing from "./EditDrawing"
 import { updateDrawingXML, updateDrawingWebp, getDrawing, getDrawingsByIds } from "@/app/actions/drawings/crudDrawings"
