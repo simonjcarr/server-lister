@@ -173,6 +173,27 @@ export type InsertProjectLinkServer = z.infer<typeof insertProjectLinkServerSche
 export type SelectProjectLinkServer = z.infer<typeof selectProjectLinkServerSchema>
 export type UpdateProjectLinkServer = z.infer<typeof updateProjectLinkServerSchema>
 
+export const projectDrawings = pgTable(
+  "project_drawings",
+  {
+    id: serial("id").primaryKey(),
+    projectId: integer("project_id").notNull(),
+    name: text("name").notNull(),
+    description: text("description"),
+    xml: text("xml").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
+  },
+  (table) => [uniqueIndex("unique_project_drawing_idx").on(table.projectId, table.name)]
+)
+
+export const insertProjectDrawingSchema = createInsertSchema(projectDrawings)
+export const selectProjectDrawingSchema = createSelectSchema(projectDrawings)
+export const updateProjectDrawingSchema = createUpdateSchema(projectDrawings)
+export type InsertProjectDrawing = z.infer<typeof insertProjectDrawingSchema>
+export type SelectProjectDrawing = z.infer<typeof selectProjectDrawingSchema>
+export type UpdateProjectDrawing = z.infer<typeof updateProjectDrawingSchema>
+
 export const business = pgTable(
   "business",
   {
