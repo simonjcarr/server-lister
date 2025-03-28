@@ -59,7 +59,10 @@ const DrawingsComponent = ({ drawingIds, drawingId, drawingUpdated }: { drawingI
     },
     onSuccess: (updatedDrawing) => {
       console.log("Drawing updated successfully:", updatedDrawing)
+      // Invalidate the query for the individual drawing
       queryClient.invalidateQueries({ queryKey: ["drawing", openDrawingId] })
+      // Invalidate the query that fetches all drawings by IDs to update the list
+      queryClient.invalidateQueries({ queryKey: ["drawings", drawingIds] })
       if (updatedDrawing) {
         drawingUpdated(updatedDrawing as SelectDrawing)
       }
