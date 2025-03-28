@@ -8,12 +8,18 @@ import { updateDrawingXML, updateDrawingWebp, getDrawing, getDrawingsByIds } fro
 import DrawIOEmbed from "./DrawIO"
 import { SelectDrawing } from "@/db/schema"
 import { EditOutlined } from "@ant-design/icons"
+import DrawingPreview from "./DrawingPreview"
 
-const DrawingsComponent = ({ drawingIds, drawingId, drawingUpdated }: { drawingIds: number[], drawingId: number | null, drawingUpdated: (drawing: SelectDrawing) => void }) => {
+const DrawingsComponent = ({ drawingIds, drawingId, drawingUpdated }: { 
+  drawingIds: number[], 
+  drawingId: number | null, 
+  drawingUpdated: (drawing: SelectDrawing) => void 
+}) => {
   const queryClient = useQueryClient()
   const [openDrawingId, setOpenDrawingId] = useState<number | null>(drawingId)
   const [initialXml, setInitialXml] = useState<string | null>(null)
   const [cardTitle, setCardTitle] = useState<string | null>(null)
+  const [isEditing, setIsEditing] = useState(false)
 
   // Fetch all drawings by their IDs
   const { data: drawingsAvailable = [], isLoading: isLoadingDrawings } = useQuery({
@@ -39,10 +45,8 @@ const DrawingsComponent = ({ drawingIds, drawingId, drawingUpdated }: { drawingI
     queryKey: ["drawing", openDrawingId],
     queryFn: async () => {
       if (!openDrawingId) return null
-      console.log("Fetching drawing data for ID:", openDrawingId)
       try {
         const result = await getDrawing(openDrawingId)
-        console.log("Query result:", result)
         return result
       } catch (err) {
         console.error("Error fetching drawing:", err)
@@ -58,7 +62,6 @@ const DrawingsComponent = ({ drawingIds, drawingId, drawingUpdated }: { drawingI
       return await updateDrawingXML(openDrawingId, xml)
     },
     onSuccess: (updatedDrawing) => {
-      console.log("Drawing updated successfully:", updatedDrawing)
       // Invalidate the query for the individual drawing
       queryClient.invalidateQueries({ queryKey: ["drawing", openDrawingId] })
       // Invalidate the query that fetches all drawings by IDs to update the list
@@ -70,24 +73,27 @@ const DrawingsComponent = ({ drawingIds, drawingId, drawingUpdated }: { drawingI
   })
 
   const webpMutate = useMutation({
-    mutationFn: async (webp: string) => {
+    mutationFn: async (base64Data: string) => {
       if (!openDrawingId) return
-      return await updateDrawingWebp(openDrawingId, webp)
+      return await updateDrawingWebp(openDrawingId, base64Data)
     },
     onSuccess: (updatedDrawing) => {
-      console.log("Drawing WebP updated successfully", updatedDrawing)
-      // No need to invalidate queries as the WebP doesn't affect the UI
+      // Invalidate the queries to update the UI with the new image
+      queryClient.invalidateQueries({ queryKey: ["drawings", drawingIds] })
+      queryClient.invalidateQueries({ queryKey: ["drawing", openDrawingId] })
+      if (updatedDrawing) {
+        drawingUpdated(updatedDrawing as SelectDrawing)
+      }
     }
   })
 
   const drawingSelected = (id: number) => {
-    console.log("Drawing selected with id:", id)
     // Clear state first before changing the drawing
     setInitialXml(null)
+    setIsEditing(false)
     
     const selectedDrawing = drawingsAvailable.find(d => d.id === id)
     if (selectedDrawing) {
-      console.log("Found drawing in available list:", selectedDrawing.name)
       setCardTitle(selectedDrawing.name)
     }
     
@@ -99,55 +105,41 @@ const DrawingsComponent = ({ drawingIds, drawingId, drawingUpdated }: { drawingI
   }
 
   useEffect(() => {
-    console.log("Data from query changed:", data)
     if (data?.name) {
-      console.log("Setting card title from query data to", data.name)
       setCardTitle(data.name)
     }
     if (data?.xml) {
-      console.log("Setting initialXml from query data, length:", data.xml.length)
       setInitialXml(data.xml)
     } else {
-      console.log("No XML available in the fetched data")
+      setInitialXml(null)
     }
   }, [data])
 
   useEffect(() => {
     if (drawingId && drawingId !== openDrawingId) {
-      console.log("Drawing ID changed from props:", drawingId)
       setOpenDrawingId(drawingId)
+      setIsEditing(false)
       const selected = drawingsAvailable.find(d => d.id === drawingId)
       if (selected?.name) {
-        console.log("Setting title from available drawings:", selected.name)
         setCardTitle(selected.name)
       }
     }
   }, [drawingId, drawingsAvailable, openDrawingId])
 
   const onLoad = (): string => {
-    console.log("onLoad called", data?.name, "initialXml length:", initialXml?.length || 0)
-    // Return the existing XML if available, otherwise an empty string
-    // which will cause DrawIO to create a new blank diagram
     if (initialXml) {
-      console.log("Returning initialXml from state")
       return initialXml
     }
-    console.log("No initialXml available, returning empty string")
     return ""
   }
 
   const onSave = (xml: string) => {
-    console.log("Saving drawing", openDrawingId)
     mutate.mutate(xml)
-    // WebP export will be handled by the DrawIOEmbed component's onExport callback
   }
 
-  const onExport = (webpBase64: string) => {
-    console.log("WebP export received, length:", webpBase64.length)
-    
-    // Save the WebP data to the database
-    if (webpBase64 && openDrawingId) {
-      webpMutate.mutate(webpBase64)
+  const onExport = (base64Data: string) => {
+    if (base64Data && openDrawingId) {
+      webpMutate.mutate(base64Data)
     }
   }
 
@@ -155,33 +147,63 @@ const DrawingsComponent = ({ drawingIds, drawingId, drawingUpdated }: { drawingI
     setOpenDrawingId(null)
     setInitialXml(null)
     setCardTitle(null)
+    setIsEditing(false)
+  }
+
+  const handleEditDrawing = () => {
+    setIsEditing(true)
   }
 
   const currentTitle = cardTitle || findSelectedDrawing()?.name || null
-  console.log("Current title:", currentTitle, "openDrawingId:", openDrawingId, "cardTitle:", cardTitle)
+  const selectedDrawing = openDrawingId ? (data || findSelectedDrawing()) : null
 
   return (
-    <Card title={
-      currentTitle ||
-      <OpenDrawing drawingsAvailable={drawingsAvailable || []} drawingSelected={drawingSelected}>
-        <Button type="default">Open Drawing</Button>
-      </OpenDrawing>}
+    <Card 
+      title={
+        currentTitle ||
+        <OpenDrawing 
+          drawingsAvailable={drawingsAvailable || []} 
+          drawingSelected={drawingSelected}
+        >
+          <Button type="default">Open Drawing</Button>
+        </OpenDrawing>
+      }
       extra={
         <>
-          {!openDrawingId && <NewDrawing drawingUpdated={drawingUpdated}><Button type="default">New Drawing</Button></NewDrawing>}
-          {openDrawingId && (
-            <>
-              <EditDrawing drawing={findSelectedDrawing() || null} drawingUpdated={drawingUpdated}>
-                <Button type="default" icon={<EditOutlined />} style={{ marginRight: 8 }}>Edit</Button>
-              </EditDrawing>
-              <Button type="default" onClick={closeDrawing}>Close Drawing</Button>
-            </>
-          )}
+          {!openDrawingId && 
+            <NewDrawing drawingUpdated={drawingUpdated}>
+              <Button type="default">New Drawing</Button>
+            </NewDrawing>
+          }
+          {openDrawingId && !isEditing && 
+            <EditDrawing 
+              drawing={findSelectedDrawing() || null} 
+              drawingUpdated={drawingUpdated}
+            >
+              <Button 
+                type="default" 
+                icon={<EditOutlined />} 
+                style={{ marginRight: 8 }}
+              >
+                Properties
+              </Button>
+            </EditDrawing>
+          }
         </>
-      }>
+      }
+    >
       {(isLoadingDrawings || isLoadingSingleDrawing) && <Spin />}
       {error && <Alert message="Error loading drawing" type="error" />}
-      {!!openDrawingId && !isLoadingSingleDrawing && (
+      
+      {!!openDrawingId && !isLoadingSingleDrawing && !isEditing && (
+        <DrawingPreview 
+          drawing={selectedDrawing || null}
+          onEdit={handleEditDrawing}
+          onClose={closeDrawing}
+        />
+      )}
+      
+      {!!openDrawingId && !isLoadingSingleDrawing && isEditing && (
         <DrawIOEmbed 
           onLoad={onLoad} 
           onSave={onSave} 
