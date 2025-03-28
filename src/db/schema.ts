@@ -134,6 +134,45 @@ export type InsertPrimaryProjectEngineer = z.infer<typeof insertPrimaryProjectEn
 export type SelectPrimaryProjectEngineer = z.infer<typeof selectPrimaryProjectEngineerSchema>
 export type UpdatePrimaryProjectEngineer = z.infer<typeof updatePrimaryProjectEngineerSchema>
 
+
+export const projectLinks = pgTable(
+  "project_links",
+  {
+    id: serial("id").primaryKey(),
+    projectId: integer("project_id").notNull(),
+    link: text("link").notNull(),
+    name: text("name").notNull(),
+    description: text("description"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
+  },
+  (table) => [uniqueIndex("unique_project_link_idx").on(table.projectId, table.link)]
+)
+
+export const insertProjectLinkSchema = createInsertSchema(projectLinks)
+export const selectProjectLinkSchema = createSelectSchema(projectLinks)
+export const updateProjectLinkSchema = createUpdateSchema(projectLinks)
+export type InsertProjectLink = z.infer<typeof insertProjectLinkSchema>
+export type SelectProjectLink = z.infer<typeof selectProjectLinkSchema>
+export type UpdateProjectLink = z.infer<typeof updateProjectLinkSchema>
+
+export const projectLinkServers = pgTable(
+  "project_link_servers",
+  {
+    id: serial("id").primaryKey(),
+    projectLinkId: integer("project_link_id").notNull(),
+    serverId: integer("server_id").notNull(),
+  },
+  (table) => [uniqueIndex("unique_project_link_server_idx").on(table.projectLinkId, table.serverId)]
+)
+
+export const insertProjectLinkServerSchema = createInsertSchema(projectLinkServers)
+export const selectProjectLinkServerSchema = createSelectSchema(projectLinkServers)
+export const updateProjectLinkServerSchema = createUpdateSchema(projectLinkServers)
+export type InsertProjectLinkServer = z.infer<typeof insertProjectLinkServerSchema>
+export type SelectProjectLinkServer = z.infer<typeof selectProjectLinkServerSchema>
+export type UpdateProjectLinkServer = z.infer<typeof updateProjectLinkServerSchema>
+
 export const business = pgTable(
   "business",
   {
