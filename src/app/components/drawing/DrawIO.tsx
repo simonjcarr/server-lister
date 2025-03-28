@@ -127,7 +127,7 @@ function DrawIOEmbed({ drawingId, onSave, onLoad, onExport }: DrawIOEmbedProps) 
     return () => {
       window.removeEventListener('message', messageHandler);
     };
-  }, [drawingId, onLoad, onSave, onExport, saveDiagramToDatabase]);
+  }, [drawingId, onLoad, onSave, onExport]);
 
   return (
     <div style={{ width: '100%', height: '70vh', border: '1px solid #ccc', position: 'relative' }}>
