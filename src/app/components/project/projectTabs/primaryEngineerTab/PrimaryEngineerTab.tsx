@@ -35,7 +35,6 @@ const PrimaryEngineers = ({ projectId }: { projectId: number }) => {
       return await updatePrimaryProjectEngineers(projectId, userIds)
     } ,
     onSuccess: () => {
-      console.log("invalidating queries")
       queryClient.invalidateQueries({ queryKey: ["primaryProjectEngineers", "ids", projectId], exact: true });
       queryClient.invalidateQueries({ queryKey: ["primaryProjectEngineers", "list", projectId], exact: true });
     },
