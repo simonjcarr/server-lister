@@ -1,21 +1,37 @@
+'use client'
 // DrawIO.tsx - Self-hosted DrawIO component
 import React, { useRef, useEffect } from 'react';
-
+import { useMutation, useQuery } from '@tanstack/react-query'
+import { getDrawing, updateDrawingXML } from '@/app/actions/drawings/crudDrawings';
 // Self-hosted DrawIO URL with embed mode parameters
 const DRAWIO_URL = process.env.DRAWIO_URL ? `${process.env.DRAWIO_URL}?embed=1&proto=json` : 'http://localhost:8080?embed=1&proto=json';
 
 interface DrawIOEmbedProps {
-  initialDiagramXml?: string | null;
+  drawingId: number;
   onSave?: (xml: string) => void;
   onLoad?: () => void;
 }
 
-function DrawIOEmbed({ initialDiagramXml, onSave, onLoad }: DrawIOEmbedProps) {
+function DrawIOEmbed({ drawingId, onSave, onLoad }: DrawIOEmbedProps) {
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
   // const [isFrameReady, setIsFrameReady] = useState(false);
 
+  const xmlMutation = useMutation({
+    mutationFn: async (xml: string) => {
+      return await updateDrawingXML(drawingId, xml);
+    }
+  })
+
+  const { data: xml } = useQuery({
+    queryKey: ['drawing', drawingId],
+    queryFn: async () => {
+      return (await getDrawing(drawingId))?.xml || null;
+    }
+  })
+
   // Function to save diagram to database
   const saveDiagramToDatabase = (xml: string) => {
+    xmlMutation.mutate(xml);
     // This function will be implemented by you to save the XML data to your database
     // Example implementation:
     /*
@@ -68,10 +84,10 @@ function DrawIOEmbed({ initialDiagramXml, onSave, onLoad }: DrawIOEmbedProps) {
             // Handle init event - draw.io is initialized and ready to receive commands
             if (msg.event === 'init') {
               // Load the diagram if we have initial XML
-              if (initialDiagramXml) {
+              if (xml) {
                 postMessage({
                   action: 'load',
-                  xml: initialDiagramXml,
+                  xml,
                   autosave: 0,   // Enable autosave functionality
                   modified: false,
                   noSaveBtn: 0,  // Show the save button
@@ -134,7 +150,7 @@ function DrawIOEmbed({ initialDiagramXml, onSave, onLoad }: DrawIOEmbedProps) {
       window.removeEventListener('message', messageHandler);
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialDiagramXml, onLoad, onSave]);
+  }, [xml, onLoad, onSave]);
 
   return (
     <div style={{ width: '100%', height: '70vh', border: '1px solid #ccc' }}>

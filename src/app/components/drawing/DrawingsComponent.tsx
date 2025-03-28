@@ -78,8 +78,8 @@ const DrawingsComponent = ({ drawingsAvailable, drawingId, drawingUpdated }: {  
       }>
       {isLoading && <Spin />}
       {error && <Alert message="Error loading drawing" type="error" />}
-      {data && !!openDrawingId && initialXml && <DrawIOEmbed onLoad={onLoad} onSave={onSave} initialDiagramXml={initialXml || ""} />}
-      {data && !!openDrawingId && !initialXml && <DrawIOEmbed onLoad={onLoad} onSave={onSave} initialDiagramXml={initialXml || ""} />}
+      {drawingsAvailable && !!openDrawingId && initialXml && <DrawIOEmbed onLoad={onLoad} onSave={onSave} drawingId={openDrawingId} />}
+      {drawingsAvailable && !!openDrawingId && !initialXml && <DrawIOEmbed onLoad={onLoad} onSave={onSave} drawingId={openDrawingId} />}
     </Card>
   )
 }
