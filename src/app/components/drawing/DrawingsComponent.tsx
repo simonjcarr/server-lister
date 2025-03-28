@@ -117,7 +117,7 @@ const DrawingsComponent = ({ drawingsAvailable, drawingId, drawingUpdated }: {  
           {!openDrawingId && <NewDrawing drawingUpdated={drawingUpdated}><Button type="default">New Drawing</Button></NewDrawing>}
           {openDrawingId && (
             <>
-              <EditDrawing drawing={findSelectedDrawing()} drawingUpdated={drawingUpdated}>
+              <EditDrawing drawing={findSelectedDrawing() || null} drawingUpdated={drawingUpdated}>
                 <Button type="default" icon={<EditOutlined />} style={{ marginRight: 8 }}>Edit</Button>
               </EditDrawing>
               <Button type="default" onClick={closeDrawing}>Close Drawing</Button>
