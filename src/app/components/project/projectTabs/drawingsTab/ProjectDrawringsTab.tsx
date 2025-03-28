@@ -41,7 +41,7 @@ const ProjectDrawingsTab = ({projectId}: {projectId: number}) => {
     <Card title={cardTitle || <OpenDrawing projectId={projectId} drawingSelected={drawingSelected}><Button type="default">Open Drawing</Button></OpenDrawing>} extra={<NewDrawing projectId={projectId} drawingSelected={drawingSelected}><Button type="default">New Drawing</Button></NewDrawing>}>
       {isLoading && <Spin />}
       {error && <Alert message="Error loading drawing" type="error" />}
-      {data && <DrawIOEmbed onLoad={onLoad} onSave={onSave} initialDiagramXml={data.xml} />}
+      {data && !!openDrawingId && <DrawIOEmbed onLoad={onLoad} onSave={onSave} initialDiagramXml={data.xml} />}
     </Card>
   )
 }

@@ -2,7 +2,7 @@
 import React, { useRef, useEffect } from 'react';
 
 // Self-hosted DrawIO URL with embed mode parameters
-const DRAWIO_URL = `${process.env.DRAWIO_URL}?embed=1&proto=json` || 'http://localhost:8080?embed=1&proto=json';
+const DRAWIO_URL = process.env.DRAWIO_URL ? `${process.env.DRAWIO_URL}?embed=1&proto=json` : 'http://localhost:8080?embed=1&proto=json';
 
 interface DrawIOEmbedProps {
   initialDiagramXml?: string | null;
