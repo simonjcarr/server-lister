@@ -18,6 +18,7 @@ const PreviewDrawingsCard = ({ projectId }: { projectId: number }) => {
 
   /**
    * Handle clicking on a drawing to open it in the Drawings tab
+   * This matches the behavior in OpenDrawing.tsx where drawingSelected is called
    */
   const handleDrawingClick = (drawingId: number) => {
     // First, find the Drawings tab and click it
@@ -25,7 +26,8 @@ const PreviewDrawingsCard = ({ projectId }: { projectId: number }) => {
     if (tabsElement) {
       (tabsElement as HTMLElement).click();
       
-      // After a small delay to allow tab switch, find the drawing in the list and click it
+      // After a small delay to allow tab switch, dispatch the custom event to open the drawing
+      // This event is listened for in DrawingsComponent.tsx with the same handler that OpenDrawing.tsx uses
       setTimeout(() => {
         // Create and dispatch a custom event to open the drawing
         const event = new CustomEvent('openDrawing', { detail: { drawingId } });
@@ -57,7 +59,7 @@ const PreviewDrawingsCard = ({ projectId }: { projectId: number }) => {
                 {drawing.webp ? (
                   <img
                     alt={drawing.name}
-                    src={`data:image/png;base64,${drawing.webp}`}
+                    src={`data:image/webp;base64,${drawing.webp}`}
                     className="max-h-full max-w-full object-contain"
                   />
                 ) : (
