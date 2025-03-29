@@ -61,7 +61,7 @@ export function ChatPanel({ serverId }: ChatPanelProps) {
   }
 
   return (
-    <div className="flex flex-col" style={{ height: '500px', overflow: 'hidden' }}>
+    <div className="h-full overflow-hidden">
       <ChatProvider chatRoomId={chatRoomId} initialCategories={initialCategories}>
         <ChatPanelContent />
       </ChatProvider>
@@ -170,9 +170,9 @@ function ChatPanelContent() {
   })
 
   return (
-    <div className="flex flex-col h-full" style={{ overflow: 'hidden' }}>
+    <div className="flex flex-col h-full overflow-hidden">
       {/* Category tabs */}
-      <div className="flex-shrink-0">
+      <div className="flex-shrink-0 bg-white z-10">
         <Tabs
           activeKey={selectedCategoryId?.toString()}
           onChange={(key) => selectCategory(parseInt(key, 10))}
@@ -184,7 +184,7 @@ function ChatPanelContent() {
       <div 
         ref={messagesContainerRef}
         className="flex-grow overflow-y-auto p-4" 
-        style={{ minHeight: 0 }} // This is crucial for flex items with overflow
+        style={{ flexGrow: 1, minHeight: 100, maxHeight: 'calc(100vh - 320px)' }} // Set max height to ensure it doesn't overflow
       >
         {/* Loading indicator for more messages */}
         {loadingMore && (
@@ -237,7 +237,7 @@ function ChatPanelContent() {
       </div>
 
       {/* Message input */}
-      <div className="p-4 border-t flex-shrink-0">
+      <div className="p-4 border-t flex-shrink-0 mt-auto bg-white">
         <Flex gap="small" className="w-full">
           <Input
             value={messageText}
