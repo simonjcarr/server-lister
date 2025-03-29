@@ -2,11 +2,11 @@
 
 import { useState, useEffect } from 'react'
 import { Table, Input, Select, Card, Space, Button, Tag, Typography, Checkbox, App } from 'antd'
-import { useQuery, useQueries, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useQuery, useQueries, useMutation} from '@tanstack/react-query'
 import { HeartFilled, HeartOutlined, SearchOutlined, ReloadOutlined, PlusOutlined } from '@ant-design/icons'
 import { PaginationParams, ServerFilter, ServerSort, getBusinessOptions, getLocationOptions, getOSOptions, getProjectOptions, getServers } from '@/app/actions/server/crudActions'
 import { useSession } from 'next-auth/react'
-import { getUserFavoriteServersWithDetails, addServerToUser, removeServerFromUser, checkUserFavorites, manualAddFavorite } from '@/app/actions/server/clientActions'
+import { getUserFavoriteServersWithDetails, addServerToUser, removeServerFromUser, manualAddFavorite } from '@/app/actions/server/clientActions'
 import type { ColumnsType } from 'antd/es/table'
 import type { TablePaginationConfig } from 'antd/es/table'
 import type { FilterValue, SorterResult } from 'antd/es/table/interface'
@@ -22,7 +22,6 @@ type ServerData = Awaited<ReturnType<typeof getServers>>['data'][number] & { key
 function ServerList() {
   const router = useRouter()
   const { data: session } = useSession()
-  const queryClient = useQueryClient()
   const { message } = App.useApp()
   // State for pagination, filters, and sorting
   const [pagination, setPagination] = useState<PaginationParams>({
@@ -121,7 +120,7 @@ function ServerList() {
         refetchFavorites();
       }, 500);
     },
-    onError: (error) => {
+    onError: () => {
       message.error('Failed to update favorites');
     },
   });
@@ -169,7 +168,7 @@ function ServerList() {
       } else {
         message.error(`Failed to add to favorites`);
       }
-    } catch (error) {
+    } catch {
       message.error('Failed to add to favorites');
     }
   };
