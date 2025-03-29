@@ -52,7 +52,7 @@ const FormEditCollection: React.FC<FormEditCollectionProps> = ({ collection, chi
         };
         
         // Invalidate and refetch collections
-        queryClient.invalidateQueries({ queryKey: ['collections'] });
+        queryClient.invalidateQueries({ queryKey: ['collections-with-subscription'] });
         queryClient.invalidateQueries({ queryKey: ['collection', collection.id] });
         
         form.resetFields();

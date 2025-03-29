@@ -42,7 +42,7 @@ const FormAddCollection: React.FC<FormAddCollectionProps> = ({ children }) => {
         };
         
         // Invalidate and refetch collections
-        queryClient.invalidateQueries({ queryKey: ['collections'] });
+        queryClient.invalidateQueries({ queryKey: ['collections-with-subscription'] });
         
         form.resetFields();
         setIsModalOpen(false);

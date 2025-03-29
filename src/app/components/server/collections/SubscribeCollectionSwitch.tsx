@@ -55,6 +55,7 @@ function SubscribeCollectionSwitch({ collectionId }: { collectionId: number }) {
         // Invalidate related queries
         queryClient.invalidateQueries({ queryKey: ['usersInCollection', collectionId] });
         queryClient.invalidateQueries({ queryKey: ['isSubscribed', collectionId] });
+        queryClient.invalidateQueries({ queryKey: ['collections-with-subscription'] });
       } else {
         showErrorNotification(
           actionResult.action === 'subscribe'
