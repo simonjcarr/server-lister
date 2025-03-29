@@ -24,6 +24,7 @@ interface NotificationContextType {
   unreadCount: number
   markAsRead: (id: number) => Promise<void>
   markAllAsRead: () => Promise<void>
+  deleteNotifications: (ids: number[]) => Promise<void>
 }
 
 // Create context
@@ -125,8 +126,26 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     })
   }, [notifications, api])
 
+  // Delete multiple notifications
+  const deleteNotifications = async (ids: number[]) => {
+    try {
+      const res = await fetch('/api/notifications/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids }),
+      })
+      
+      if (!res.ok) throw new Error('Failed to delete notifications')
+      
+      // Invalidate query to refresh the notifications
+      queryClient.invalidateQueries({ queryKey: ['notifications', session?.user?.id] })
+    } catch (error) {
+      console.error('Error deleting notifications:', error)
+    }
+  }
+
   return (
-    <NotificationContext.Provider value={{ notifications, unreadCount, markAsRead, markAllAsRead }}>
+    <NotificationContext.Provider value={{ notifications, unreadCount, markAsRead, markAllAsRead, deleteNotifications }}>
       {contextHolder}
       {children}
     </NotificationContext.Provider>

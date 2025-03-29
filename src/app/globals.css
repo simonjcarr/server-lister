@@ -119,3 +119,17 @@ body {
 .dark-theme-dropdown .ant-btn-text:not(:disabled) {
   color: #e5e7eb !important;
 }
+
+.dark-theme-dropdown .ant-checkbox-wrapper {
+  color: #e5e7eb !important;
+}
+
+.dark-theme-dropdown .ant-checkbox-inner {
+  background-color: #374151 !important;
+  border-color: #4b5563 !important;
+}
+
+.dark-theme-dropdown .ant-checkbox-checked .ant-checkbox-inner {
+  background-color: #2563eb !important;
+  border-color: #2563eb !important;
+}
