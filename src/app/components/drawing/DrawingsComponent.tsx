@@ -1,5 +1,5 @@
 import React from "react"
-import { Alert, Button, Card, Spin, App, Space, Popconfirm, Dropdown, Menu } from "antd"
+import { Alert, Button, Card, Spin, App, Space, Dropdown } from "antd"
 import NewDrawing from "./NewDrawing"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { useEffect, useState } from "react"
@@ -57,6 +57,25 @@ const DrawingsComponent = ({ drawingIds, drawingId, drawingUpdated }: {
     },
     enabled: !!openDrawingId
   })
+
+  // Listen for custom event to open a specific drawing
+  useEffect(() => {
+    const handleOpenDrawing = (event: CustomEvent<{ drawingId: number }>) => {
+      const { drawingId } = event.detail;
+      if (drawingId && drawingsAvailable.length > 0) {
+        // Find the drawing in the available drawings and open it
+        drawingSelected(drawingId);
+      }
+    };
+
+    // Add event listener
+    document.addEventListener('openDrawing', handleOpenDrawing as EventListener);
+
+    // Clean up
+    return () => {
+      document.removeEventListener('openDrawing', handleOpenDrawing as EventListener);
+    };
+  }, [drawingIds, drawingsAvailable]);
 
   // Reference for the Edit Drawing button click
   const [triggerEditDrawing, setTriggerEditDrawing] = useState<boolean>(false);

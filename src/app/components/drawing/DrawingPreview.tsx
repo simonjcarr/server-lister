@@ -1,12 +1,20 @@
-import React, { useEffect, useState } from 'react';
-import { Button, Card, Empty, Space, Typography, List, Tag, Spin, Divider, Collapse, Radio, Table, Row, Col, Popconfirm, message } from 'antd';
-import { EditOutlined, CloudServerOutlined, LinkOutlined, DatabaseOutlined, AppstoreOutlined, UnorderedListOutlined, TableOutlined, DeleteOutlined } from '@ant-design/icons';
+import React, { useState } from 'react';
+import { Button, Card, Empty, Space, Typography, List, Tag, Spin,  Collapse, Radio, Table, Row, Col, } from 'antd';
+import { CloudServerOutlined, LinkOutlined, AppstoreOutlined, UnorderedListOutlined, TableOutlined, } from '@ant-design/icons';
 import { SelectDrawing } from '@/db/schema';
 import { useQuery } from '@tanstack/react-query';
 import { getDrawingServers } from '@/app/actions/drawings/serverDrawings/serverDrawingActions';
 import Link from 'next/link';
 
 const { Title } = Typography;
+
+// Interface for the simplified server object returned by getDrawingServers
+interface DrawingServerItem {
+  id: number;
+  hostname: string;
+  ipv4: string | null;
+  description: string | null;
+}
 
 interface DrawingPreviewProps {
   drawing: SelectDrawing | null;
@@ -16,20 +24,20 @@ interface DrawingPreviewProps {
   isDeleting?: boolean;
 }
 
-const DrawingPreview: React.FC<DrawingPreviewProps> = ({ drawing, onEdit, onClose, onDelete, isDeleting = false }) => {
+const DrawingPreview: React.FC<DrawingPreviewProps> = ({ drawing }) => {
+  // State for view type (list, grid, or table)
+  const [viewType, setViewType] = useState<'list' | 'grid' | 'table'>('list');
+  // Query to fetch servers associated with this drawing
+  const { data: linkedServers, isLoading: serversLoading } = useQuery({
+    queryKey: ['drawing-servers', drawing?.id],
+    queryFn: () => getDrawingServers(drawing?.id ?? -1),
+    enabled: !!drawing
+  });
   if (!drawing) {
     return <Empty description="No drawing selected" />;
   }
   
-  // State for view type (list, grid, or table)
-  const [viewType, setViewType] = useState<'list' | 'grid' | 'table'>('list');
   
-  // Query to fetch servers associated with this drawing
-  const { data: linkedServers, isLoading: serversLoading } = useQuery({
-    queryKey: ['drawing-servers', drawing.id],
-    queryFn: () => getDrawingServers(drawing.id),
-    enabled: !!drawing
-  });
 
   // Table columns configuration
   const columns = [
@@ -37,7 +45,7 @@ const DrawingPreview: React.FC<DrawingPreviewProps> = ({ drawing, onEdit, onClos
       title: 'Hostname',
       dataIndex: 'hostname',
       key: 'hostname',
-      render: (_: string, record: any) => (
+      render: (_: string, record: DrawingServerItem) => (
         <Link href={`/server/view/${record.id}`}>
           <span style={{ color: '#1890ff', cursor: 'pointer' }}>{record.hostname}</span>
         </Link>
@@ -57,7 +65,7 @@ const DrawingPreview: React.FC<DrawingPreviewProps> = ({ drawing, onEdit, onClos
     {
       title: 'Actions',
       key: 'actions',
-      render: (_: string, record: any) => (
+      render: (_: string, record: DrawingServerItem) => (
         <Link href={`/server/view/${record.id}`}>
           <Button type="primary" size="small" icon={<LinkOutlined />}>View</Button>
         </Link>
@@ -66,7 +74,7 @@ const DrawingPreview: React.FC<DrawingPreviewProps> = ({ drawing, onEdit, onClos
   ];
 
   // Render server item for grid view
-  const renderGridItem = (server: any) => (
+  const renderGridItem = (server: DrawingServerItem) => (
     <Col xs={24} sm={12} md={8} lg={8} xl={6} xxl={4} key={server.id} style={{ marginBottom: 16 }}>
       <Card
         hoverable
@@ -216,7 +224,8 @@ const DrawingPreview: React.FC<DrawingPreviewProps> = ({ drawing, onEdit, onClos
                       {viewType === 'table' && (
                         <Table 
                           columns={columns} 
-                          dataSource={linkedServers.map(s => ({ ...s, key: s.id }))} 
+                          dataSource={linkedServers} 
+                          rowKey="id"
                           size="small"
                           pagination={false}
                         />

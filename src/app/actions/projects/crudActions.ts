@@ -221,6 +221,7 @@ export async function getProjectDrawings(projectId: number) {
       description: drawings.description,
       xml: drawings.xml,
       svg: drawings.svg,
+      webp: drawings.webp,
       createdAt: drawings.createdAt,
       updatedAt: drawings.updatedAt
     })
