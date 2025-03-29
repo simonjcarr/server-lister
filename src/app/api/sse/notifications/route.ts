@@ -11,7 +11,6 @@ export async function GET(request: NextRequest) {
   }
 
   const userId = session.user.id;
-  console.log(`SSE: New connection established for user ${userId}`);
   
   // Create a ping timer to keep the connection alive
   let pingInterval: NodeJS.Timeout | null = null;
@@ -29,18 +28,18 @@ export async function GET(request: NextRequest) {
       // Send a ping every 30 seconds to keep the connection alive
       pingInterval = setInterval(() => {
         try {
-          console.log(`SSE: Sending ping to user ${userId}`);
           controller.enqueue(encoder.encode(': ping\n\n'));
         } catch (error) {
-          console.error(`SSE: Error sending ping to user ${userId}:`, error);
-          clearInterval(pingInterval!);
+          if (pingInterval) {
+            clearInterval(pingInterval);
+            pingInterval = null;
+          }
           connections.delete(userId);
         }
       }, 30000);
 
       // When the connection is closed, clean up
       request.signal.addEventListener('abort', () => {
-        console.log(`SSE: Connection closed for user ${userId}`);
         if (pingInterval) {
           clearInterval(pingInterval);
           pingInterval = null;
@@ -49,7 +48,6 @@ export async function GET(request: NextRequest) {
       });
     },
     cancel() {
-      console.log(`SSE: Connection cancelled for user ${userId}`);
       if (pingInterval) {
         clearInterval(pingInterval);
         pingInterval = null;
@@ -73,19 +71,15 @@ export function sendEventToUser(userId: string, event: string, data: any) {
   // Check if user has an active connection
   const controller = connections.get(userId);
   if (!controller) {
-    console.log(`SSE: User ${userId} not connected, cannot send event`);
     return false;
   }
   
   // Send the event
   try {
     const encoder = new TextEncoder();
-    const payload = `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
-    controller.enqueue(encoder.encode(payload));
-    console.log(`SSE: Event sent to user ${userId} successfully (payload length: ${payload.length})`);
+    controller.enqueue(encoder.encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`));
     return true;
   } catch (error) {
-    console.error(`SSE: Error sending event to user ${userId}:`, error);
     return false;
   }
 }
@@ -98,18 +92,15 @@ export function broadcastEvent(event: string, data: any) {
       const encoder = new TextEncoder();
       controller.enqueue(encoder.encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`));
       sentCount++;
-      console.log(`SSE: Broadcast event sent to user ${userId}`);
     } catch (error) {
-      console.error(`SSE: Error broadcasting to user ${userId}:`, error);
       // Remove the connection if we can't send to it
       connections.delete(userId);
     }
   });
-  console.log(`SSE: Broadcast to ${sentCount} users`);
   return sentCount;
 }
 
-// Debug function to see active connections
+// Function to get connection status (for diagnostic endpoints only)
 export function getConnectionsStatus() {
   return {
     activeConnections: connections.size,

@@ -1,3 +1,8 @@
+// This is a diagnostic page used for testing SSE connections
+// It's currently disabled for production use
+// To re-enable, remove the comments below
+
+/*
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -162,3 +167,4 @@ export default function TestSSEPage() {
     </div>
   );
 }
+*/

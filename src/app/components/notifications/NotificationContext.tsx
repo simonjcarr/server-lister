@@ -55,7 +55,6 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       }
     },
     enabled: !!session?.user?.id,
-    // We're using SSE instead of polling
   })
 
   // Calculate unread count
@@ -118,11 +117,8 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     if (!session?.user?.id) return
     
     try {
-      console.log('SSE Client: Setting up SSE connection for user', session.user.id)
-      
       // Close any existing connection
       if (eventSourceRef.current) {
-        console.log('SSE Client: Closing existing connection')
         eventSourceRef.current.close()
         eventSourceRef.current = null
       }
@@ -139,19 +135,15 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       eventSourceRef.current = eventSource
       
       // Handle connection open
-      eventSource.addEventListener('connected', (event) => {
-        console.log('SSE Client: Connection established successfully!')
+      eventSource.addEventListener('connected', () => {
         setSseConnected(true)
       })
       
       // Handle notification events
       eventSource.addEventListener('notification', (event) => {
-        console.log('SSE Client: Received notification event data:', event.data)
-        
         try {
           // Parse the notification data
           const newNotification = JSON.parse(event.data) as UserNotification
-          console.log('SSE Client: Parsed notification:', newNotification)
           
           // Invalidate the query to refresh the notifications list
           queryClient.invalidateQueries({ queryKey: ['notifications', session.user.id] })
@@ -182,13 +174,13 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
             },
           })
         } catch (error) {
-          console.error('SSE Client: Error processing notification event:', error)
+          console.error('Error processing notification event:', error)
         }
       })
       
       // Handle connection error
       eventSource.onerror = (error) => {
-        console.error('SSE Client: Connection error:', error)
+        console.error('SSE connection error:', error)
         setSseConnected(false)
         
         // Clean up the current connection
@@ -199,16 +191,14 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
         
         // Attempt to reconnect after a delay
         if (!reconnectTimeoutRef.current) {
-          console.log('SSE Client: Scheduling reconnection attempt in 5 seconds...')
           reconnectTimeoutRef.current = setTimeout(() => {
-            console.log('SSE Client: Attempting to reconnect...')
             reconnectTimeoutRef.current = null
             connectToSSE() // Try to reconnect
           }, 5000)
         }
       }
     } catch (error) {
-      console.error('SSE Client: Error setting up SSE connection:', error)
+      console.error('Error setting up SSE connection:', error)
       setSseConnected(false)
     }
   }
@@ -220,7 +210,6 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     // Clean up on unmount
     return () => {
       if (eventSourceRef.current) {
-        console.log('SSE Client: Cleaning up SSE connection on unmount')
         eventSourceRef.current.close()
         eventSourceRef.current = null
       }

@@ -100,8 +100,6 @@ export async function sendChatNotifications(message: ChatMessage): Promise<void>
       message: notificationMessage, 
       userIds: Array.from(userIdsToNotify)
     });
-
-    console.log(`Added notification to queue for ${userIdsToNotify.size} users`);
   } catch (error) {
     console.error("Error sending chat notifications:", error);
   }

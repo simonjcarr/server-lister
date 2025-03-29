@@ -1,3 +1,8 @@
+// This is a diagnostic endpoint used for debugging SSE connections
+// It's currently disabled for production use
+// To re-enable, remove the comments below
+
+/*
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { getConnectionsStatus } from '../../sse/notifications/route';
@@ -34,3 +39,4 @@ export async function GET(request: NextRequest) {
     }, { status: 500 });
   }
 }
+*/

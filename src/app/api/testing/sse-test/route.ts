@@ -1,3 +1,8 @@
+// This is a diagnostic endpoint used for testing SSE notifications
+// It's currently disabled for production use
+// To re-enable, remove the comments below
+
+/*
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { sendEventToUser } from '../../sse/notifications/route';
@@ -45,3 +50,4 @@ export async function GET(request: NextRequest) {
     }, { status: 500 });
   }
 }
+*/
