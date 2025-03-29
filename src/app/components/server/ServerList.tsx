@@ -1,9 +1,10 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Table, Input, Select, Card, Space, Button, Tag, Typography, Checkbox, App } from 'antd'
+import { Table, Card, Space, Button, Tag, Typography, App } from 'antd'
 import { useQuery, useQueries, useMutation} from '@tanstack/react-query'
-import { HeartFilled, HeartOutlined, SearchOutlined, ReloadOutlined, PlusOutlined } from '@ant-design/icons'
+import { HeartFilled, HeartOutlined, PlusOutlined } from '@ant-design/icons'
+import ServerFilters from './ServerFilters'
 import { PaginationParams, ServerFilter, ServerSort, getBusinessOptions, getLocationOptions, getOSOptions, getProjectOptions, getServers } from '@/app/actions/server/crudActions'
 import { getServerCollections } from '@/app/actions/server/serverCollectionActions'
 import { useSession } from 'next-auth/react'
@@ -419,87 +420,24 @@ function ServerList() {
           <FormAddServer><Button icon={<PlusOutlined />} size='small'>New Server</Button></FormAddServer>
         </Title>
 
-      {/* Filter and search controls */}
-      <Space wrap style={{ marginBottom: 16 }}>
-        <Input
-          placeholder="Search hostname, IP, description"
-          value={searchText}
-          onChange={e => setSearchText(e.target.value)}
-          onPressEnter={handleSearch}
-          style={{ width: 250 }}
-          suffix={
-            <Button type="text" icon={<SearchOutlined />} onClick={handleSearch} />
-          }
-        />
-        
-        {session && (
-          <Checkbox
-            checked={showFavoritesOnly}
-            onChange={e => setShowFavoritesOnly(e.target.checked)}
-          >
-            <Space>
-              <HeartOutlined style={{ color: showFavoritesOnly ? '#ff4d4f' : undefined }} />
-              Favorites Only
-            </Space>
-          </Checkbox>
-        )}
-
-        <Select
-          placeholder="Business"
-          style={{ width: 150 }}
-          allowClear
-          value={filters.businessId}
-          onChange={value => handleFilterChange('businessId', value)}
-          options={businessOptions.map(b => ({ value: b.id, label: b.name }))}
-        />
-
-        <Select
-          placeholder="Project"
-          style={{ width: 150 }}
-          allowClear
-          value={filters.projectId}
-          onChange={value => handleFilterChange('projectId', value)}
-          options={projectOptions.map(p => ({ value: p.id, label: p.name }))}
-        />
-
-        <Select
-          placeholder="OS"
-          style={{ width: 150 }}
-          allowClear
-          value={filters.osId}
-          onChange={value => handleFilterChange('osId', value)}
-          options={osOptions.map(o => ({ value: o.id, label: o.name }))}
-        />
-
-        <Select
-          placeholder="Location"
-          style={{ width: 150 }}
-          allowClear
-          value={filters.locationId}
-          onChange={value => handleFilterChange('locationId', value)}
-          options={locationOptions.map(l => ({ value: l.id, label: l.name }))}
-        />
-
-        <Select
-          placeholder="Collection"
-          style={{ width: 150 }}
-          allowClear
-          value={filters.collectionId}
-          onChange={value => handleFilterChange('collectionId', value)}
-          options={collectionOptions.map(c => ({ value: c.id, label: c.name }))}
-        />
-
-        <Button
-          icon={<ReloadOutlined />}
-          onClick={() => refetch()}
-        >
-          Refresh
-        </Button>
-
-        <Button onClick={handleClearFilters}>
-          Clear Filters
-        </Button>
-      </Space>
+      {/* Use the new ServerFilters component */}
+      <ServerFilters 
+        filters={filters}
+        onFilterChange={handleFilterChange}
+        searchText={searchText}
+        onSearchTextChange={setSearchText}
+        onSearch={handleSearch}
+        onClearFilters={handleClearFilters}
+        onRefresh={() => refetch()}
+        showFavoritesOnly={showFavoritesOnly}
+        onFavoritesToggle={setShowFavoritesOnly}
+        businessOptions={businessOptions}
+        projectOptions={projectOptions}
+        osOptions={osOptions}
+        locationOptions={locationOptions}
+        collectionOptions={collectionOptions}
+        hasSession={!!session}
+      />
 
       {/* Server data table */}
       <Table
