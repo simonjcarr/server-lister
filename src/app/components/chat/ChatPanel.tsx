@@ -172,7 +172,7 @@ function ChatPanelContent() {
   return (
     <div className="flex flex-col h-full overflow-hidden">
       {/* Category tabs */}
-      <div className="flex-shrink-0 bg-white z-10">
+      <div className="flex-shrink-0 bg-inherit z-10">
         <Tabs
           activeKey={selectedCategoryId?.toString()}
           onChange={(key) => selectCategory(parseInt(key, 10))}
@@ -237,7 +237,7 @@ function ChatPanelContent() {
       </div>
 
       {/* Message input */}
-      <div className="p-4 border-t flex-shrink-0 mt-auto bg-white">
+      <div className="p-4 border-t flex-shrink-0 mt-auto bg-inherit">
         <Flex gap="small" className="w-full">
           <Input
             value={messageText}
