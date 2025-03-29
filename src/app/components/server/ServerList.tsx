@@ -5,6 +5,7 @@ import { Table, Input, Select, Card, Space, Button, Tag, Typography, Checkbox, A
 import { useQuery, useQueries, useMutation} from '@tanstack/react-query'
 import { HeartFilled, HeartOutlined, SearchOutlined, ReloadOutlined, PlusOutlined } from '@ant-design/icons'
 import { PaginationParams, ServerFilter, ServerSort, getBusinessOptions, getLocationOptions, getOSOptions, getProjectOptions, getServers } from '@/app/actions/server/crudActions'
+import { getServerCollections } from '@/app/actions/server/serverCollectionActions'
 import { useSession } from 'next-auth/react'
 import { getUserFavoriteServersWithDetails, addServerToUser, removeServerFromUser, manualAddFavorite } from '@/app/actions/server/clientActions'
 import type { ColumnsType } from 'antd/es/table'
@@ -45,6 +46,9 @@ function ServerList() {
 
   // Current filters including search text
   const currentFilters: ServerFilter = searchText ? { ...filters, search: searchText } : { ...filters }
+  
+  // Determine stale time based on whether we're filtering by collection
+  const staleTime = filters.collectionId ? 0 : 5 * 60 * 1000; // 0 for collection filter, 5 minutes otherwise
 
   // Query for filter options
   const filterQueries = useQueries({
@@ -65,6 +69,10 @@ function ServerList() {
         queryKey: ['locationOptions'],
         queryFn: getLocationOptions,
       },
+      {
+        queryKey: ['collectionOptions'],
+        queryFn: getServerCollections,
+      },
     ],
   })
 
@@ -72,6 +80,7 @@ function ServerList() {
   const projectOptions = filterQueries[1].data ?? []
   const osOptions = filterQueries[2].data ?? []
   const locationOptions = filterQueries[3].data ?? []
+  const collectionOptions = filterQueries[4].data ?? []
 
   // Query for favorite servers
   const { data: favoriteServers = [], refetch: refetchFavorites } = useQuery({
@@ -177,10 +186,23 @@ function ServerList() {
   const { data: serverData, isLoading, refetch } = useQuery({
     queryKey: ['servers', currentFilters, sort, pagination, showFavoritesOnly],
     queryFn: () => getServers(currentFilters, sort, pagination),
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    refetchInterval: 5 * 60 * 1000 // 5 minutes
+    staleTime: staleTime, // Dynamic stale time based on collection filter
+    refetchInterval: filters.collectionId ? 3000 : 5 * 60 * 1000 // More frequent refresh with collection filter
   })
 
+  // Effect to refetch when collection filter is active
+  useEffect(() => {
+    // If we're filtering by a collection, make sure we stay up to date
+    if (filters.collectionId) {
+      // Set a shorter stale time when collection filter is active
+      const timer = setInterval(() => {
+        refetch();
+      }, 5000); // Check every 5 seconds
+      
+      return () => clearInterval(timer);
+    }
+  }, [filters.collectionId, refetch]);
+  
   // Effect to refetch favorites when the toggle count changes
   useEffect(() => {
     if (favoriteToggleCount > 0) {
@@ -456,6 +478,15 @@ function ServerList() {
           value={filters.locationId}
           onChange={value => handleFilterChange('locationId', value)}
           options={locationOptions.map(l => ({ value: l.id, label: l.name }))}
+        />
+
+        <Select
+          placeholder="Collection"
+          style={{ width: 150 }}
+          allowClear
+          value={filters.collectionId}
+          onChange={value => handleFilterChange('collectionId', value)}
+          options={collectionOptions.map(c => ({ value: c.id, label: c.name }))}
         />
 
         <Button

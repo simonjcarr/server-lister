@@ -20,31 +20,26 @@ const FormAddCollection: React.FC<FormAddCollectionProps> = ({ children }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [actionResult, setActionResult] = useState<ActionResult | null>(null);
-  const [api] = notification.useNotification();
+  const [api, contextHolder] = notification.useNotification();
   const queryClient = useQueryClient();
 
-  // Create stable callbacks for notifications
-  const showSuccessNotification = useCallback(() => {
-    api.success({
-      message: 'Success',
-      description: 'Collection created successfully',
-      duration: 3,
-    });
-  }, [api]);
+  // Using a ref for storing notification config to avoid calling during render
+  const notificationConfig = React.useRef<{
+    type: 'success' | 'error';
+    message: string;
+    description: string;
+  } | null>(null);
 
-  const showErrorNotification = useCallback((message: string) => {
-    api.error({
-      message: 'Error',
-      description: message || 'Failed to create collection',
-      duration: 3,
-    });
-  }, [api]);
-
-  // Handle notifications in an effect using stable callbacks
+  // Handle notifications and state updates in an effect
   useEffect(() => {
     if (actionResult) {
       if (actionResult.success) {
-        showSuccessNotification();
+        // Set notification config to be shown in the next effect
+        notificationConfig.current = {
+          type: 'success',
+          message: 'Success',
+          description: 'Collection created successfully'
+        };
         
         // Invalidate and refetch collections
         queryClient.invalidateQueries({ queryKey: ['collections'] });
@@ -52,13 +47,39 @@ const FormAddCollection: React.FC<FormAddCollectionProps> = ({ children }) => {
         form.resetFields();
         setIsModalOpen(false);
       } else {
-        showErrorNotification(actionResult.message || 'Failed to create collection');
+        // Set notification config for error
+        notificationConfig.current = {
+          type: 'error',
+          message: 'Error',
+          description: actionResult.message || 'Failed to create collection'
+        };
       }
       
       // Reset the result after handling
       setActionResult(null);
     }
-  }, [actionResult, showSuccessNotification, showErrorNotification, form, queryClient]);
+  }, [actionResult, form, queryClient]);
+  
+  // Separate effect for showing notifications to avoid calling during render
+  useEffect(() => {
+    if (notificationConfig.current) {
+      const { type, message, description } = notificationConfig.current;
+      if (type === 'success') {
+        api.success({
+          message,
+          description,
+          duration: 3,
+        });
+      } else {
+        api.error({
+          message,
+          description,
+          duration: 3,
+        });
+      }
+      notificationConfig.current = null;
+    }
+  }, [actionResult, api]);
 
   const showModal = () => {
     setIsModalOpen(true);
@@ -92,6 +113,7 @@ const FormAddCollection: React.FC<FormAddCollectionProps> = ({ children }) => {
 
   return (
     <>
+      {contextHolder}
       <div onClick={showModal} className="cursor-pointer">
         {children}
       </div>

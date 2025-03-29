@@ -27,31 +27,59 @@ interface RemoveResult {
 
 function CollectionServerList({ collectionId }: { collectionId: number }) {
   const queryClient = useQueryClient();
-  const { notification: api } = App.useApp();
+  const { notification: api, notification } = App.useApp();
+  
+  // Using a ref for storing notification config to avoid calling during render
+  const notificationConfig = React.useRef<{
+    type: 'success' | 'error';
+    message: string;
+    description: string;
+  } | null>(null);
   const [removeServerResult, setRemoveServerResult] = useState<RemoveResult | null>(null);
   
   // Instead of using callbacks that directly call notifications,
   // simply pass the notification data to the effect
   
-  // Handle server removal notifications in an effect
+  // First effect to update notification config but not trigger API calls during render
   useEffect(() => {
     if (removeServerResult) {
       if (removeServerResult.success) {
-        api.success({
+        notificationConfig.current = {
+          type: 'success',
           message: 'Server Removed',
-          description: `Server ${removeServerResult.hostname} has been removed from the collection`,
-          duration: 3,
-        });
+          description: `Server ${removeServerResult.hostname} has been removed from the collection`
+        };
       } else {
-        api.error({
+        notificationConfig.current = {
+          type: 'error',
           message: 'Error',
-          description: 'Failed to remove server from collection',
-          duration: 3,
-        });
+          description: 'Failed to remove server from collection'
+        };
       }
       setRemoveServerResult(null);
     }
-  }, [removeServerResult, api]);
+  }, [removeServerResult]);
+  
+  // Second effect to handle the actual notification API calls
+  useEffect(() => {
+    if (notificationConfig.current) {
+      const { type, message, description } = notificationConfig.current;
+      if (type === 'success') {
+        notification.success({
+          message,
+          description,
+          duration: 3,
+        });
+      } else {
+        notification.error({
+          message,
+          description,
+          duration: 3,
+        });
+      }
+      notificationConfig.current = null;
+    }
+  }, [notification, removeServerResult]);
   
   // Fetch collection details
   const collectionQuery = useQuery({
@@ -96,7 +124,15 @@ function CollectionServerList({ collectionId }: { collectionId: number }) {
       
       // Invalidate and refetch all related queries
       queryClient.invalidateQueries({ queryKey: ['collection-servers', collectionId] });
-      // Also invalidate the available servers query to keep that list updated
+      
+      // Also invalidate all server queries
+      queryClient.invalidateQueries({ queryKey: ['servers'] });
+      
+      // Force immediate refetch of filtered server views
+      queryClient.refetchQueries({ queryKey: ['servers'] });
+      
+      // Also invalidate the collection options
+      queryClient.invalidateQueries({ queryKey: ['collectionOptions'] });
       queryClient.invalidateQueries({ queryKey: ['collections'] });
     },
     onError: (error) => {

@@ -52,6 +52,8 @@ export async function addServerToCollection(
     // More aggressive revalidation to ensure all paths are updated
     revalidatePath("/server/collections");
     revalidatePath("/server/collections/", "page");
+    revalidatePath("/server/list");
+    revalidatePath("/");
     return { success: true };
   } catch (error) {
     console.error("Error adding server to collection:", error);
