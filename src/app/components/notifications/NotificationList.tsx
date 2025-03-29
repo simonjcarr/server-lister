@@ -79,7 +79,7 @@ export default function NotificationList() {
       placement="bottomRight"
     >
       <Badge count={unreadCount} size="small">
-        <Button type="text" icon={<BellOutlined />} size="large" />
+        <Button type="text" icon={<BellOutlined />} />
       </Badge>
     </Popover>
   )
