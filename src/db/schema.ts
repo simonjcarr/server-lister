@@ -801,21 +801,53 @@ export type InsertNotification = z.infer<typeof insertNotificationSchema>
 export type SelectNotification = z.infer<typeof selectNotificationSchema>
 export type UpdateNotification = z.infer<typeof updateNotificationSchema>
 
+export const chatCategories = pgTable(
+  "chat_categories",
+  {
+    id: serial("id").primaryKey(),
+    name: text("name").notNull(),
+    enabled: boolean("enabled").notNull().default(true),
+    icon: text("icon"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
+  },
+  (table) => [
+    uniqueIndex("unique_chat_category_name_idx").on(table.name),
+    index("chat_categories_enabled_idx").on(table.enabled),
+  ]
+)
+
+const insertChatCategorySchema = createInsertSchema(chatCategories)
+const selectChatCategorySchema = createSelectSchema(chatCategories)
+const updateChatCategorySchema = createUpdateSchema(chatCategories)
+export type InsertChatCategory = z.infer<typeof insertChatCategorySchema>
+export type SelectChatCategory = z.infer<typeof selectChatCategorySchema>
+export type UpdateChatCategory = z.infer<typeof updateChatCategorySchema>
+
 export const chatMessages = pgTable(
   "chat_messages",
   {
     id: serial("id").primaryKey(),
-    userId: text("userId").notNull().references(() => users.id, { onDelete: "cascade" }),
+    userId: text("userId")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
     message: text("message").notNull(),
     chatRoomId: text("chatRoomId").notNull(),
+    categoryId: integer("categoryId")
+      .notNull()
+      .references(() => chatCategories.id, {
+        onDelete: "cascade",
+        onUpdate: "cascade",
+      }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
   },
   (table) => [
     index("chat_messages_user_id_idx").on(table.userId),
     index("chat_messages_chatRoomId_idx").on(table.chatRoomId),
+    index("chat_messages_categoryId_idx").on(table.categoryId),
   ]
-)
+);
 
 const insertChatMessageSchema = createInsertSchema(chatMessages)
 const selectChatMessageSchema = createSelectSchema(chatMessages)

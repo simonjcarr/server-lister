@@ -1,11 +1,10 @@
 // Client-side component for rendering collections
 'use client'
-import { Button, Card, Popconfirm, Space, Table, TableColumnsType, App, Switch, Tooltip, Radio, Segmented } from 'antd';
+import { Button, Card, Popconfirm, Space, Table, TableColumnsType, App, Tooltip, Segmented } from 'antd';
 import React, { useState } from 'react';
 import { useQueryClient, useQuery, useMutation } from '@tanstack/react-query';
 
 // Import the server actions
-import { getServerCollections } from '@/app/actions/server/serverCollectionActions';
 import { deleteCollection } from '@/app/actions/server/collectionActions';
 import { getServerCollectionsWithSubscription, CollectionWithSubscription } from '@/app/actions/server/collectionSubscriptionActions';
 import { subscribeUserToCollection, unsubscribeUserFromCollection } from '@/app/actions/server/serverCollectionActions';
@@ -24,7 +23,7 @@ function ListCollections() {
   const queryClient = useQueryClient();
   const [selectedCollectionId, setSelectedCollectionId] = useState<number | null>(null);
   const [showSubscribedOnly, setShowSubscribedOnly] = useState<boolean>(false);
-  const { notification, message } = App.useApp();
+  const { notification } = App.useApp();
   // Using a ref for storing notification config to avoid calling during render
   const notificationConfig = React.useRef<{
     type: 'success' | 'error';
@@ -275,7 +274,11 @@ function ListCollections() {
               }))} 
               size='small'
               pagination={{ pageSize: 10 }}
+<<<<<<< HEAD
               rowClassName={(record) => record.id === selectedCollectionId ? 'bg-gray-200 dark:bg-gray-700' : ''}
+=======
+              rowClassName={(record) => record.id === selectedCollectionId ? 'bg-gray-800' : ''}
+>>>>>>> chat
               onRow={(record) => ({
                 onClick: () => handleRowClick(record),
               })}

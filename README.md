@@ -20,6 +20,28 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
+## Chat System
+
+The application includes a real-time chat system for servers, organized into categories similar to Discord.
+
+### Features
+- Real-time messaging using Server-Sent Events (SSE)
+- Category-based organization of messages
+- Notifications for users with favorite servers or collection subscriptions
+- Lazy loading of messages with pagination
+
+### Setup
+
+To set up the chat system, run the setup script:
+
+```bash
+node scripts/setup-chat.js
+```
+
+This will create the necessary categories and seed sample messages.
+
+For more information, see the [chat system documentation](docs/chat-system.md).
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:
