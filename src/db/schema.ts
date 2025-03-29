@@ -808,12 +808,14 @@ export const chatMessages = pgTable(
     userId: text("userId").notNull().references(() => users.id, { onDelete: "cascade" }),
     message: text("message").notNull(),
     chatRoomId: text("chatRoomId").notNull(),
+    category: text("category").notNull(),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
   },
   (table) => [
     index("chat_messages_user_id_idx").on(table.userId),
     index("chat_messages_chatRoomId_idx").on(table.chatRoomId),
+    index("chat_messages_category_idx").on(table.category),
   ]
 )
 
