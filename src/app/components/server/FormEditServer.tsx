@@ -23,8 +23,17 @@ const FormEditServer = ({ children, serverId }: { children: React.ReactNode, ser
   const mutation = useMutation({
     mutationFn: (data: UpdateServer) => updateServer(data, serverId),
     onSuccess: () => {
+      // Invalidate the specific server query
       queryClient.invalidateQueries({ queryKey: ["server", serverId] });
+      
+      // Invalidate all servers list queries regardless of filters
+      queryClient.invalidateQueries({
+        queryKey: ["servers"],
+        refetchType: 'all', // Force refetch all related queries
+      });
+      
       messageApi.success('Server updated successfully!');
+      setOpen(false); // Close the drawer after successful update
     },
     onError: (error: unknown) => {
       console.error('Error updating server:', error);
@@ -33,8 +42,11 @@ const FormEditServer = ({ children, serverId }: { children: React.ReactNode, ser
   });
   const [messageApi, contextHolder] = message.useMessage();
   const onFinish = async (values: UpdateServer) => {
+    // Submit the mutation but don't navigate away immediately
+    // Let the onSuccess handler close the drawer
     mutation.mutate(values);
-    router.push(`/server/view/${serverId}`);
+    // Don't navigate away from current page to allow list to refresh
+    // router.push(`/server/view/${serverId}`);
   };
 
   const handleHostnameChange = async (value: string) => {
