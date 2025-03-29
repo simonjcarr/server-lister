@@ -1,36 +1,29 @@
 // Client-side component for rendering collections
 'use client'
-import { Button, Card, Popconfirm, Space, Table, TableColumnsType, App } from 'antd';
+import { Button, Card, Popconfirm, Space, Table, TableColumnsType, App, Switch, Tooltip, Radio, Segmented } from 'antd';
 import React, { useState } from 'react';
 import { useQueryClient, useQuery, useMutation } from '@tanstack/react-query';
 
 // Import the server actions
 import { getServerCollections } from '@/app/actions/server/serverCollectionActions';
 import { deleteCollection } from '@/app/actions/server/collectionActions';
+import { getServerCollectionsWithSubscription, CollectionWithSubscription } from '@/app/actions/server/collectionSubscriptionActions';
+import { subscribeUserToCollection, unsubscribeUserFromCollection } from '@/app/actions/server/serverCollectionActions';
 import CollectionServerList from './CollectionServerList';
 import FormAddCollection from './FormAddCollection';
 import FormEditCollection from './FormEditCollection';
 import { MdAdd, MdDelete, MdEdit } from 'react-icons/md';
+import { HeartFilled, HeartOutlined, FilterOutlined } from '@ant-design/icons';
 import { SelectCollection } from '@/db/schema';
 
-interface ServerCollection {
-  id: number;
-  name: string;
-  description: string | null;
-  createdAt: string;
-  updatedAt: string;
-}
-
-interface DataType {
+interface DataType extends CollectionWithSubscription {
   key: React.Key;
-  name: string;
-  id: number;
-  description: string | null;
 }
 
 function ListCollections() {
   const queryClient = useQueryClient();
   const [selectedCollectionId, setSelectedCollectionId] = useState<number | null>(null);
+  const [showSubscribedOnly, setShowSubscribedOnly] = useState<boolean>(false);
   const { notification, message } = App.useApp();
   // Using a ref for storing notification config to avoid calling during render
   const notificationConfig = React.useRef<{
@@ -41,10 +34,9 @@ function ListCollections() {
   
   // Call the server action directly via React Query
   const { isPending, error, data } = useQuery({
-    queryKey: ['collections'],
+    queryKey: ['collections-with-subscription'],
     queryFn: async () => {
-      const result = await getServerCollections();
-      return result;
+      return await getServerCollectionsWithSubscription();
     }
   });
   
@@ -66,7 +58,7 @@ function ListCollections() {
         }
         
         // Invalidate and refetch collections
-        queryClient.invalidateQueries({ queryKey: ['collections'] });
+        queryClient.invalidateQueries({ queryKey: ['collections-with-subscription'] });
       } else {
         // Store the notification config to show in effect
         notificationConfig.current = {
@@ -84,6 +76,40 @@ function ListCollections() {
         message: 'Error',
         description: 'An unexpected error occurred'
       };
+    }
+  });
+
+  // Mutation for subscribing to a collection
+  const subscribeMutation = useMutation({
+    mutationFn: (collectionId: number) => subscribeUserToCollection(collectionId),
+    onSuccess: (_, collectionId) => {
+      // Invalidate both the collections list and the individual collection subscription status
+      queryClient.invalidateQueries({ queryKey: ['collections-with-subscription'] });
+      queryClient.invalidateQueries({ queryKey: ['isSubscribed', collectionId] });
+    },
+    onError: (error) => {
+      console.error('Error subscribing to collection:', error);
+      notification.error({
+        message: 'Error',
+        description: 'Failed to subscribe to collection'
+      });
+    }
+  });
+
+  // Mutation for unsubscribing from a collection
+  const unsubscribeMutation = useMutation({
+    mutationFn: (collectionId: number) => unsubscribeUserFromCollection(collectionId),
+    onSuccess: (_, collectionId) => {
+      // Invalidate both the collections list and the individual collection subscription status
+      queryClient.invalidateQueries({ queryKey: ['collections-with-subscription'] });
+      queryClient.invalidateQueries({ queryKey: ['isSubscribed', collectionId] });
+    },
+    onError: (error) => {
+      console.error('Error unsubscribing from collection:', error);
+      notification.error({
+        message: 'Error',
+        description: 'Failed to unsubscribe from collection'
+      });
     }
   });
   
@@ -110,13 +136,41 @@ function ListCollections() {
 
   const handleRowClick = (record: DataType) => {
     setSelectedCollectionId(record.id);
-  }
+  };
 
   const handleDeleteCollection = (id: number) => {
     deleteMutation.mutate(id);
-  }
+  };
+
+  const handleToggleSubscription = (collectionId: number, isSubscribed: boolean) => {
+    if (isSubscribed) {
+      unsubscribeMutation.mutate(collectionId);
+    } else {
+      subscribeMutation.mutate(collectionId);
+    }
+  };
 
   const columns: TableColumnsType<DataType> = [
+    {
+      title: '',
+      key: 'subscription',
+      width: 50,
+      render: (_, record) => (
+        <Tooltip title={record.isSubscribed ? "Unsubscribe" : "Subscribe"}>
+          <Button
+            type="text"
+            icon={record.isSubscribed ? 
+              <HeartFilled style={{ color: '#FFD700' }} /> : 
+              <HeartOutlined style={{ color: '#d9d9d9' }} />
+            }
+            onClick={(e) => {
+              e.stopPropagation();
+              handleToggleSubscription(record.id, record.isSubscribed);
+            }}
+          />
+        </Tooltip>
+      ),
+    },
     {
       title: 'Name',
       dataIndex: 'name',
@@ -161,15 +215,22 @@ function ListCollections() {
     },
   ];
 
+  // Filter collections based on subscription status if filter is enabled
+  const filteredData = data?.filter(collection => 
+    !showSubscribedOnly || collection.isSubscribed
+  );
+
   return (
     <Card 
       title="Server Collections" 
       extra={
-        <FormAddCollection>
-          <Button type="primary" icon={<MdAdd />}>
-            Add Collection
-          </Button>
-        </FormAddCollection>
+        <Space>
+          <FormAddCollection>
+            <Button type="primary" icon={<MdAdd />}>
+              Add Collection
+            </Button>
+          </FormAddCollection>
+        </Space>
       }
     >
       {isPending ? (
@@ -179,9 +240,36 @@ function ListCollections() {
       ) : (
         <div className='grid grid-cols-12 gap-4'>
           <div className='col col-span-4'>
+            <div className="mb-4">
+              <Segmented
+                options={[
+                  {
+                    label: (
+                      <div className="flex items-center">
+                        <FilterOutlined className="mr-1" />
+                        <span>All Collections</span>
+                      </div>
+                    ),
+                    value: 'all',
+                  },
+                  {
+                    label: (
+                      <div className="flex items-center">
+                        <HeartFilled className="mr-1" style={{ color: '#FFD700' }} />
+                        <span>Subscribed Only</span>
+                      </div>
+                    ),
+                    value: 'subscribed',
+                  },
+                ]}
+                value={showSubscribedOnly ? 'subscribed' : 'all'}
+                onChange={(value) => setShowSubscribedOnly(value === 'subscribed')}
+                block
+              />
+            </div>
             <Table 
               columns={columns} 
-              dataSource={data?.map(collection => ({ 
+              dataSource={filteredData?.map(collection => ({ 
                 ...collection, 
                 key: collection.id 
               }))} 
