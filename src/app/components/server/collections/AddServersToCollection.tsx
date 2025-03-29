@@ -32,19 +32,26 @@ const AddServersToCollection: React.FC<AddServersToCollectionProps> = ({ collect
   const [loading, setLoading] = useState(false);
   const [actionResult, setActionResult] = useState<ActionResult | null>(null);
   const [warningMessage, setWarningMessage] = useState<string | null>(null);
-  const { notification: api } = App.useApp();
+  const { notification, message } = App.useApp();
+  
+  // Using a ref for storing notification config to avoid calling during render
+  const notificationConfig = React.useRef<{
+    type: 'success' | 'error' | 'warning';
+    message: string;
+    description: string;
+  } | null>(null);
   const queryClient = useQueryClient();
 
-  // Handle notifications directly in effect
+  // First effect to update notification config but not trigger API calls during render
   useEffect(() => {
     if (actionResult) {
       if (actionResult.success) {
         const count = selectedServerIds.length;
-        api.success({
+        notificationConfig.current = {
+          type: 'success',
           message: 'Success',
-          description: `${count} server(s) added to collection`,
-          duration: 3,
-        });
+          description: `${count} server(s) added to collection`
+        };
         
         // Close modal and reset selection first
         setSelectedServerIds([]);
@@ -52,6 +59,10 @@ const AddServersToCollection: React.FC<AddServersToCollectionProps> = ({ collect
         
         // Invalidate all queries to force a complete refresh
         queryClient.invalidateQueries();
+        
+        // Explicitly invalidate these specific queries to ensure UI updates
+        queryClient.invalidateQueries({ queryKey: ['servers'] });
+        queryClient.refetchQueries({ queryKey: ['servers'] });
         
         // Use a timeout to ensure the server-side changes are complete
         setTimeout(() => {
@@ -61,29 +72,62 @@ const AddServersToCollection: React.FC<AddServersToCollectionProps> = ({ collect
           queryClient.invalidateQueries({ queryKey: ['collection-servers', collection.id] });
         }, 500);
       } else {
-        api.error({
+        notificationConfig.current = {
+          type: 'error',
           message: 'Error',
-          description: actionResult.message || 'Failed to add servers to collection',
-          duration: 3,
-        });
+          description: actionResult.message || 'Failed to add servers to collection'
+        };
       }
       
       // Reset the result after handling
       setActionResult(null);
     }
-  }, [actionResult, queryClient, collection.id, selectedServerIds.length, api]);
+  }, [actionResult, queryClient, collection.id, selectedServerIds.length]);
 
   // Handle warning message
   useEffect(() => {
     if (warningMessage) {
-      api.warning({
+      notificationConfig.current = {
+        type: 'warning',
         message: 'No Servers Selected',
-        description: warningMessage,
-        duration: 3,
-      });
+        description: warningMessage
+      };
       setWarningMessage(null);
     }
-  }, [warningMessage, api]);
+  }, [warningMessage]);
+  
+  // Second effect to handle the actual notification API calls
+  useEffect(() => {
+    if (notificationConfig.current) {
+      const { type, message: msg, description } = notificationConfig.current;
+      
+      switch (type) {
+        case 'success':
+          notification.success({
+            message: msg,
+            description,
+            duration: 3,
+          });
+          break;
+        case 'error':
+          notification.error({
+            message: msg,
+            description,
+            duration: 3,
+          });
+          break;
+        case 'warning':
+          notification.warning({
+            message: msg,
+            description,
+            duration: 3,
+          });
+          break;
+      }
+      
+      notificationConfig.current = null;
+    }
+  }, [notification, actionResult, warningMessage]);
 
   const loadServers = async () => {
     setLoading(true);
@@ -95,11 +139,11 @@ const AddServersToCollection: React.FC<AddServersToCollectionProps> = ({ collect
       setAvailableServers(servers);
     } catch (error) {
       console.error('Error loading servers:', error);
-      api.error({
+      notificationConfig.current = {
+        type: 'error',
         message: 'Error',
-        description: 'Failed to load available servers',
-        duration: 3,
-      });
+        description: 'Failed to load available servers'
+      };
     } finally {
       setLoading(false);
     }

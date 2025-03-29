@@ -31,7 +31,13 @@ interface DataType {
 function ListCollections() {
   const queryClient = useQueryClient();
   const [selectedCollectionId, setSelectedCollectionId] = useState<number | null>(null);
-  const { notification } = App.useApp();
+  const { notification, message } = App.useApp();
+  // Using a ref for storing notification config to avoid calling during render
+  const notificationConfig = React.useRef<{
+    type: 'success' | 'error';
+    message: string;
+    description: string;
+  } | null>(null);
   
   // Call the server action directly via React Query
   const { isPending, error, data } = useQuery({
@@ -47,11 +53,12 @@ function ListCollections() {
     mutationFn: (id: number) => deleteCollection(id),
     onSuccess: (data) => {
       if (data.success) {
-        notification.success({
+        // Store the notification config to show in effect
+        notificationConfig.current = {
+          type: 'success',
           message: 'Success',
-          description: 'Collection deleted successfully',
-          duration: 3,
-        });
+          description: 'Collection deleted successfully'
+        };
         
         // If the deleted collection was selected, reset the selection
         if (selectedCollectionId === data.id) {
@@ -61,22 +68,45 @@ function ListCollections() {
         // Invalidate and refetch collections
         queryClient.invalidateQueries({ queryKey: ['collections'] });
       } else {
-        notification.error({
+        // Store the notification config to show in effect
+        notificationConfig.current = {
+          type: 'error',
           message: 'Error',
-          description: data.message || 'Failed to delete collection',
-          duration: 3,
-        });
+          description: data.message || 'Failed to delete collection'
+        };
       }
     },
     onError: (error) => {
       console.error('Error deleting collection:', error);
-      notification.error({
+      // Store the notification config to show in effect
+      notificationConfig.current = {
+        type: 'error',
         message: 'Error',
-        description: 'An unexpected error occurred',
-        duration: 3,
-      });
+        description: 'An unexpected error occurred'
+      };
     }
   });
+  
+  // Effect for showing notifications to avoid calling during render
+  React.useEffect(() => {
+    if (notificationConfig.current) {
+      const { type, message: msg, description } = notificationConfig.current;
+      if (type === 'success') {
+        notification.success({
+          message: msg,
+          description,
+          duration: 3,
+        });
+      } else {
+        notification.error({
+          message: msg,
+          description,
+          duration: 3,
+        });
+      }
+      notificationConfig.current = null;
+    }
+  }, [notification, deleteMutation.isSuccess, deleteMutation.isError]);
 
   const handleRowClick = (record: DataType) => {
     setSelectedCollectionId(record.id);

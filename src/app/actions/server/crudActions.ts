@@ -1,7 +1,7 @@
 'use server';
 
 import { db } from "@/db";
-import { InsertServer, SelectServer, UpdateServer, business, locations, os, projects, servers } from "@/db/schema";
+import { InsertServer, SelectServer, UpdateServer, business, locations, os, projects, servers, servers_collections } from "@/db/schema";
 import { and, asc, count, desc, eq, ilike, or} from "drizzle-orm";
 import { SQLWrapper } from "drizzle-orm/sql";
 
@@ -41,6 +41,7 @@ export type ServerFilter = {
   projectId?: number;
   osId?: number;
   locationId?: number;
+  collectionId?: number;
   search?: string;
 };
 
@@ -92,6 +93,11 @@ export async function getServers(
       whereConditions.push(eq(servers.locationId, filters.locationId));
     }
     
+    if (filters.collectionId !== undefined) {
+      // For collection filter, we need to join with the servers_collections table
+      // This will be handled separately
+    }
+    
     if (filters.search) {
       whereConditions.push(
         or(
@@ -111,10 +117,22 @@ export async function getServers(
     const offset = (page - 1) * pageSize;
     
     // Get total count for pagination
-    const totalCountResult = await db
+    let countQueryBuilder = db
       .select({ count: count() })
-      .from(servers)
-      .where(whereClause);
+      .from(servers);
+      
+    // Handle collection filter for count query
+    if (filters.collectionId !== undefined) {
+      countQueryBuilder = countQueryBuilder.innerJoin(
+        servers_collections,
+        and(
+          eq(servers.id, servers_collections.serverId),
+          eq(servers_collections.collectionId, filters.collectionId)
+        )
+      );
+    }
+    
+    const totalCountResult = await countQueryBuilder.where(whereClause);
       
     const totalCount = Number(totalCountResult[0].count);
 
@@ -155,7 +173,8 @@ export async function getServers(
     const orderBy = sort.direction === 'asc' ? asc(sortColumn) : desc(sortColumn);
     
     // Query with joins to get related data and apply ordering
-    const serverData = await db
+    // Base query builder
+    let queryBuilder = db
       .select({
         id: servers.id,
         hostname: servers.hostname,
@@ -180,7 +199,21 @@ export async function getServers(
       .leftJoin(projects, eq(servers.projectId, projects.id))
       .leftJoin(business, eq(servers.business, business.id))
       .leftJoin(os, eq(servers.osId, os.id))
-      .leftJoin(locations, eq(servers.locationId, locations.id))
+      .leftJoin(locations, eq(servers.locationId, locations.id));
+      
+    // Handle collection filter if present
+    if (filters.collectionId !== undefined) {
+      queryBuilder = queryBuilder.innerJoin(
+        servers_collections,
+        and(
+          eq(servers.id, servers_collections.serverId),
+          eq(servers_collections.collectionId, filters.collectionId)
+        )
+      );
+    }
+    
+    // Apply where conditions, ordering, limit, and offset
+    const serverData = await queryBuilder
       .where(whereClause)
       .orderBy(orderBy)
       .limit(pageSize)
