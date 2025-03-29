@@ -275,7 +275,7 @@ function ListCollections() {
               }))} 
               size='small'
               pagination={{ pageSize: 10 }}
-              rowClassName={(record) => record.id === selectedCollectionId ? 'bg-blue-50' : ''}
+              rowClassName={(record) => record.id === selectedCollectionId ? 'bg-gray-200 dark:bg-gray-700' : ''}
               onRow={(record) => ({
                 onClick: () => handleRowClick(record),
               })}
