@@ -1,13 +1,15 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { useQuery } from "@tanstack/react-query"
 import { getProjectDrawings } from "@/app/actions/projects/crudActions"
-import { Button, Card, Typography } from 'antd'
-import { ArrowRightOutlined } from '@ant-design/icons'
+import { Button, Card, Typography, Radio, Table, Row, Col, Space } from 'antd'
+import { ArrowRightOutlined, TableOutlined, AppstoreOutlined } from '@ant-design/icons'
 
 /**
  * Component for displaying technology stacks from project drawings
  */
 const PreviewDrawingsCard = ({ projectId }: { projectId: number }) => {
+  const [viewMode, setViewMode] = useState<'table' | 'grid'>('table')
+  
   // Fetch drawings data from the server
   const { data: drawings = [], isLoading } = useQuery({
     queryKey: ["project-drawings", projectId],
@@ -39,48 +41,105 @@ const PreviewDrawingsCard = ({ projectId }: { projectId: number }) => {
   // We don't need to validate the base64 string as it should be valid if present
 
   return (
-    <Card title="Project Drawings" className="h-full">
+    <Card 
+      title="Project Drawings" 
+      className="h-full"
+      extra={
+        <Radio.Group 
+          value={viewMode} 
+          onChange={(e) => setViewMode(e.target.value)}
+          optionType="button"
+          buttonStyle="solid"
+          size="small"
+        >
+          <Radio.Button value="table"><TableOutlined /> Table</Radio.Button>
+          <Radio.Button value="grid"><AppstoreOutlined /> Grid</Radio.Button>
+        </Radio.Group>
+      }
+    >
       {isLoading ? (
         <div className="text-center py-4">Loading drawings...</div>
       ) : drawings.length === 0 ? (
         <div className="text-center py-4 text-gray-500">No drawings available for this project</div>
-      ) : (
-        <div className="space-y-4">
-          {drawings.map((drawing) => (
-            <Card 
-              key={drawing.id} 
-              hoverable
-              className="overflow-hidden flex flex-col"
-              onClick={() => handleDrawingClick(drawing.id)}
-            >
-              <Typography.Title level={5} className="mb-0 truncate">{drawing.name}</Typography.Title>
-              
-              <div className="h-36 flex items-center justify-center bg-gray-100 mt-4 mb-6 overflow-hidden">
-                {drawing.webp ? (
-                  <img
-                    alt={drawing.name}
-                    src={`data:image/webp;base64,${drawing.webp}`}
-                    className="max-h-full max-w-full object-contain"
-                  />
-                ) : (
-                  <Typography.Text className="text-gray-400 text-center">
-                    No preview
-                  </Typography.Text>
-                )}
-              </div>
-              
-              <div className="flex justify-end">
+      ) : viewMode === 'table' ? (
+        <Table
+          columns={[
+            {
+              title: "Title",
+              dataIndex: "name",
+              sorter: (a, b) => a.name.localeCompare(b.name),
+              defaultSortOrder: 'ascend',
+            },
+            {
+              title: "Actions",
+              key: "actions",
+              width: 100,
+              render: (_, record) => (
                 <Button 
                   type="text" 
-                  className="p-0 h-auto flex items-center gap-1"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDrawingClick(record.id);
+                  }} 
+                  className="flex items-center gap-1"
                 >
                   <span>Open</span>
                   <ArrowRightOutlined />
                 </Button>
-              </div>
-            </Card>
+              )
+            }
+          ]}
+          dataSource={drawings.map((drawing) => ({
+            id: drawing.id,
+            name: drawing.name,
+            key: drawing.id,
+          }))}
+          rowKey="id"
+          size='small'
+          onRow={(record) => ({
+            onClick: () => handleDrawingClick(record.id),
+          })}
+          rowClassName={() => 'cursor-pointer'}
+          pagination={false}
+        />
+      ) : (
+        <Row gutter={[16, 16]}>
+          {drawings.map((drawing) => (
+            <Col key={drawing.id} xs={24} sm={12} md={8} lg={8} xl={8}>
+              <Card 
+                hoverable
+                className="overflow-hidden flex flex-col h-full"
+                onClick={() => handleDrawingClick(drawing.id)}
+              >
+                <Typography.Title level={5} className="mb-0 truncate">{drawing.name}</Typography.Title>
+                
+                <div className="h-36 flex items-center justify-center bg-gray-100 mt-4 mb-6 overflow-hidden">
+                  {drawing.webp ? (
+                    <img
+                      alt={drawing.name}
+                      src={`data:image/webp;base64,${drawing.webp}`}
+                      className="max-h-full max-w-full object-contain"
+                    />
+                  ) : (
+                    <Typography.Text className="text-gray-400 text-center">
+                      No preview
+                    </Typography.Text>
+                  )}
+                </div>
+                
+                <div className="flex justify-end mt-auto">
+                  <Button 
+                    type="text" 
+                    className="p-0 h-auto flex items-center gap-1"
+                  >
+                    <span>Open</span>
+                    <ArrowRightOutlined />
+                  </Button>
+                </div>
+              </Card>
+            </Col>
           ))}
-        </div>
+        </Row>
       )}
     </Card>
   )
