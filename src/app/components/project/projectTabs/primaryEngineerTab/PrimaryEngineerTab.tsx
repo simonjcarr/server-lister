@@ -52,6 +52,7 @@ const PrimaryEngineers = ({ projectId }: { projectId: number }) => {
     <>
       {(primaryEngineerLoading || allUsersLoading) && <p>Loading...</p>}
       {(primaryEngineerError || allUsersError) && <p>Error: {(primaryEngineerError || allUsersError)?.message}</p>}
+      {JSON.stringify({targetKeys})}
       {data && Array.isArray(data) && allUsers && Array.isArray(allUsers) && (
         <Card title="Primary engineers">
           {updatePrimaryEngineersError && <p>Error: {updatePrimaryEngineersError.message}</p>}

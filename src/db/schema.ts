@@ -561,8 +561,19 @@ export const users_servers = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
   },
-  (table) => [index("users_servers_serverId_idx").on(table.serverId)]
+  (table) => [
+    index("users_servers_serverId_idx").on(table.serverId),
+    index("users_servers_userId_idx").on(table.userId),
+    uniqueIndex("unique_user_server_idx").on(table.userId, table.serverId)
+  ]
 );
+
+const insertUserServerSchema = createInsertSchema(users_servers)
+const selectUserServerSchema = createSelectSchema(users_servers)
+const updateUserServerSchema = createUpdateSchema(users_servers)
+export type InsertUserServer = z.infer<typeof insertUserServerSchema>
+export type SelectUserServer = z.infer<typeof selectUserServerSchema>
+export type UpdateUserServer = z.infer<typeof updateUserServerSchema>
 
 export const tags = pgTable(
   "tags",

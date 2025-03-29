@@ -82,6 +82,14 @@ const App: React.FC = () => {
           onClick: () => {
             router.push('/server/collections');
           },
+        },
+        {
+          key: 'server-favorites',
+          label: 'Favourite Servers',
+          icon: <FaRegListAlt />,
+          onClick: () => {
+            router.push('/server/favourites');
+          },
         }
 
       ],
