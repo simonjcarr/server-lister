@@ -4,11 +4,13 @@ import { useState } from 'react'
 import { List, Typography, Button, Popover, Empty, Badge, Spin } from 'antd'
 import { BellOutlined, CheckOutlined } from '@ant-design/icons'
 import { useNotifications } from './NotificationContext'
-import { format } from 'date-fns'
+import { useTheme } from '@/app/theme/ThemeProvider'
+import DistanceToNow from '../utils/DistanceToNow'
 
 export default function NotificationList() {
   const [open, setOpen] = useState(false)
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications()
+  const { isDarkMode } = useTheme()
   const [loading, setLoading] = useState(false)
 
   const handleOpenChange = (newOpen: boolean) => {
@@ -26,8 +28,8 @@ export default function NotificationList() {
   }
 
   const content = (
-    <div style={{ width: 300, maxHeight: 400, overflow: 'auto' }}>
-      <div className="flex justify-between items-center mb-2 p-2 border-b">
+    <div className={`${isDarkMode ? 'dark:bg-gray-800 dark:text-gray-200' : ''}`} style={{ width: 300, maxHeight: 400, overflow: 'auto' }}>
+      <div className={`flex justify-between items-center mb-2 px-4 py-2 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
         <Typography.Text strong>Notifications</Typography.Text>
         <Button 
           type="text" 
@@ -47,18 +49,15 @@ export default function NotificationList() {
           dataSource={notifications}
           renderItem={(notification) => (
             <List.Item 
-              className={`cursor-pointer transition-colors ${!notification.read ? 'bg-blue-50' : ''}`}
+              className={`cursor-pointer transition-colors px-4 ${!notification.read ? (isDarkMode ? 'bg-gray-800' : 'bg-gray-200/50') : 'px-4'}`}
               onClick={() => handleMarkRead(notification.id)}
             >
               <List.Item.Meta
                 title={notification.title}
                 description={
-                  <>
-                    <div>{notification.message}</div>
-                    <div className="text-xs text-gray-400 mt-1">
-                      {format(new Date(notification.createdAt), 'MMM d, yyyy h:mm a')}
-                    </div>
-                  </>
+                  <div className="mt-1">
+                    <DistanceToNow date={new Date(notification.createdAt)} />
+                  </div>
                 }
               />
             </List.Item>
@@ -77,6 +76,7 @@ export default function NotificationList() {
       onOpenChange={handleOpenChange}
       arrow={false}
       placement="bottomRight"
+      overlayClassName={isDarkMode ? 'dark-theme-dropdown' : ''}
     >
       <Badge count={unreadCount} size="small">
         <Button type="text" icon={<BellOutlined />} />
