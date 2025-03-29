@@ -63,7 +63,7 @@ export default function NotificationList() {
   }
 
   const content = (
-    <div className={`${isDarkMode ? 'dark:bg-gray-800 dark:text-gray-200' : ''}`} style={{ width: 320, maxHeight: 450, overflow: 'auto' }}>
+    <div className={`${isDarkMode ? 'bg-gray-900 text-gray-200' : 'bg-white'}`} style={{ width: 320, maxHeight: 450, overflow: 'auto' }}>
       <div className={`flex justify-between items-center mb-2 py-2 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
         <div className="flex items-center ml-2">
           <Checkbox 
@@ -103,7 +103,9 @@ export default function NotificationList() {
           dataSource={notifications}
           renderItem={(notification) => (
             <List.Item 
-              className={`transition-colors ${!notification.read ? (isDarkMode ? 'bg-gray-800' : 'bg-gray-200/50') : ''}`}
+              className={`transition-colors ${!notification.read 
+                ? (isDarkMode ? 'bg-gray-700' : 'bg-gray-200/50') 
+                : (isDarkMode ? 'bg-gray-900/90' : '')}`}
             >
               <div className="ml-2">
                 <Checkbox 

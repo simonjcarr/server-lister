@@ -92,7 +92,7 @@ body {
 
 /* Dark theme for Ant Design popover/dropdown content */
 .dark-theme-dropdown .ant-popover-inner {
-  background-color: #1e293b !important;
+  background-color: #111827 !important;
   color: #e5e7eb !important;
 }
 
@@ -101,7 +101,7 @@ body {
 }
 
 .dark-theme-dropdown .ant-popover-arrow::before {
-  background-color: #1e293b !important;
+  background-color: #111827 !important;
 }
 
 .dark-theme-dropdown .ant-list-item {
