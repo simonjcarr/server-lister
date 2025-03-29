@@ -64,27 +64,25 @@ export default function NotificationList() {
 
   const content = (
     <div className={`${isDarkMode ? 'dark:bg-gray-800 dark:text-gray-200' : ''}`} style={{ width: 320, maxHeight: 450, overflow: 'auto' }}>
-      <div className={`flex justify-between items-center mb-2 px-4 py-2 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
-        <div className="flex items-center gap-2">
+      <div className={`flex justify-between items-center mb-2 py-2 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+        <div className="flex items-center ml-2">
           <Checkbox 
             checked={allSelected} 
             onChange={(e) => handleSelectAll(e.target.checked)}
             disabled={notifications.length === 0}
           />
-          <Typography.Text strong>Notifications</Typography.Text>
+          <span className="ml-3 font-semibold">Notifications</span>
         </div>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1 mr-2">
           {selectedIds.length > 0 && (
             <Button
+              className={`text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300`}
               type="text"
               size="small"
-              danger
               onClick={handleDelete}
               icon={<DeleteOutlined />}
               loading={deleteLoading}
-            >
-              Delete
-            </Button>
+            />
           )}
           <Button 
             type="text" 
@@ -105,9 +103,9 @@ export default function NotificationList() {
           dataSource={notifications}
           renderItem={(notification) => (
             <List.Item 
-              className={`transition-colors px-4 ${!notification.read ? (isDarkMode ? 'bg-gray-800' : 'bg-gray-200/50') : ''}`}
+              className={`transition-colors ${!notification.read ? (isDarkMode ? 'bg-gray-800' : 'bg-gray-200/50') : ''}`}
             >
-              <div className="flex items-center mr-3">
+              <div className="ml-2">
                 <Checkbox 
                   checked={selectedIds.includes(notification.id)}
                   onChange={() => handleSelect(notification.id)}
@@ -115,7 +113,7 @@ export default function NotificationList() {
                 />
               </div>
               <div 
-                className="flex-1 cursor-pointer" 
+                className="ml-3 cursor-pointer flex-1" 
                 onClick={() => handleMarkRead(notification.id)}
               >
                 <List.Item.Meta
