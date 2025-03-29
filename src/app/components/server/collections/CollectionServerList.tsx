@@ -1,99 +1,227 @@
 'use client'
-import { Button, Card, Space, Table, notification } from 'antd'
-import React from 'react'
-import { useEffect, useState } from 'react'
+import { App, Button, Card, Empty, Table } from 'antd'
+import React, { useCallback, useEffect, useState } from 'react'
 import { getServerCollection, getServersInCollection, removeServerFromCollection } from '@/app/actions/server/serverCollectionActions';
-import { MdDelete } from 'react-icons/md';
+import { MdDelete, MdEdit } from 'react-icons/md';
 import { ColumnsType } from 'antd/es/table';
-import type { SelectServerCollection, SelectCollection } from '@/db/schema';
-import { getServer } from '@/app/actions/server/crudActions';
+import type { SelectCollection } from '@/db/schema';
+import { getServerById } from '@/app/actions/server/crudActions';
 import SubscribeCollectionSwitch from './SubscribeCollectionSwitch';
 import CollectionSubscribedUsers from './CollectionSubscribedUsers';
+import AddServersToCollection from './AddServersToCollection';
+import FormEditCollection from './FormEditCollection';
+import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
+import Link from 'next/link';
 
-function CollectionServerList({ collectionId }: { collectionId: any }) {
-  const [servers, setServers] = useState<any[]>([]);
-  const [collection, setCollection] = useState<SelectCollection | null>(null);
-  const [ api ] = notification.useNotification();
+interface ServerListItem {
+  id: number;
+  hostname: string;
+  ipv4: string | null;
+  description: string | null;
+}
+
+interface RemoveResult {
+  success: boolean;
+  hostname: string;
+}
+
+function CollectionServerList({ collectionId }: { collectionId: number }) {
+  const queryClient = useQueryClient();
+  const { notification: api } = App.useApp();
+  const [removeServerResult, setRemoveServerResult] = useState<RemoveResult | null>(null);
+  
+  // Instead of using callbacks that directly call notifications,
+  // simply pass the notification data to the effect
+  
+  // Handle server removal notifications in an effect
   useEffect(() => {
-    async function getServers() {
-      const servers = await getServersInCollection(collectionId);
-      const collection = await getServerCollection(collectionId);
-      setServers(servers.map(server => ({ ...server, key: server.id })));
-      if (collection) {
-        setCollection(collection[0]);
+    if (removeServerResult) {
+      if (removeServerResult.success) {
+        api.success({
+          message: 'Server Removed',
+          description: `Server ${removeServerResult.hostname} has been removed from the collection`,
+          duration: 3,
+        });
+      } else {
+        api.error({
+          message: 'Error',
+          description: 'Failed to remove server from collection',
+          duration: 3,
+        });
       }
+      setRemoveServerResult(null);
     }
-    getServers();
-  }, [collectionId])
+  }, [removeServerResult, api]);
+  
+  // Fetch collection details
+  const collectionQuery = useQuery({
+    queryKey: ['collection', collectionId],
+    queryFn: async () => {
+      const result = await getServerCollection(collectionId);
+      return result && result.length > 0 ? result[0] : null;
+    }
+  });
+  
+  // Fetch servers in the collection with staleTime: 0 to ensure fresh data
+  const serversQuery = useQuery({
+    queryKey: ['collection-servers', collectionId],
+    queryFn: async () => {
+      const servers = await getServersInCollection(collectionId);
+      return servers.map(server => ({ ...server, key: server.id }));
+    },
+    staleTime: 0, // Always consider data stale to force re-fetch
+    refetchOnMount: true, // Always refetch when component mounts
+    refetchOnWindowFocus: true // Refetch when window regains focus
+  });
+  
+  // Mutation for removing a server from the collection
+  const removeServerMutation = useMutation({
+    mutationFn: async ({ serverId }: { serverId: number }) => {
+      const serverToRemove = await getServerById(serverId);
+      if (!serverToRemove) {
+        throw new Error(`Server with id ${serverId} not found`);
+      }
+      
+      return {
+        result: await removeServerFromCollection(serverId, collectionId),
+        hostname: serverToRemove.hostname
+      };
+    },
+    onSuccess: (data) => {
+      // Instead of showing notification directly, set state to trigger the effect
+      setRemoveServerResult({
+        success: data.result.success,
+        hostname: data.hostname
+      });
+      
+      // Invalidate and refetch all related queries
+      queryClient.invalidateQueries({ queryKey: ['collection-servers', collectionId] });
+      // Also invalidate the available servers query to keep that list updated
+      queryClient.invalidateQueries({ queryKey: ['collections'] });
+    },
+    onError: (error) => {
+      console.error('Error removing server from collection:', error);
+      setRemoveServerResult({
+        success: false,
+        hostname: ''
+      });
+    }
+  });
 
   const handleRemoveServerFromList = async (serverId: number) => {
-    if (!serverId || !collection) {
-      return;
+    if (confirm('Are you sure you want to remove this server from the collection?')) {
+      removeServerMutation.mutate({ serverId });
     }
-    const serverToRemove = await getServer(serverId)
-    if (!serverToRemove) {
-      api.error({
-        message: 'Not Found',
-        description: `Server with id ${serverId} not found`,
-        duration: 3,
-      })
-      return;
-    }
-    if(!confirm(`Are you sure you want to remove ${serverToRemove.hostname} from the collection?`)) {
-      return
-    }
-    await removeServerFromCollection(serverId, collection.id)
-    const servers = await getServersInCollection(collectionId);
-    
-    setServers(servers.map(server => ({ ...server, key: server.id })));
-    // Notify that server has been removed
-    api.success({
-      message: 'Server Removed',
-      description: `Server ${serverToRemove.hostname} has been removed from the collection`,
-      duration: 3,
-    })
-  }
+  };
 
-  const columns: ColumnsType<any> = [
+  const columns: ColumnsType<ServerListItem> = [
     {
       title: 'Hostname',
       dataIndex: 'hostname',
       sorter: (a, b) => a.hostname.localeCompare(b.hostname),
       sortDirections: ['ascend', 'descend'],
       defaultSortOrder: 'ascend',
+      render: (text, record) => (
+        <Link href={`/server/view/${record.id}`}>{text}</Link>
+      ),
     },
     {
       title: 'IP',
       dataIndex: 'ipv4',
-      sorter: (a, b) => a.ipv4.localeCompare(b.ipv4),
-      sortDirections: ['ascend', 'descend'],
-      defaultSortOrder: 'ascend',
+      render: (text) => text || '-',
     },
     {
-      render: (_: any, record: SelectServerCollection) => (
-        <Space>
-          {<Button color='red' danger size='small' icon={<MdDelete />} onClick={() => handleRemoveServerFromList(record.id)} />}
-        </Space>
+      title: 'Description',
+      dataIndex: 'description',
+      render: (text) => text || '-',
+    },
+    {
+      title: 'Action',
+      key: 'action',
+      width: 80,
+      render: (_, record) => (
+        <Button 
+          danger 
+          size='small' 
+          icon={<MdDelete />} 
+          title="Remove from collection"
+          onClick={() => handleRemoveServerFromList(record.id)} 
+        />
       ),
     }
-  ]
+  ];
+
+  // Loading or error states
+  if (collectionQuery.isPending || serversQuery.isPending) {
+    return <div>Loading...</div>;
+  }
+
+  if (collectionQuery.error || serversQuery.error) {
+    return <div>Error loading collection data</div>;
+  }
+
+  const collection = collectionQuery.data;
+  if (!collection) {
+    return <div>Collection not found</div>;
+  }
 
   return (
     <div className='flex flex-col gap-4'>
-      {collection && (
-        <Card title={collection.name} extra={<SubscribeCollectionSwitch collectionId={collectionId} />}>
-          <p className='text-gray-500 mb-4'>{collection.description}</p>
-          <div className='flex flex-col gap-4'>
-            <Card title="Servers">
-              <Table columns={columns} dataSource={servers} size='small' />
-            </Card>
-            <CollectionSubscribedUsers collectionId={collectionId} />
+      <Card 
+        title={
+          <div className="flex justify-between items-center">
+            <span>{collection.name}</span>
+            <div className="flex items-center gap-2">
+              <FormEditCollection collection={collection}>
+                <Button 
+                  size="small" 
+                  icon={<MdEdit />} 
+                  title="Edit collection"
+                >
+                  Edit
+                </Button>
+              </FormEditCollection>
+              <SubscribeCollectionSwitch collectionId={collectionId} />
+            </div>
           </div>
-        </Card>
-      )}
-
+        }
+      >
+        <p className='text-gray-500 mb-4'>{collection.description || "No description provided."}</p>
+        
+        <div className='flex flex-col gap-4'>
+          <Card 
+            title="Servers" 
+            extra={<AddServersToCollection collection={collection} />}
+            styles={{ 
+              body: { 
+                padding: serversQuery.data?.length ? undefined : 0 
+              } 
+            }}
+          >
+            {serversQuery.data?.length ? (
+              <Table 
+                columns={columns} 
+                dataSource={serversQuery.data} 
+                size='small'
+                pagination={{ 
+                  pageSize: 10,
+                  hideOnSinglePage: serversQuery.data.length <= 10,
+                }}
+                className="collections-table" 
+              />
+            ) : (
+              <Empty 
+                description="No servers in this collection" 
+                image={Empty.PRESENTED_IMAGE_SIMPLE}
+              />
+            )}
+          </Card>
+          
+          <CollectionSubscribedUsers collectionId={collectionId} />
+        </div>
+      </Card>
     </div>
-  )
+  );
 }
 
-export default CollectionServerList
+export default CollectionServerList;

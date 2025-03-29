@@ -49,7 +49,9 @@ export async function addServerToCollection(
       createdAt: new Date(),
       updatedAt: new Date(),
     });
+    // More aggressive revalidation to ensure all paths are updated
     revalidatePath("/server/collections");
+    revalidatePath("/server/collections/", "page");
     return { success: true };
   } catch (error) {
     console.error("Error adding server to collection:", error);
@@ -70,7 +72,9 @@ export async function removeServerFromCollection(
           eq(servers_collections.collectionId, collectionId)
         )
       );
+    // More aggressive revalidation to ensure all paths are updated
     revalidatePath("/server/collections");
+    revalidatePath("/server/collections/", "page");
     return { success: true };
   } catch (error) {
     console.error("Error removing server from collection:", error);
@@ -108,7 +112,9 @@ export async function createUserCollectionSubscription(
       createdAt: new Date(),
       updatedAt: new Date(),
     });
+    // More aggressive revalidation to ensure all paths are updated
     revalidatePath("/server/collections");
+    revalidatePath("/server/collections/", "page");
     return { success: true };
   } catch (error) {
     console.error("Error creating user collection subscription:", error);
@@ -129,7 +135,9 @@ export async function removeUserCollectionSubscription(
           eq(server_collection_subscriptions.collectionId, collectionId)
         )
       );
+    // More aggressive revalidation to ensure all paths are updated
     revalidatePath("/server/collections");
+    revalidatePath("/server/collections/", "page");
     return { success: true };
   } catch (error) {
     console.error("Error removing user collection subscription:", error);
