@@ -38,7 +38,12 @@ const FavoriteServers: React.FC = () => {
           // Direct SQL database query
           const favorites = await getUserFavoriteServersWithDetailsDirect();
           if (favorites.length > 0) {
-            setFavoritesList(favorites as FavoriteServer[]);
+            // Convert Date objects to strings to match the FavoriteServer interface
+            const formattedFavorites = favorites.map(favorite => ({
+              ...favorite,
+              createdAt: favorite.createdAt instanceof Date ? favorite.createdAt.toISOString() : favorite.createdAt
+            }));
+            setFavoritesList(formattedFavorites as FavoriteServer[]);
           }
         } catch (error) {
           console.error('Error in direct fetch:', error);
@@ -54,8 +59,13 @@ const FavoriteServers: React.FC = () => {
     queryKey: ['favoriteServers'],
     queryFn: async () => {
       const result = await getUserFavoriteServersWithDetails();
-      setFavoritesList(result as FavoriteServer[]);
-      return result as FavoriteServer[];
+      // Convert Date objects to strings to match the FavoriteServer interface
+      const formattedResult = result.map(item => ({
+        ...item,
+        createdAt: item.createdAt instanceof Date ? item.createdAt.toISOString() : item.createdAt
+      }));
+      setFavoritesList(formattedResult as FavoriteServer[]);
+      return formattedResult as FavoriteServer[];
     },
     enabled: !!session, // Only run query if user is logged in
     staleTime: 10000, // 10 seconds
@@ -86,7 +96,7 @@ const FavoriteServers: React.FC = () => {
           </div>
         }
         extra={<Button onClick={handleManageFavorites}>Manage</Button>}
-        variant="bordered"
+        variant="outlined"
         className="shadow-sm"
       >
         <Skeleton active paragraph={{ rows: 4 }} />
@@ -108,7 +118,7 @@ const FavoriteServers: React.FC = () => {
         </div>
       }
       extra={<Button onClick={handleManageFavorites}>Manage</Button>}
-      variant="bordered"
+      variant="outlined"
       className="shadow-sm"
     >
       {displayData.length === 0 ? (
