@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query"
 import { getProjectById } from "@/app/actions/projects/crudActions"
 import { Col, Row } from 'antd'
 import PrimaryEngineerList from './PrimaryEngineerList'
+import PreviewDrawingsCard from './PreviewDrawingsCard'
 
 const ProjectTab = ({ projectId }: { projectId: number }) => {
   const { data, error, isLoading } = useQuery({
@@ -21,6 +22,9 @@ const ProjectTab = ({ projectId }: { projectId: number }) => {
       <Row gutter={[16, 16]}>
         <Col span={12}>
           <PrimaryEngineerList projectId={projectId} />
+        </Col>
+        <Col span={12}>
+          <PreviewDrawingsCard projectId={projectId} />
         </Col>
       </Row>
       </>
