@@ -2,18 +2,17 @@
 
 import React, { useEffect, useState } from 'react';
 import { Button, Card, Transfer, message, Spin, App } from 'antd';
-import { TransferDirection, TransferProps } from 'antd/es/transfer';
+import { TransferProps } from 'antd/es/transfer';
 import { useSession } from 'next-auth/react';
 import { FaHeart, FaServer } from 'react-icons/fa';
 import { useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getAllServers, getUserFavoriteServersWithDetailsDirect, updateUserFavoriteServers, getFavoriteServerIds } from '@/app/actions/server/userServerActions';
+import { getAllServers, updateUserFavoriteServers, getFavoriteServerIds } from '@/app/actions/server/userServerActions';
 
 interface ServerItem {
   key: string;
   title: string;
   description: string;
-  disabled: boolean;
 }
 
 const FavouriteServersPage = () => {
@@ -46,21 +45,9 @@ const FavouriteServersPage = () => {
     if (favoriteServerIds && favoriteServerIds.length > 0) {
       // Convert to strings since the Transfer component expects string keys
       const serverIdStrings = favoriteServerIds.map(id => id.toString());
-      console.log('Setting target keys from favoriteServerIds:', serverIdStrings);
       setTargetKeys(serverIdStrings);
-    } else {
-      console.log('No favorite server IDs found or array is empty:', favoriteServerIds);
     }
   }, [favoriteServerIds]);
-  
-  // Also fetch the detailed server info for debugging
-  const { data: favoriteServers = [] } = useQuery({
-    queryKey: ['favoriteServersDetails'],
-    queryFn: async () => {
-      return await getUserFavoriteServersWithDetailsDirect();
-    },
-    enabled: !!session,
-  });
 
   // Mutation to update favorite servers
   const { mutate: updateFavorites, isPending } = useMutation({
@@ -72,26 +59,21 @@ const FavouriteServersPage = () => {
     onSuccess: () => {
       message.success('Favourite servers updated successfully');
       queryClient.invalidateQueries({ queryKey: ['favoriteServerIds'] });
-      queryClient.invalidateQueries({ queryKey: ['favoriteServersDetails'] });
     },
     onError: () => {
       message.error('An error occurred while saving your favourites');
     },
   });
 
-  const onChange: TransferProps['onChange'] = (nextTargetKeys) => {
-    console.log('Transfer onChange:', nextTargetKeys);
+  const onChange: TransferProps['onChange'] = async (nextTargetKeys) => {
     setTargetKeys(nextTargetKeys);
-  };
-
-  const handleSave = () => {
-    if (!session?.user?.id) {
+    
+    // Immediately save when changed (just like in PrimaryEngineerTab)
+    if (session?.user?.id) {
+      await updateFavorites(nextTargetKeys);
+    } else {
       message.error('You must be logged in to save favourites');
-      return;
     }
-
-    console.log('Saving target keys:', targetKeys);
-    updateFavorites(targetKeys);
   };
 
   const filterOption = (inputValue: string, item: any) => {
@@ -160,41 +142,6 @@ const FavouriteServersPage = () => {
             searchPlaceholder: 'Search servers...',
           }}
         />
-        
-        <div className="flex justify-end mt-4">
-          <Button 
-            type="primary" 
-            loading={isPending} 
-            onClick={handleSave}
-          >
-            Save Favourites
-          </Button>
-        </div>
-        </Card>
-        
-        <Card className="mt-6">
-          <p>Debug Information:</p>
-          <p><strong>Target Keys:</strong> {targetKeys.join(', ') || 'None'}</p>
-          <p><strong>Available Server IDs:</strong> {serverItems.map(s => s.key).join(', ') || 'None'}</p>
-          <p><strong>Raw Favorite Server IDs:</strong> {favoriteServerIds.map(id => id.toString()).join(', ') || 'None'}</p>
-          <p><strong>Favorite Servers Count:</strong> {favoriteServers?.length || 0}</p>
-          <p><strong>Favorite IDs from Database (Details):</strong> 
-            {favoriteServers && favoriteServers.length > 0 
-              ? favoriteServers.map(f => {
-                  // Try all possible property names
-                  const id = f.serverId || f.serverid || f.server_id || f.serverId;
-                  return id?.toString() || 'undefined';
-                }).join(', ') 
-              : 'None'}
-          </p>
-          <p><strong>First Favorite Server Object:</strong></p>
-          <pre className="text-xs mt-2 bg-gray-100 p-2 rounded">
-            {JSON.stringify(favoriteServers?.[0] || 'No favorites', null, 2)}
-          </pre>
-          <p><strong>First Server Item:</strong></p>
-          <pre className="text-xs mt-2 bg-gray-100 p-2 rounded">
-            {JSON.stringify(serverItems[0] || 'No items', null, 2)}
-          </pre>
         </Card>
       </div>
     </App>
