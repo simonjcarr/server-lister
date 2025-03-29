@@ -1,12 +1,12 @@
 'use client'
 
-import { useState } from 'react'
-import { Table, Input, Select, Card, Space, Button, Tag, Typography, Checkbox, message } from 'antd'
+import { useState, useEffect } from 'react'
+import { Table, Input, Select, Card, Space, Button, Tag, Typography, Checkbox, App } from 'antd'
 import { useQuery, useQueries, useMutation, useQueryClient } from '@tanstack/react-query'
 import { HeartFilled, HeartOutlined, SearchOutlined, ReloadOutlined, PlusOutlined } from '@ant-design/icons'
 import { PaginationParams, ServerFilter, ServerSort, getBusinessOptions, getLocationOptions, getOSOptions, getProjectOptions, getServers } from '@/app/actions/server/crudActions'
 import { useSession } from 'next-auth/react'
-import { getUserFavoriteServersWithDetails, addServerToUser, removeServerFromUser } from '@/app/actions/server/userServerActions'
+import { getUserFavoriteServersWithDetails, addServerToUser, removeServerFromUser, checkUserFavorites, manualAddFavorite } from '@/app/actions/server/clientActions'
 import type { ColumnsType } from 'antd/es/table'
 import type { TablePaginationConfig } from 'antd/es/table'
 import type { FilterValue, SorterResult } from 'antd/es/table/interface'
@@ -23,11 +23,15 @@ function ServerList() {
   const router = useRouter()
   const { data: session } = useSession()
   const queryClient = useQueryClient()
+  const { message } = App.useApp()
   // State for pagination, filters, and sorting
   const [pagination, setPagination] = useState<PaginationParams>({
     page: 1,
     pageSize: 10,
   })
+  
+  // State to force re-renders on favorite toggle
+  const [favoriteToggleCount, setFavoriteToggleCount] = useState(0)
 
   // State for active filters
   const [filters, setFilters] = useState<ServerFilter>({})
@@ -71,11 +75,11 @@ function ServerList() {
   const locationOptions = filterQueries[3].data ?? []
 
   // Query for favorite servers
-  const { data: favoriteServers = [] } = useQuery({
-    queryKey: ['favoriteServers'],
+  const { data: favoriteServers = [], refetch: refetchFavorites } = useQuery({
+    queryKey: ['favoriteServers', favoriteToggleCount],
     queryFn: getUserFavoriteServersWithDetails,
     enabled: !!session, // Only run if user is logged in
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 0, // Always fetch fresh data
   })
 
   // Create a set of favorite server IDs for faster lookup
@@ -86,25 +90,38 @@ function ServerList() {
     mutationFn: async ({ serverId, action }: { serverId: number; action: 'add' | 'remove' }) => {
       if (!session?.user?.id) throw new Error('User not authenticated');
       
-      if (action === 'add') {
-        return await addServerToUser(serverId, session.user.id);
-      } else {
-        return await removeServerFromUser(serverId, session.user.id);
+      try {
+        let result;
+        if (action === 'add') {
+          result = await addServerToUser(serverId, session.user.id);
+        } else {
+          result = await removeServerFromUser(serverId, session.user.id);
+        }
+        
+        return { result, serverId, action };
+      } catch (error) {
+        throw error;
       }
     },
-    onSuccess: (_, variables) => {
-      // Show success message
+    onSuccess: (data, variables) => {
+      // Increment counter to force refetch
+      setFavoriteToggleCount(prev => prev + 1);
+      
+      // Optimistically update UI
       if (variables.action === 'add') {
+        favoriteServerIds.add(variables.serverId);
         message.success('Added to favorites');
       } else {
+        favoriteServerIds.delete(variables.serverId);
         message.success('Removed from favorites');
       }
       
-      // Invalidate queries to refetch data
-      queryClient.invalidateQueries({ queryKey: ['favoriteServers'] });
+      // Manually refetch favorites
+      setTimeout(() => {
+        refetchFavorites();
+      }, 500);
     },
     onError: (error) => {
-      console.error('Error toggling favorite:', error);
       message.error('Failed to update favorites');
     },
   });
@@ -113,10 +130,48 @@ function ServerList() {
   const handleFavoriteToggle = (e: React.MouseEvent, serverId: number) => {
     e.stopPropagation(); // Prevent row click
     
-    if (!session?.user?.id) return;
+    if (!session?.user?.id) {
+      message.warning('Please log in to add favorites');
+      return;
+    }
     
-    const action = favoriteServerIds.has(serverId) ? 'remove' : 'add';
-    toggleFavorite({ serverId, action });
+    // Get current state
+    const isCurrentlyFavorite = favoriteServerIds.has(serverId);
+    const action = isCurrentlyFavorite ? 'remove' : 'add';
+    
+    if (action === 'add') {
+      // If we're trying to add, use our manual method that's more reliable
+      handleManualAddFavorite(serverId);
+    } else {
+      // For removal, use the normal method
+      toggleFavorite({ serverId, action });
+    }
+  };
+  
+  // Force manual add (for diagnostics)
+  const handleManualAddFavorite = async (serverId: number) => {
+    if (!session?.user?.id) {
+      message.warning('Please log in to add favorites');
+      return;
+    }
+    
+    try {
+      const result = await manualAddFavorite(serverId);
+      
+      if (result.success) {
+        message.success('Added to favorites');
+        // Force a refresh of favorite data
+        setFavoriteToggleCount(prev => prev + 1);
+        refetchFavorites();
+        
+        // Also force add to local Set
+        favoriteServerIds.add(serverId);
+      } else {
+        message.error(`Failed to add to favorites`);
+      }
+    } catch (error) {
+      message.error('Failed to add to favorites');
+    }
   };
 
   // Query for server data
@@ -126,6 +181,13 @@ function ServerList() {
     staleTime: 5 * 60 * 1000, // 5 minutes
     refetchInterval: 5 * 60 * 1000 // 5 minutes
   })
+
+  // Effect to refetch favorites when the toggle count changes
+  useEffect(() => {
+    if (favoriteToggleCount > 0) {
+      refetchFavorites();
+    }
+  }, [favoriteToggleCount, refetchFavorites]);
 
   // Process server data
   let data = serverData?.data.map(server => ({ ...server, key: server.id })) ?? []
@@ -175,8 +237,6 @@ function ServerList() {
     _filters: Record<string, FilterValue | null>,
     sorter: SorterResult<ServerData> | SorterResult<ServerData>[],
   ) => {
-    console.log('Sort changed:', sorter)
-
     // Update pagination
     if (paginationConfig.current && paginationConfig.pageSize) {
       setPagination({
@@ -239,13 +299,20 @@ function ServerList() {
       key: 'favorite',
       width: 70,
       align: 'center',
-      render: (_, record: ServerData) => (
-        <div onClick={(e) => handleFavoriteToggle(e, record.id)} className="cursor-pointer hover:text-blue-500">
-          {favoriteServerIds.has(record.id) ? 
-            <HeartFilled style={{ color: '#FFD700', fontSize: '18px' }} /> : 
-            <HeartOutlined style={{ color: '#d9d9d9', fontSize: '18px' }} />}
-        </div>
-      ),
+      render: (_, record: ServerData) => {
+        const isFavorite = favoriteServerIds.has(record.id);
+        return (
+          <div 
+            onClick={(e) => handleFavoriteToggle(e, record.id)} 
+            className="cursor-pointer hover:text-blue-500 flex items-center justify-center"
+            title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+          >
+            {isFavorite ? 
+              <HeartFilled style={{ color: '#FFD700', fontSize: '18px' }} /> : 
+              <HeartOutlined style={{ color: '#d9d9d9', fontSize: '18px' }} />}
+          </div>
+        );
+      },
     },
     {
       title: 'Hostname',
@@ -324,11 +391,12 @@ function ServerList() {
   ]
 
   return (
-    <Card>
-      <Title level={4} className='flex justify-between items-center'>
-        <div>Server List</div>
-        <FormAddServer><Button icon={<PlusOutlined />} size='small'>New Server</Button></FormAddServer>
-      </Title>
+    <App>
+      <Card>
+        <Title level={4} className='flex justify-between items-center'>
+          <div>Server List</div>
+          <FormAddServer><Button icon={<PlusOutlined />} size='small'>New Server</Button></FormAddServer>
+        </Title>
 
       {/* Filter and search controls */}
       <Space wrap style={{ marginBottom: 16 }}>
@@ -427,6 +495,7 @@ function ServerList() {
         size="middle"
       />
     </Card>
+    </App>
   )
 }
 
