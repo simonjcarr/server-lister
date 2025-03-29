@@ -147,6 +147,7 @@ function ChatPanelContent() {
           count={category.id === selectedCategoryId ? 0 : category.messageCount}
           size="small"
           style={{ marginLeft: 8 }}
+          overflowCount={99}
         >
           <span className="flex items-center gap-2">
             {Icon && <Icon className="w-4 h-4" />}

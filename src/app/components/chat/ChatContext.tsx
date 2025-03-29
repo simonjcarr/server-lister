@@ -37,6 +37,8 @@ export function ChatProvider({ children, chatRoomId, initialCategories }: ChatPr
   const eventSourceRef = useRef<EventSource | null>(null);
   const eventSourceInitialized = useRef(false);
   const lastEventIdRef = useRef<number | null>(null);
+  // Track currently selected category for event handlers
+  const selectedCategoryIdRef = useRef<number | null>(selectedCategoryId);
 
   // Function to select a category and load messages
   const selectCategory = async (categoryId: number) => {
@@ -46,6 +48,15 @@ export function ChatProvider({ children, chatRoomId, initialCategories }: ChatPr
     setMessages([]);
     setMessageOffset(0);
     setHasMore(true);
+    
+    // Reset the counter for the selected category
+    setCategories((prevCategories) =>
+      prevCategories.map((category) =>
+        category.id === categoryId
+          ? { ...category, messageCount: 0 } // Reset count when switching to this category
+          : category
+      )
+    );
     
     try {
       setLoading(true);
@@ -103,28 +114,37 @@ export function ChatProvider({ children, chatRoomId, initialCategories }: ChatPr
     }
   };
 
+  // Helper function to just update category counts without adding to messages array
+  const updateCategoryCount = (categoryId: number) => {
+    setCategories((prevCategories) =>
+      prevCategories.map((category) =>
+        category.id === categoryId
+          ? {
+              ...category,
+              messageCount: (category.messageCount || 0) + 1,
+            }
+          : category
+      )
+    );
+  };
+
   // Function to add a new message to the state
   const addMessage = (message: ChatMessage) => {
-    if (message.categoryId !== selectedCategoryId) {
-      // Update the count for the category
-      setCategories((prevCategories) =>
-        prevCategories.map((category) =>
-          category.id === message.categoryId
-            ? {
-                ...category,
-                messageCount: (category.messageCount || 0) + 1,
-              }
-            : category
-        )
-      );
-      return;
-    }
-
     // Check if the message is already in the list to prevent duplicates
     const messageExists = messages.some((m) => m.id === message.id);
-    if (!messageExists) {
+    
+    if (messageExists) {
+      console.log(`Message ${message.id} already exists, skipping`);
+      return; // Skip if we already have this message
+    }
+    
+    // This function should ONLY add messages that match the currently selected category
+    if (message.categoryId === selectedCategoryId) {
+      console.log(`Adding message ${message.id} to category ${selectedCategoryId}`);
       setMessages((prev) => [message, ...prev]);
       lastEventIdRef.current = Math.max(lastEventIdRef.current || 0, message.id);
+    } else {
+      console.warn(`Message ${message.id} doesn't match current category ${selectedCategoryId}, ignoring`);
     }
   };
 
@@ -178,7 +198,18 @@ export function ChatProvider({ children, chatRoomId, initialCategories }: ChatPr
       eventSource.addEventListener('message', (event) => {
         try {
           const data = JSON.parse(event.data);
-          addMessage(data);
+          console.log('Message received from SSE:', data, 'Current category:', selectedCategoryIdRef.current);
+          
+          // IMPORTANT: Use the ref to get the current category ID
+          const currentCategoryId = selectedCategoryIdRef.current;
+          
+          // Only add to messages list if it matches the current category
+          if (data.categoryId === currentCategoryId) {
+            addMessage(data);
+          } else {
+            // Otherwise, just update the counter
+            updateCategoryCount(data.categoryId);
+          }
         } catch (error) {
           console.error('Error parsing SSE message:', error);
         }
@@ -212,6 +243,11 @@ export function ChatProvider({ children, chatRoomId, initialCategories }: ChatPr
     };
   }, [chatRoomId]);
 
+  // Update the ref when the selected category changes
+  useEffect(() => {
+    selectedCategoryIdRef.current = selectedCategoryId;
+  }, [selectedCategoryId]);
+  
   // Load initial messages when the selected category changes
   useEffect(() => {
     if (selectedCategoryId) {
