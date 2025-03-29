@@ -1,10 +1,12 @@
 'use client'
 
 import { useState } from 'react'
-import { Table, Input, Select, Card, Space, Button, Tag, Typography } from 'antd'
-import { useQuery, useQueries } from '@tanstack/react-query'
-import { SearchOutlined, ReloadOutlined, PlusOutlined } from '@ant-design/icons'
+import { Table, Input, Select, Card, Space, Button, Tag, Typography, Checkbox, message } from 'antd'
+import { useQuery, useQueries, useMutation, useQueryClient } from '@tanstack/react-query'
+import { HeartFilled, HeartOutlined, SearchOutlined, ReloadOutlined, PlusOutlined } from '@ant-design/icons'
 import { PaginationParams, ServerFilter, ServerSort, getBusinessOptions, getLocationOptions, getOSOptions, getProjectOptions, getServers } from '@/app/actions/server/crudActions'
+import { useSession } from 'next-auth/react'
+import { getUserFavoriteServersWithDetails, addServerToUser, removeServerFromUser } from '@/app/actions/server/userServerActions'
 import type { ColumnsType } from 'antd/es/table'
 import type { TablePaginationConfig } from 'antd/es/table'
 import type { FilterValue, SorterResult } from 'antd/es/table/interface'
@@ -19,6 +21,8 @@ type ServerData = Awaited<ReturnType<typeof getServers>>['data'][number] & { key
 
 function ServerList() {
   const router = useRouter()
+  const { data: session } = useSession()
+  const queryClient = useQueryClient()
   // State for pagination, filters, and sorting
   const [pagination, setPagination] = useState<PaginationParams>({
     page: 1,
@@ -28,6 +32,7 @@ function ServerList() {
   // State for active filters
   const [filters, setFilters] = useState<ServerFilter>({})
   const [searchText, setSearchText] = useState('')
+  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false)
 
   // State for sorting
   const [sort, setSort] = useState<ServerSort>({
@@ -65,17 +70,72 @@ function ServerList() {
   const osOptions = filterQueries[2].data ?? []
   const locationOptions = filterQueries[3].data ?? []
 
+  // Query for favorite servers
+  const { data: favoriteServers = [] } = useQuery({
+    queryKey: ['favoriteServers'],
+    queryFn: getUserFavoriteServersWithDetails,
+    enabled: !!session, // Only run if user is logged in
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  })
+
+  // Create a set of favorite server IDs for faster lookup
+  const favoriteServerIds = new Set(favoriteServers.map(fav => fav.serverId))
+
+  // Add to favorites mutation
+  const { mutate: toggleFavorite } = useMutation({
+    mutationFn: async ({ serverId, action }: { serverId: number; action: 'add' | 'remove' }) => {
+      if (!session?.user?.id) throw new Error('User not authenticated');
+      
+      if (action === 'add') {
+        return await addServerToUser(serverId, session.user.id);
+      } else {
+        return await removeServerFromUser(serverId, session.user.id);
+      }
+    },
+    onSuccess: (_, variables) => {
+      // Show success message
+      if (variables.action === 'add') {
+        message.success('Added to favorites');
+      } else {
+        message.success('Removed from favorites');
+      }
+      
+      // Invalidate queries to refetch data
+      queryClient.invalidateQueries({ queryKey: ['favoriteServers'] });
+    },
+    onError: (error) => {
+      console.error('Error toggling favorite:', error);
+      message.error('Failed to update favorites');
+    },
+  });
+
+  // Handle favorite toggle
+  const handleFavoriteToggle = (e: React.MouseEvent, serverId: number) => {
+    e.stopPropagation(); // Prevent row click
+    
+    if (!session?.user?.id) return;
+    
+    const action = favoriteServerIds.has(serverId) ? 'remove' : 'add';
+    toggleFavorite({ serverId, action });
+  };
+
   // Query for server data
   const { data: serverData, isLoading, refetch } = useQuery({
-    queryKey: ['servers',],
+    queryKey: ['servers', currentFilters, sort, pagination, showFavoritesOnly],
     queryFn: () => getServers(currentFilters, sort, pagination),
     staleTime: 5 * 60 * 1000, // 5 minutes
     refetchInterval: 5 * 60 * 1000 // 5 minutes
   })
 
   // Process server data
-  const data = serverData?.data.map(server => ({ ...server, key: server.id })) ?? []
-  const total = serverData?.pagination.total ?? 0
+  let data = serverData?.data.map(server => ({ ...server, key: server.id })) ?? []
+  
+  // Filter by favorites if needed
+  if (showFavoritesOnly && session) {
+    data = data.filter(server => favoriteServerIds.has(server.id))
+  }
+  
+  const total = showFavoritesOnly ? data.length : (serverData?.pagination.total ?? 0)
   
   // Update pagination if needed
   if (serverData && (pagination.page !== serverData.pagination.current || 
@@ -165,6 +225,7 @@ function ServerList() {
   const handleClearFilters = () => {
     setFilters({})
     setSearchText('')
+    setShowFavoritesOnly(false)
     setPagination({
       page: 1,
       pageSize: 10,
@@ -173,6 +234,19 @@ function ServerList() {
 
   // Table columns configuration
   const columns: ColumnsType<ServerData> = [
+    {
+      title: 'Favorite',
+      key: 'favorite',
+      width: 70,
+      align: 'center',
+      render: (_, record: ServerData) => (
+        <div onClick={(e) => handleFavoriteToggle(e, record.id)} className="cursor-pointer hover:text-blue-500">
+          {favoriteServerIds.has(record.id) ? 
+            <HeartFilled style={{ color: '#FFD700', fontSize: '18px' }} /> : 
+            <HeartOutlined style={{ color: '#d9d9d9', fontSize: '18px' }} />}
+        </div>
+      ),
+    },
     {
       title: 'Hostname',
       dataIndex: 'hostname',
@@ -247,13 +321,6 @@ function ServerList() {
         </Space>
       ),
     },
-    {
-      title: 'Description',
-      dataIndex: 'description',
-      key: 'description',
-      responsive: ['xl' as Breakpoint],
-      ellipsis: true,
-    },
   ]
 
   return (
@@ -275,6 +342,18 @@ function ServerList() {
             <Button type="text" icon={<SearchOutlined />} onClick={handleSearch} />
           }
         />
+        
+        {session && (
+          <Checkbox
+            checked={showFavoritesOnly}
+            onChange={e => setShowFavoritesOnly(e.target.checked)}
+          >
+            <Space>
+              <HeartOutlined style={{ color: showFavoritesOnly ? '#ff4d4f' : undefined }} />
+              Favorites Only
+            </Space>
+          </Checkbox>
+        )}
 
         <Select
           placeholder="Business"
