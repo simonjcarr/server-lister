@@ -50,7 +50,7 @@ export async function updateCollection(id: number, collection: Partial<SelectCol
 }
 
 // Delete a collection
-export async function deleteCollection(id: number): Promise<{ success: boolean; message?: string }> {
+export async function deleteCollection(id: number): Promise<{ success: boolean; message?: string; id?: number }> {
   try {
     await db.delete(collections)
       .where(eq(collections.id, id));
@@ -58,7 +58,7 @@ export async function deleteCollection(id: number): Promise<{ success: boolean; 
     // More aggressive revalidation to ensure all paths are updated
     revalidatePath("/server/collections");
     revalidatePath("/server/collections/", "page");
-    return { success: true };
+    return { success: true, id };
   } catch (error) {
     console.error("Error deleting collection:", error);
     return { success: false, message: "Failed to delete collection" };
