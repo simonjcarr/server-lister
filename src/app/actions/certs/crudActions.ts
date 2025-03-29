@@ -144,12 +144,20 @@ export async function updateCertificate(cert: UpdateCert) {
       throw new Error("Certificate ID is required for update");
     }
     
+    console.log(`Certificates: Updating certificate ID ${certData.id} for domain ${cert.primaryDomain}`);
     const result = await db.update(certs).set(certData).where(eq(certs.id, certData.id)).returning();
-    await jobQueue.add('notification', 
-      { title: "Certificate Request Update", 
+    
+    if (result.length > 0 && result[0].requestedById) {
+      console.log(`Certificates: Adding notification job for user ${result[0].requestedById}`);
+      await jobQueue.add('notification', { 
+        title: "Certificate Request Update", 
         message: `Your certificate request for ${cert.primaryDomain} has been updated by ${session.user.name}.`, 
         userIds: [result[0].requestedById]
       });
+    } else {
+      console.log(`Certificates: Can't send notification, requestedById is missing or update failed`);
+    }
+    
     return result;
   } catch (error) {
     console.error("Error updating certificate:", error);

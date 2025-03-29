@@ -119,9 +119,10 @@ export default function NotificationList() {
                 onClick={() => handleMarkRead(notification.id)}
               >
                 <List.Item.Meta
-                  title={notification.title}
+                  title={<div>{notification.title}</div>}
                   description={
                     <div className="mt-1">
+                      <div className="text-xs text-ellipsis overflow-hidden">{notification.message}</div>
                       <DistanceToNow date={new Date(notification.createdAt)} />
                     </div>
                   }

@@ -22,14 +22,12 @@ export function SiteHeader() {
         <NavDrawerLeft />
       </div>
       <div className='flex gap-2'>
-
-      <Button
-        onClick={toggleTheme}
-        icon={isDarkMode ? <Moon size={16} /> : <Sun size={16} />}
-      />
-      {session?.user && <NotificationList />}
-      {session?.user ? <div><AuthMenu /></div> : <div><SignIn /></div>}
-      
+        <Button
+          onClick={toggleTheme}
+          icon={isDarkMode ? <Moon size={16} /> : <Sun size={16} />}
+        />
+        {session?.user && <NotificationList />}
+        {session?.user ? <div><AuthMenu /></div> : <div><SignIn /></div>}
       </div>
     </div>
   )

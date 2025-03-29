@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
+import { createContext, useContext, useState, useEffect, ReactNode, useRef } from 'react'
 import { Badge, notification, Button } from 'antd'
 import { BellOutlined } from '@ant-design/icons'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
@@ -35,6 +35,9 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   const { data: session } = useSession()
   const queryClient = useQueryClient()
   const [api, contextHolder] = notification.useNotification()
+  const eventSourceRef = useRef<EventSource | null>(null)
+  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const [sseConnected, setSseConnected] = useState(false)
 
   // Fetch notifications
   const { data: notifications = [] } = useQuery<UserNotification[]>({
@@ -42,12 +45,17 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     queryFn: async () => {
       if (!session?.user?.id) return []
       
-      const res = await fetch('/api/notifications')
-      if (!res.ok) throw new Error('Failed to fetch notifications')
-      return res.json()
+      try {
+        const res = await fetch('/api/notifications')
+        if (!res.ok) throw new Error('Failed to fetch notifications')
+        return res.json()
+      } catch (error) {
+        console.error('Error fetching notifications:', error)
+        return []
+      }
     },
     enabled: !!session?.user?.id,
-    refetchInterval: 30000, // Refresh every 30 seconds
+    // We're using SSE instead of polling
   })
 
   // Calculate unread count
@@ -87,45 +95,6 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  // Show notification toasts for new unread notifications
-  useEffect(() => {
-    if (notifications.length === 0) return
-
-    // Check for unread notifications
-    const unreadNotifications = notifications.filter(n => !n.read)
-    if (unreadNotifications.length === 0) return
-
-    // Only show the most recent unread notification as a toast
-    const latestNotification = unreadNotifications.reduce((latest, current) => {
-      return new Date(current.createdAt) > new Date(latest.createdAt) ? current : latest
-    }, unreadNotifications[0])
-
-    // Extract server ID from notification message if it's a chat notification
-    const serverIdMatch = latestNotification.message.match(/on\s+(\w+):/i)
-    const hostname = serverIdMatch?.[1]
-
-    api.open({
-      message: latestNotification.title,
-      description: (
-        <div>
-          {latestNotification.message}
-          {hostname && (
-            <div className="mt-2">
-              <Link href={`/servers?hostname=${hostname}`}>
-                <Button size="small" type="primary">View Server</Button>
-              </Link>
-            </div>
-          )}
-        </div>
-      ),
-      placement: 'topRight',
-      duration: 5,
-      onClick: () => {
-        markAsRead(latestNotification.id)
-      },
-    })
-  }, [notifications, api])
-
   // Delete multiple notifications
   const deleteNotifications = async (ids: number[]) => {
     try {
@@ -143,6 +112,125 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       console.error('Error deleting notifications:', error)
     }
   }
+
+  // Function to establish SSE connection
+  const connectToSSE = () => {
+    if (!session?.user?.id) return
+    
+    try {
+      console.log('SSE Client: Setting up SSE connection for user', session.user.id)
+      
+      // Close any existing connection
+      if (eventSourceRef.current) {
+        console.log('SSE Client: Closing existing connection')
+        eventSourceRef.current.close()
+        eventSourceRef.current = null
+      }
+      
+      // Clear any existing reconnect timeout
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current)
+        reconnectTimeoutRef.current = null
+      }
+      
+      // Add a timestamp to prevent caching issues
+      const timestamp = new Date().getTime()
+      const eventSource = new EventSource(`/api/sse/notifications?t=${timestamp}`)
+      eventSourceRef.current = eventSource
+      
+      // Handle connection open
+      eventSource.addEventListener('connected', (event) => {
+        console.log('SSE Client: Connection established successfully!')
+        setSseConnected(true)
+      })
+      
+      // Handle notification events
+      eventSource.addEventListener('notification', (event) => {
+        console.log('SSE Client: Received notification event data:', event.data)
+        
+        try {
+          // Parse the notification data
+          const newNotification = JSON.parse(event.data) as UserNotification
+          console.log('SSE Client: Parsed notification:', newNotification)
+          
+          // Invalidate the query to refresh the notifications list
+          queryClient.invalidateQueries({ queryKey: ['notifications', session.user.id] })
+          
+          // Extract server ID from notification message if it's a chat notification
+          const serverIdMatch = newNotification.message.match(/on\s+(\w+):/i)
+          const hostname = serverIdMatch?.[1]
+          
+          // Show a toast notification
+          api.open({
+            message: newNotification.title,
+            description: (
+              <div>
+                {newNotification.message}
+                {hostname && (
+                  <div className="mt-2">
+                    <Link href={`/servers?hostname=${hostname}`}>
+                      <Button size="small" type="primary">View Server</Button>
+                    </Link>
+                  </div>
+                )}
+              </div>
+            ),
+            placement: 'topRight',
+            duration: 5,
+            onClick: () => {
+              markAsRead(newNotification.id)
+            },
+          })
+        } catch (error) {
+          console.error('SSE Client: Error processing notification event:', error)
+        }
+      })
+      
+      // Handle connection error
+      eventSource.onerror = (error) => {
+        console.error('SSE Client: Connection error:', error)
+        setSseConnected(false)
+        
+        // Clean up the current connection
+        if (eventSourceRef.current) {
+          eventSourceRef.current.close()
+          eventSourceRef.current = null
+        }
+        
+        // Attempt to reconnect after a delay
+        if (!reconnectTimeoutRef.current) {
+          console.log('SSE Client: Scheduling reconnection attempt in 5 seconds...')
+          reconnectTimeoutRef.current = setTimeout(() => {
+            console.log('SSE Client: Attempting to reconnect...')
+            reconnectTimeoutRef.current = null
+            connectToSSE() // Try to reconnect
+          }, 5000)
+        }
+      }
+    } catch (error) {
+      console.error('SSE Client: Error setting up SSE connection:', error)
+      setSseConnected(false)
+    }
+  }
+  
+  // Set up SSE connection
+  useEffect(() => {
+    connectToSSE()
+    
+    // Clean up on unmount
+    return () => {
+      if (eventSourceRef.current) {
+        console.log('SSE Client: Cleaning up SSE connection on unmount')
+        eventSourceRef.current.close()
+        eventSourceRef.current = null
+      }
+      
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current)
+        reconnectTimeoutRef.current = null
+      }
+    }
+  }, [session?.user?.id]) // Re-connect if user ID changes
 
   return (
     <NotificationContext.Provider value={{ notifications, unreadCount, markAsRead, markAllAsRead, deleteNotifications }}>
