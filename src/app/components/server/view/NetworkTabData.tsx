@@ -1,7 +1,8 @@
 import React from 'react'
 import { useQuery } from "@tanstack/react-query"
 import { getServerById } from "@/app/actions/server/crudActions"
-import { Alert, Row, Spin, Col } from 'antd'
+import { Alert, Row, Spin, Col, Divider } from 'antd'
+import ServerBookingCode from './bookingCode/ServerBookingCode'
 
 const NetworkTabData = ({ serverId }: { serverId: number }) => {
   const { data, error, isLoading } = useQuery({
@@ -21,7 +22,7 @@ const NetworkTabData = ({ serverId }: { serverId: number }) => {
       {error && <Alert message="Error" description={error instanceof Error ? error.message : 'An error occurred'} type="error" />}
       {data && (
         <>
-          <div >
+          <div>
             <div className="text-lg font-bold">Network</div>
             {tableData.map((item) => (
               <Row key={item.key} className='border-b border-gray-700 py-2'>
@@ -29,6 +30,13 @@ const NetworkTabData = ({ serverId }: { serverId: number }) => {
                 <Col span={16}>{item.value}</Col>
               </Row>
             ))}
+          </div>
+          
+          <Divider />
+          
+          <div>
+            <div className="text-lg font-bold mb-2">Booking Code</div>
+            <ServerBookingCode serverId={serverId} />
           </div>
         </>
       )}
