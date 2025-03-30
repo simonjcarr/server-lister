@@ -7,7 +7,7 @@ if (!process.env.DATABASE_URL) {
 }
 
 export default {
-  schema: "./src/db/schema.ts", // Path to schema definitions
+  schema: "./src/db/schema/index.ts", // Path to schema definitions
   out: "./drizzle", // Output folder for migrations
   dialect: "postgresql",
   dbCredentials: {

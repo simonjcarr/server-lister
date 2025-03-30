@@ -1,15 +1,26 @@
 'use client'
-import React from 'react'
+import React, { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { getOSs, type OSWithPatchVersion } from '@/app/actions/os/crudActions'
-import { Button, Card, Table } from 'antd'
+import { Button, Card, Table, Tabs } from 'antd'
 import FormEditOS from '../components/os/FormEditOS'
-import { CalendarOutlined } from '@ant-design/icons'
+import FormAddOS from '../components/os/FormAddOS'
+import ListOSFamily from '../components/os/ListOSFamily'
+import { CalendarOutlined, PlusOutlined } from '@ant-design/icons'
+import type { TabsProps } from 'antd'
+const { TabPane } = Tabs;
+
+type TabKey = 'os' | 'osFamily';
+
 const Page = () => {
+  const [activeTab, setActiveTab] = useState<TabKey>('os');
+
   const { data, isLoading, error } = useQuery<OSWithPatchVersion[]>({
     queryKey: ['oss'],
     queryFn: () => getOSs(),
   });
+
+  // Define columns for the OS table
   const columns = [
     {
       title: 'Name',
@@ -21,6 +32,15 @@ const Page = () => {
       title: 'Version',
       dataIndex: 'version',
       key: 'version',
+    },
+    {
+      title: 'OS Family',
+      dataIndex: 'familyName',
+      key: 'familyName',
+      render: (text: string | null) => text || 'Not Assigned',
+      filters: Array.from(new Set(data?.map(os => os.familyName).filter(Boolean) || []))
+        .map(family => ({ text: family, value: family })),
+      onFilter: (value: string, record: OSWithPatchVersion) => record.familyName === value,
     },
     {
       title: (<div className='flex items-center gap-2'><CalendarOutlined /> EOL Date</div>),
@@ -44,10 +64,12 @@ const Page = () => {
         </FormEditOS>
       ),
     }
-  ]
-  return (
-    <div>
-      <Card title="OS List">
+  ];
+
+  // OS table rendering function
+  const renderOSTable = () => {
+    return (
+      <>
         {isLoading && <p>Loading...</p>}
         {error && <p>Error: {error.message}</p>}
         {data && (
@@ -57,6 +79,41 @@ const Page = () => {
             rowKey="id" 
           />
         )}
+      </>
+    );
+  };
+
+  // Define tabs items
+  const tabItems: TabsProps['items'] = [
+    {
+      key: 'os',
+      label: 'Operating Systems',
+      children: renderOSTable(),
+    },
+    {
+      key: 'osFamily',
+      label: 'OS Families',
+      children: <ListOSFamily />,
+    },
+  ];
+  return (
+    <div>
+      <Card 
+        title="Operating System Management"
+        extra={
+          activeTab === 'os' ? (
+            <FormAddOS>
+              <Button type="primary" icon={<PlusOutlined />}>Add OS</Button>
+            </FormAddOS>
+          ) : null
+        }
+      >
+        <Tabs 
+          activeKey={activeTab} 
+          onChange={(key) => setActiveTab(key as TabKey)}
+          className="mb-4"
+          items={tabItems}
+        />
       </Card>
     </div>
   )

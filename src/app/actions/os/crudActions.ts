@@ -1,13 +1,14 @@
 "use server";
 
 import { db } from "@/db";
-import { os, osPatchVersions } from "@/db/schema";
+import { os, osPatchVersions, osFamily } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
 import type { InsertOS, UpdateOS, SelectOS } from "@/db/schema";
 
 // Define a type for the result of getOSs
 export type OSWithPatchVersion = Omit<SelectOS, 'version' | 'description'> & {
   latestPatchVersion: string | null;
+  familyName?: string | null;
 };
 
 export async function getOS() {
@@ -76,12 +77,17 @@ export async function getOSById(id: number) {
 
 export async function getOSs(): Promise<OSWithPatchVersion[]> {
   try {
-    
-    
     // Get all OS records
     const osRecords = await db.select().from(os);
     
-    // For each OS, find the latest patch version
+    // Get all families for lookup
+    const families = await db.select().from(osFamily);
+    const familyMap = families.reduce((acc, family) => {
+      acc[family.id] = family.name;
+      return acc;
+    }, {} as Record<number, string>);
+    
+    // For each OS, find the latest patch version and family name
     const results = await Promise.all(
       osRecords.map(async (osRecord) => {
         // Find the latest patch version for this OS
@@ -98,7 +104,8 @@ export async function getOSs(): Promise<OSWithPatchVersion[]> {
           ...osRecord,
           latestPatchVersion: patchVersions.length > 0 
             ? patchVersions[0].patchVersion 
-            : "No patch version"
+            : "No patch version",
+          familyName: osRecord.osFamilyId ? familyMap[osRecord.osFamilyId] : null
         };
       })
     );

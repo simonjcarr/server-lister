@@ -3,6 +3,7 @@
 export * from './users';
 export * from './drawings';
 export * from './locations';
+export * from './osFamily';
 export * from './os';
 export * from './projects';
 export * from './servers';

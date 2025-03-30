@@ -1,4 +1,6 @@
 import { pgTable, text, timestamp, serial, uniqueIndex, index, integer } from "drizzle-orm/pg-core";
+import { relations } from "drizzle-orm";
+import { osFamily } from "./osFamily";
 import { createInsertSchema, createSelectSchema, createUpdateSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -10,6 +12,7 @@ export const os = pgTable(
     version: text("version").notNull(),
     EOLDate: timestamp("eol_date", { withTimezone: true }).notNull(),
     description: text("description"),
+    osFamilyId: integer("os_family_id").references(() => osFamily.id),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
   },
@@ -44,3 +47,11 @@ export const updateOSPatchVersionSchema = createUpdateSchema(osPatchVersions);
 export type InsertOSPatchVersion = z.infer<typeof insertOSPatchVersionSchema>;
 export type SelectOSPatchVersion = z.infer<typeof selectOSPatchVersionSchema>;
 export type UpdateOSPatchVersion = z.infer<typeof updateOSPatchVersionSchema>;
+
+// Define OS relations
+export const osRelations = relations(os, ({ one }) => ({
+  family: one(osFamily, {
+    fields: [os.osFamilyId],
+    references: [osFamily.id],
+  }),
+}));

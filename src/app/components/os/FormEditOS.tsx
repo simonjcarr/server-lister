@@ -1,10 +1,11 @@
 'use client'
 import React, { useState } from 'react';
-import { Card, Form, Input, Button, notification, Typography, Drawer, Spin, } from 'antd'; // Added Divider
+import { Card, Form, Input, Button, notification, Typography, Drawer, Spin, Select } from 'antd'; // Added Select
 const { TextArea } = Input;
 const { Text } = Typography;
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { getOSById, updateOS } from '@/app/actions/os/crudActions';
+import { getOSFamilies } from '@/app/actions/os/osFamilyActions';
 import { UpdateOS, SelectOS } from '@/db/schema'; // Added SelectOS
 import ManageOSPatchVersions from './ManageOSPatchVersions'; // Import the new component
 
@@ -23,6 +24,13 @@ const FormEditOS = ({ children, id }: { children: React.ReactNode, id: number })
     staleTime: 0, // Always consider data stale
     refetchOnWindowFocus: false, // Don't refetch on window focus
     gcTime: 0, // Disable garbage collection (equivalent to old cacheTime),
+  });
+
+  // Fetch OS Families for dropdown
+  const { data: osFamilies = [] } = useQuery({
+    queryKey: ['osFamilies'],
+    queryFn: getOSFamilies,
+    enabled: open, // Only fetch when drawer is open
   });
 
   // Update OS mutation
@@ -141,6 +149,22 @@ const FormEditOS = ({ children, id }: { children: React.ReactNode, id: number })
               className="dark:text-white"
             >
               <Input className="dark:bg-gray-700 dark:text-white dark:border-gray-600" />
+            </Form.Item>
+
+            <Form.Item
+              name="osFamilyId"
+              label="OS Family"
+              className="dark:text-white"
+            >
+              <Select
+                className="dark:bg-gray-700 dark:text-white dark:border-gray-600"
+                placeholder="Select OS Family"
+                allowClear
+                options={osFamilies.map(family => ({
+                  label: family.name,
+                  value: family.id
+                }))}
+              />
             </Form.Item>
 
             <Form.Item
