@@ -1,8 +1,7 @@
 import React from 'react'
 import { useQuery } from "@tanstack/react-query"
 import { getServerById } from "@/app/actions/server/crudActions"
-import { Alert, Row, Spin, Col, Divider } from 'antd'
-import ServerBookingCode from './bookingCode/ServerBookingCode'
+import { Alert, Row, Spin, Col } from 'antd'
 
 const NetworkTabData = ({ serverId }: { serverId: number }) => {
   const { data, error, isLoading } = useQuery({
@@ -30,13 +29,6 @@ const NetworkTabData = ({ serverId }: { serverId: number }) => {
                 <Col span={16}>{item.value}</Col>
               </Row>
             ))}
-          </div>
-          
-          <Divider />
-          
-          <div>
-            <div className="text-lg font-bold mb-2">Booking Code</div>
-            <ServerBookingCode serverId={serverId} />
           </div>
         </>
       )}

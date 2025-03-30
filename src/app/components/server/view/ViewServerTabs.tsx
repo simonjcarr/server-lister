@@ -12,6 +12,7 @@ import ServerUsers from "./users/ServerUsers"
 import ServerOS from "./os/ServerOS"
 import ServerDrawings from "./drawings/ServerDrawings"
 import ServerOnboardingStatus from "./ServerOnboardingStatus"
+import ProjectTabData from "./project/ProjectTabData"
 
 const ViewServerTabs = ({ serverId }: { serverId: number }) => {
   const { data, error, isLoading } = useQuery({
@@ -24,6 +25,7 @@ const ViewServerTabs = ({ serverId }: { serverId: number }) => {
   const items = [
     { key: 'hardware', label: 'Hardware', children: <HardwareTabData serverId={serverId} /> },
     { key: 'network', label: 'Network', children: <NetworkTabData serverId={serverId} /> },
+    { key: 'project', label: 'Project', children: <ProjectTabData serverId={serverId} /> },
     { key: 'certs', label: 'Certificates', children: <CertificateTabData serverId={serverId} /> },
     { key: 'storage', label: 'Storage', children: <ServerStorage serverId={serverId} /> },
     { key: 'os', label: 'OS', children: <ServerOS serverId={serverId} /> },
