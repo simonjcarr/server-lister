@@ -5,6 +5,7 @@ import { getProjectActiveBookingCode } from '@/app/actions/bookingCodes/crudActi
 import dayjs from 'dayjs';
 import AssignBookingCodeToProject from './AssignBookingCodeToProject';
 import { LinkOutlined } from '@ant-design/icons';
+import ClickToCopy from '../utils/ClickToCopy';
 
 const { Title, Text } = Typography;
 
@@ -67,7 +68,7 @@ const ProjectBookingCodeDisplay: React.FC<ProjectBookingCodeDisplayProps> = ({ p
     >
       <div className="flex flex-col">
         <div className="flex items-center mb-2">
-          <Title level={4} className="m-0 mr-2">{bookingCode.code}</Title>
+          <Title level={4} className="m-0 mr-2"><ClickToCopy text={bookingCode.code} /></Title>
           {isExpired ? (
             <Tag color="red">Expired</Tag>
           ) : bookingCode.enabled ? (
