@@ -47,10 +47,14 @@ const FormEditOS = ({ children, id }: { children: React.ReactNode, id: number })
       // Force refetch all related queries
       console.log('Mutation successful - refetching queries');
       
-      // Then refetch
+      // Then refetch OS queries
       queryClient.refetchQueries({ queryKey: ['oss'] });
       queryClient.refetchQueries({ queryKey: ['os', id] });
       queryClient.refetchQueries({ queryKey: ['os'] });
+      
+      // Also invalidate OS Family queries to update counts
+      queryClient.invalidateQueries({ queryKey: ['osFamilyWithCount'] });
+      queryClient.invalidateQueries({ queryKey: ['osFamilies'] });
       setOpen(false);
     },
     onError: (error) => {

@@ -1,12 +1,12 @@
 'use client'
 import React, { useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
-import { getOSs, type OSWithPatchVersion } from '@/app/actions/os/crudActions'
-import { Button, Card, Table, Tabs } from 'antd'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { getOSs, deleteOS, type OSWithPatchVersion } from '@/app/actions/os/crudActions'
+import { Button, Card, Table, Tabs, Popconfirm, notification } from 'antd'
 import FormEditOS from '../components/os/FormEditOS'
 import FormAddOS from '../components/os/FormAddOS'
 import ListOSFamily from '../components/os/ListOSFamily'
-import { CalendarOutlined, PlusOutlined } from '@ant-design/icons'
+import { CalendarOutlined, PlusOutlined, DeleteOutlined, EditOutlined } from '@ant-design/icons'
 import type { TabsProps } from 'antd'
 const { TabPane } = Tabs;
 
@@ -14,11 +14,52 @@ type TabKey = 'os' | 'osFamily';
 
 const Page = () => {
   const [activeTab, setActiveTab] = useState<TabKey>('os');
+  const [messageApi, contextHolder] = notification.useNotification();
+  const queryClient = useQueryClient();
 
-  const { data, isLoading, error } = useQuery<OSWithPatchVersion[]>({
+  const { data, isLoading, error, refetch } = useQuery<OSWithPatchVersion[]>({
     queryKey: ['oss'],
     queryFn: () => getOSs(),
   });
+
+  // Handle OS deletion
+  const handleDeleteOS = async (id: number) => {
+    try {
+      const result = await deleteOS(id);
+      
+      if (result.success) {
+        messageApi.success({
+          message: "Deleted",
+          description: "OS has been deleted successfully",
+          duration: 3,
+        });
+        
+        // Refresh OS data
+        refetch();
+        
+        // Invalidate all related queries
+        queryClient.invalidateQueries({ queryKey: ['oss'] });
+        queryClient.invalidateQueries({ queryKey: ['os'] });
+        
+        // Also invalidate OS Family queries to update counts
+        queryClient.invalidateQueries({ queryKey: ['osFamilyWithCount'] });
+        queryClient.invalidateQueries({ queryKey: ['osFamilies'] });
+      } else {
+        messageApi.error({
+          message: "Failed",
+          description: "Failed to delete OS",
+          duration: 3,
+        });
+      }
+    } catch (error) {
+      console.error("Error deleting OS:", error);
+      messageApi.error({
+        message: "Failed",
+        description: "An unexpected error occurred while deleting the OS",
+        duration: 3,
+      });
+    }
+  };
 
   // Define columns for the OS table
   const columns = [
@@ -59,9 +100,26 @@ const Page = () => {
       dataIndex: 'id',
       key: 'id',
       render: (text: string, record: OSWithPatchVersion) => (
-        <FormEditOS id={record.id}>
-          <Button type="link">Edit</Button>
-        </FormEditOS>
+        <div className="flex space-x-2">
+          <FormEditOS id={record.id}>
+            <Button icon={<EditOutlined />} type="link" />
+          </FormEditOS>
+          
+          <Popconfirm
+            title="Delete Operating System"
+            description={`Are you sure you want to delete ${record.name}?`}
+            onConfirm={() => handleDeleteOS(record.id)}
+            okText="Yes"
+            cancelText="No"
+          >
+            <Button 
+              icon={<DeleteOutlined />} 
+              type="link" 
+              danger
+              title="Delete OS"
+            />
+          </Popconfirm>
+        </div>
       ),
     }
   ];
@@ -98,6 +156,7 @@ const Page = () => {
   ];
   return (
     <div>
+      {contextHolder}
       <Card 
         title="Operating System Management"
         extra={

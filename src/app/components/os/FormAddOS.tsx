@@ -2,12 +2,11 @@
 import { addOS } from '@/app/actions/os/crudActions';
 import { getOSFamilies } from '@/app/actions/os/osFamilyActions';
 import { InsertOS, InsertOSFamily } from '@/db/schema';
-import { Card, Form, Input, Button, notification, Typography, Drawer, Select, Tabs } from 'antd'
+import { Card, Form, Input, Button, notification, Drawer, Select, Tabs } from 'antd'
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { addOSFamily } from '@/app/actions/os/osFamilyActions';
 const { TextArea } = Input;
-const { Text } = Typography;
 
 const { TabPane } = Tabs;
 type TabKey = 'os' | 'osFamily';
@@ -32,9 +31,6 @@ function FormAddOS({children, initialTab = 'os'}: {children: React.ReactNode, in
     try {
       setLoading(true);
       
-      // Format the values to handle the OS family ID properly
-      console.log("Original form values:", values);
-      
       // Submit to server action
       const result = await addOS(values);
 
@@ -48,6 +44,10 @@ function FormAddOS({children, initialTab = 'os'}: {children: React.ReactNode, in
         
         // Invalidate OS queries to refresh OS lists
         queryClient.invalidateQueries({ queryKey: ['oss'] });
+        
+        // Also invalidate OS Family queries to update counts
+        queryClient.invalidateQueries({ queryKey: ['osFamilyWithCount'] });
+        queryClient.invalidateQueries({ queryKey: ['osFamilies'] });
       } else {
         messageApi.error({
           message: "Failed",
