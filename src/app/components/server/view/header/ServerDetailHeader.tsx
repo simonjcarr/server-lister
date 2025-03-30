@@ -43,33 +43,35 @@ const ServerDetailHeader: React.FC<ServerDetailHeaderProps> = ({ serverId }) => 
 
   return (
     <div className="w-full">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <Text strong className="text-lg text-white">Server Details</Text>
-        
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-x-8 gap-y-3 w-full md:w-auto">
-          <ServerInfoItem 
-            label="Hostname" 
-            value={serverData.hostname} 
-          />
+      <div className="flex flex-row items-center justify-between gap-4">
+        <div className="flex flex-col w-full max-w-4xl">
+          <Text strong className="text-lg text-white mb-3">Server Details</Text>
           
-          <ServerInfoItem 
-            label="IPV4" 
-            value={serverData.ipv4} 
-          />
-          
-          <ServerInfoItem 
-            label="IPV6" 
-            value={serverData.ipv6} 
-          />
-          
-          {bookingCodeData && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-3">
             <ServerInfoItem 
-              label="Booking Code" 
-              value={bookingCodeData.code}
-              tooltip={`${bookingCodeData.groupName} (${bookingCodeData.isExpired ? 'Expired' : 'Active'})`}
-              tag={bookingCodeData.isExpired ? { color: "error", text: "Expired" } : undefined}
+              label="Hostname" 
+              value={serverData.hostname} 
             />
-          )}
+            
+            <ServerInfoItem 
+              label="IPV4" 
+              value={serverData.ipv4} 
+            />
+            
+            <ServerInfoItem 
+              label="IPV6" 
+              value={serverData.ipv6} 
+            />
+            
+            {bookingCodeData && (
+              <ServerInfoItem 
+                label="Booking Code" 
+                value={bookingCodeData.code}
+                tooltip={`${bookingCodeData.groupName} (${bookingCodeData.isExpired ? 'Expired' : 'Active'})`}
+                tag={bookingCodeData.isExpired ? { color: "error", text: "Expired" } : undefined}
+              />
+            )}
+          </div>
         </div>
       </div>
     </div>
@@ -117,9 +119,9 @@ const ServerInfoItem: React.FC<ServerInfoItemProps> = ({
     <div className="flex flex-col items-start w-full">
       {contextHolder}
       <Text type="secondary" className="mb-1 text-xs text-white">{label}</Text>
-      <div className="flex items-center w-full">
+      <div className="flex items-center w-full max-w-full">
         <Tooltip title={value}>
-          <Text className="truncate text-sm text-white">
+          <Text className="truncate text-sm text-white" style={{ maxWidth: 'calc(100% - 30px)' }}>
             {displayValue}
           </Text>
         </Tooltip>
