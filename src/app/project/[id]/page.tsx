@@ -2,6 +2,7 @@
 // import React, { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import ViewProject from '@/app/components/project/ViewProject';
+import { App } from 'antd';
 
 // Dynamically import the NetworkGraph with no SSR to avoid DOM conflicts
 
@@ -19,10 +20,11 @@ const ProjectPage = () => {
   // }, [pathname])
   
   return (
-    <div className="project-page" >
-        {/* <DrawIOEmbed onSave={() => {}} onLoad={() => {}} initialDiagramXml="" /> */}
+    <div className="project-page">
+      {/* <DrawIOEmbed onSave={() => {}} onLoad={() => {}} initialDiagramXml="" /> */}
+      <App>
         <ViewProject projectId={Number(id)} />
-      
+      </App>
     </div>
   )
 }
