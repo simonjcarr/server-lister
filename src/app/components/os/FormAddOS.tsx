@@ -31,6 +31,10 @@ function FormAddOS({children, initialTab = 'os'}: {children: React.ReactNode, in
   async function onFinishOS(values: InsertOS) {
     try {
       setLoading(true);
+      
+      // Format the values to handle the OS family ID properly
+      console.log("Original form values:", values);
+      
       // Submit to server action
       const result = await addOS(values);
 

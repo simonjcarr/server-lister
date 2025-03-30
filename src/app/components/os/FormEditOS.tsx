@@ -67,11 +67,19 @@ const FormEditOS = ({ children, id }: { children: React.ReactNode, id: number })
   const onFinish = async (values: UpdateOS) => {
     try {
       setLoading(true);
-      console.log("values", values)
-      updateOSMutation({
+      console.log("Submitted form values:", values);
+      
+      // Handle osFamilyId - make sure null is properly passed if nothing is selected
+      const formattedValues = {
         ...values,
+        // Ensure osFamilyId is properly formatted (null if empty)
+        osFamilyId: values.osFamilyId !== undefined ? values.osFamilyId : null,
         EOLDate: values.EOLDate ? new Date(values.EOLDate) : undefined,
-      });
+      };
+      
+      console.log("Formatted values for update:", formattedValues);
+      
+      updateOSMutation(formattedValues);
     } catch (error) {
       console.error("Error updating OS:", error);
       messageApi.error({

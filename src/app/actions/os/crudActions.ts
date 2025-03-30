@@ -13,7 +13,12 @@ export type OSWithPatchVersion = Omit<SelectOS, 'version' | 'description'> & {
 
 export async function getOS() {
   try {
+    // Debug log the schema
+    console.log("OS Table Schema:", os);
+    
     const osResult = await db.select().from(os);
+    // Debug log to check if any OS has osFamilyId set
+    console.log("OS Records with their family IDs:", osResult.map(o => ({ id: o.id, name: o.name, osFamilyId: o.osFamilyId })));
     return osResult;
   } catch (error) {
     console.error("Error getting OS:", error);
@@ -23,12 +28,21 @@ export async function getOS() {
 
 export async function addOS(data: InsertOS) {
   try {
-    await db.insert(os).values({
+    console.log("Adding OS with data:", data);
+    
+    // Create the insert data, handling the case where osFamilyId might be null, undefined, or empty string
+    const insertData = {
       ...data,
+      // Handle null, undefined, or empty string for osFamilyId
+      osFamilyId: data.osFamilyId || null,
       EOLDate: new Date(data.EOLDate),
       createdAt: new Date(),
       updatedAt: new Date(),
-    });
+    };
+    
+    console.log("Final insert data:", insertData);
+    
+    await db.insert(os).values(insertData);
     return { success: true };
   } catch (error) {
     console.error("Error adding OS:", error);
@@ -38,12 +52,20 @@ export async function addOS(data: InsertOS) {
 
 export async function updateOS(id: number, data: UpdateOS) {
   try {
+    console.log(`Updating OS ${id} with data:`, data);
+    
+    // Handle the case where osFamilyId might be null or undefined
+    const updateData = {
+      ...data,
+      updatedAt: new Date(),
+    };
+    
+    // Log the final update data
+    console.log(`Final update data for OS ${id}:`, updateData);
+    
     await db
       .update(os)
-      .set({
-        ...data,
-        updatedAt: new Date(),
-      })
+      .set(updateData)
       .where(eq(os.id, id));
     return { success: true };
   } catch (error) {
