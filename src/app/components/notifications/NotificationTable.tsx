@@ -74,7 +74,6 @@ const RowMenu = ({ notificationId }: { notificationId: number }) => {
       return await markNotificationAsRead(notificationId)
     },
     onSuccess: () => {
-      console.log("mark as read")
       queryClient.invalidateQueries({ queryKey: ['notifications'] })
     }
   })
@@ -84,7 +83,6 @@ const RowMenu = ({ notificationId }: { notificationId: number }) => {
       return await markNotificationAsUnread(notificationId)
     },
     onSuccess: () => {
-      console.log("mark as unread")
       queryClient.invalidateQueries({ queryKey: ['notifications'] })
     }
   })
@@ -109,7 +107,6 @@ const RowMenu = ({ notificationId }: { notificationId: number }) => {
       key: '2',
       label: 'Mark as unread',
       onClick: () => {
-        console.log("notificationId", notificationId)
         markAsUnreadMutation.mutate()
       }
     },

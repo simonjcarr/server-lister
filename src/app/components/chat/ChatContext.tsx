@@ -134,17 +134,13 @@ export function ChatProvider({ children, chatRoomId, initialCategories }: ChatPr
     const messageExists = messages.some((m) => m.id === message.id);
     
     if (messageExists) {
-      console.log(`Message ${message.id} already exists, skipping`);
       return; // Skip if we already have this message
     }
     
     // This function should ONLY add messages that match the currently selected category
     if (message.categoryId === selectedCategoryId) {
-      console.log(`Adding message ${message.id} to category ${selectedCategoryId}`);
       setMessages((prev) => [message, ...prev]);
       lastEventIdRef.current = Math.max(lastEventIdRef.current || 0, message.id);
-    } else {
-      console.warn(`Message ${message.id} doesn't match current category ${selectedCategoryId}, ignoring`);
     }
   };
 
@@ -198,7 +194,6 @@ export function ChatProvider({ children, chatRoomId, initialCategories }: ChatPr
       eventSource.addEventListener('message', (event) => {
         try {
           const data = JSON.parse(event.data);
-          console.log('Message received from SSE:', data, 'Current category:', selectedCategoryIdRef.current);
           
           // IMPORTANT: Use the ref to get the current category ID
           const currentCategoryId = selectedCategoryIdRef.current;

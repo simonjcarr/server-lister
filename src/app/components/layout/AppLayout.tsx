@@ -4,7 +4,6 @@ import { Layout as AntdLayout } from 'antd';
 import { ReactNode, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import NavDrawerLeft from '../site/navDrawer/NavDrawerLeft';
 
 type AppLayoutProps = {
   children: ReactNode;
@@ -12,14 +11,13 @@ type AppLayoutProps = {
 };
 
 export function AppLayout({ children, header }: AppLayoutProps) {
-  const { data: session, status } = useSession();
+  const { status } = useSession();
   const router = useRouter();
 
   useEffect(() => {
     // If the user is not authenticated and the session status is known (not 'loading'),
     // redirect to the sign-in page
     if (status === 'unauthenticated') {
-      console.log('User not authenticated, redirecting to login');
       router.push('/api/auth/signin');
     }
   }, [status, router]);

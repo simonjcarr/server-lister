@@ -14,10 +14,6 @@ export async function POST(request: Request) {
   //Add job to the queue
   await jobQueue.add('serverScan', jsonRequest);
   
-  // Debug
-  // console.log("JSON Body:", jsonRequest);
-  // console.log("Auth Token:", authToken);
-  
   // Return success
   return new Response(JSON.stringify({ message: 'Success' }), { status: 200 });
 }

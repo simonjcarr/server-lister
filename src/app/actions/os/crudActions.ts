@@ -61,14 +61,12 @@ export async function deleteOS(id: number) {
   }
 }
 
-export async function getOSById(id: number, _timestamp?: number) {
+export async function getOSById(id: number) {
   try {
-    console.log(`Fetching OS with ID: ${id} at ${_timestamp || 'no timestamp'}`);
     const osData = await db.select().from(os).where(eq(os.id, id)).limit(1);
     if (osData.length === 0) {
       throw new Error("OS not found");
     }
-    console.log(`Found OS data:`, JSON.stringify(osData[0], null, 2));
     return osData[0];
   } catch (error) {
     console.error("Error getting OS by ID:", error);
@@ -78,19 +76,10 @@ export async function getOSById(id: number, _timestamp?: number) {
 
 export async function getOSs(): Promise<OSWithPatchVersion[]> {
   try {
-    // Debug query to directly check for patch versions
-    const debugPatchVersions = await db
-      .select({
-        osId: osPatchVersions.osId,
-        patchVersion: osPatchVersions.patchVersion,
-      })
-      .from(osPatchVersions);
     
-    console.log("Debug - All patch versions:", JSON.stringify(debugPatchVersions, null, 2));
     
     // Get all OS records
     const osRecords = await db.select().from(os);
-    console.log("OS records:", JSON.stringify(osRecords, null, 2));
     
     // For each OS, find the latest patch version
     const results = await Promise.all(
@@ -114,7 +103,6 @@ export async function getOSs(): Promise<OSWithPatchVersion[]> {
       })
     );
     
-    console.log("Final results:", JSON.stringify(results, null, 2));
     return results as OSWithPatchVersion[];
   } catch (error) {
     console.error("Error getting OSs:", error);

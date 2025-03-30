@@ -68,8 +68,6 @@ export async function deleteCollection(id: number): Promise<{ success: boolean; 
 // Get all available servers that are not in a specific collection
 export async function getServersNotInCollection(collectionId: number) {
   try {
-    console.log('Fetching servers not in collection:', collectionId);
-    
     // Use the simple, effective approach - get all servers that are not in the collection
     // Get all servers first
     const allServers = await db
@@ -81,8 +79,6 @@ export async function getServersNotInCollection(collectionId: number) {
       })
       .from(servers);
     
-    console.log('Total servers in database:', allServers.length);
-    
     // Get servers that are in the collection
     const serversInCollection = await db
       .select({
@@ -90,8 +86,6 @@ export async function getServersNotInCollection(collectionId: number) {
       })
       .from(servers_collections)
       .where(eq(servers_collections.collectionId, collectionId));
-    
-    console.log('Servers in collection:', serversInCollection.length);
     
     // Create a set for O(1) lookups
     const serverIdsInCollection = new Set(
@@ -102,9 +96,6 @@ export async function getServersNotInCollection(collectionId: number) {
     const availableServers = allServers.filter(
       (server) => !serverIdsInCollection.has(server.id)
     );
-    
-    console.log('Available servers not in collection:', availableServers.length);
-    console.log('Available server IDs:', availableServers.map(s => s.id));
     
     return availableServers;
   } catch (error) {
@@ -119,8 +110,6 @@ export async function addServersToCollection(
   collectionId: number
 ): Promise<{ success: boolean; message?: string; addedServerIds?: number[] }> {
   try {
-    console.log(`Adding ${serverIds.length} servers to collection ${collectionId}:`, serverIds);
-    
     // Create values array for bulk insert
     const values = serverIds.map((serverId) => ({
       serverId,
@@ -131,9 +120,6 @@ export async function addServersToCollection(
     
     if (values.length > 0) {
       await db.insert(servers_collections).values(values);
-      console.log(`Successfully added servers to collection ${collectionId}`);
-    } else {
-      console.log(`No servers to add to collection ${collectionId}`);
     }
     
     // More aggressive revalidation to ensure all paths are updated

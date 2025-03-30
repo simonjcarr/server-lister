@@ -81,7 +81,6 @@ export async function getRawPatchStatus(): Promise<PatchStatus[]> {
     // Cast the result rows to your defined type.
     const data = result.rows as PatchStatus[];
 
-    console.log(data);
     return data;
   } catch (error) {
     console.error("Error executing raw SQL query:", error);

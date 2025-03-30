@@ -10,7 +10,6 @@ export async function insertScan(data: ScanResults) {
   try {
     let server = await db.select().from(servers).where(eq(servers.hostname, data.host.hostname))
     if (!server || server.length === 0) {
-      console.log("server not found: creating new server", typeof data.host.memoryGB, +data.host.memoryGB, data.host.cores)
       server = await db.insert(servers).values({
         hostname: data.host.hostname,
         description: 'Auto created by Server Scan',

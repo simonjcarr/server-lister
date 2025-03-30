@@ -60,7 +60,6 @@ export async function addServerNote(
 ) {
   try {
     const session = await auth();
-    console.log(session)
     const userId = session?.user.id;
     if (!userId) {
       throw new Error("Unauthorized");

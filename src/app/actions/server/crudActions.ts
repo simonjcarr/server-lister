@@ -7,7 +7,6 @@ import { SQLWrapper } from "drizzle-orm/sql";
 
 export async function addServer(data: InsertServer) {
   try {
-    console.log(data)
     await db.insert(servers).values({
       ...data,
       // Convert empty strings to null for ipv4 and ipv6
@@ -164,7 +163,6 @@ export async function getServers(
       
       // Default
       default: 
-        console.log('Unknown sort field, defaulting to hostname:', sort.field);
         sortColumn = servers.hostname; 
         break;
     }

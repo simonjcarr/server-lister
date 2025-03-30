@@ -15,12 +15,8 @@ export async function middleware(req: NextRequest) {
         secret: process.env.AUTH_SECRET,
       });
 
-      console.log('Middleware processing admin route:', path);
-      console.log('Token received:', token ? 'Token present' : 'No token');
-
       // Not authenticated - redirect to login
       if (!token) {
-        console.log('Redirecting to login - no authentication token');
         const loginUrl = new URL('/api/auth/signin', req.url);
         loginUrl.searchParams.set('callbackUrl', req.url);
         return NextResponse.redirect(loginUrl);
@@ -28,21 +24,16 @@ export async function middleware(req: NextRequest) {
 
       // Check for roles property
       if (!token.roles) {
-        console.log('Token missing roles property:', token);
         return NextResponse.redirect(new URL('/', req.url));
       }
 
       // Force cast to array
       const roles = Array.isArray(token.roles) ? token.roles : [token.roles];
-      console.log('User roles from token:', roles);
 
       // Check admin role
       if (!roles.includes('admin')) {
-        console.log('Access denied - user lacks admin role');
         return NextResponse.redirect(new URL('/', req.url));
       }
-
-      console.log('Access granted - user has admin role');
     } catch (error) {
       console.error('Middleware error:', error);
       return NextResponse.redirect(new URL('/', req.url));

@@ -50,35 +50,27 @@ function DrawIOEmbed({ drawingId, onSave, onLoad, onExport }: DrawIOEmbedProps) 
 
   // Setup communication with Draw.io
   useEffect(() => {
-    console.log('Setting up Draw.io communication, drawingId:', drawingId);
-    
     const messageHandler = (event: MessageEvent) => {
       if (typeof event.data === 'string') {
         try {
           // Handle ready message from the iframe
           if (event.data === 'ready') {
-            console.log('Draw.io iframe is ready - sending init message');
             postMessage({ action: 'init' });
           } else if (event.data.startsWith('{')) {
             const msg = JSON.parse(event.data);
             
             // Handle init event - draw.io is initialized and ready to receive commands
             if (msg.event === 'init') {
-              console.log('Draw.io editor initialized, ready to load XML');
               
               // Get XML data to load
               let xmlToLoad = null;
               
               if (onLoad) {
-                console.log('Getting XML from onLoad callback');
                 xmlToLoad = onLoad();
               }
               
-              console.log('XML available:', !!xmlToLoad, 'length:', xmlToLoad?.length || 0);
-              
               // Load diagram if we have XML
               if (xmlToLoad && xmlToLoad.length > 0) {
-                console.log('Loading XML into the editor');
                 postMessage({
                   action: 'load',
                   xml: xmlToLoad,
@@ -89,14 +81,12 @@ function DrawIOEmbed({ drawingId, onSave, onLoad, onExport }: DrawIOEmbedProps) 
                   saveAndExit: 0
                 });
               } else {
-                console.log('No XML available, showing template dialog');
                 postMessage({ action: 'template' });
               }
             }
 
             // Handle save event - user clicked save
             if (msg.event === 'save') {
-              console.log('Save diagram');
               saveDiagramToDatabase(msg.xml);
               
               // Export the diagram as PNG (DrawIO doesn't directly support WebP export)
@@ -122,7 +112,6 @@ function DrawIOEmbed({ drawingId, onSave, onLoad, onExport }: DrawIOEmbedProps) 
             // Handle export event
             if (msg.event === 'export') {
               if (msg.format === 'png' && msg.data && onExport) {
-                console.log('PNG export received, data length:', typeof msg.data === 'string' ? msg.data.length : 'not a string');
                 
                 // Ensure it's a valid data URL or base64 string
                 let dataToSave = '';
@@ -136,7 +125,6 @@ function DrawIOEmbed({ drawingId, onSave, onLoad, onExport }: DrawIOEmbedProps) 
                     dataToSave = msg.data;
                   }
                   
-                  console.log('Processing image data for database, length:', dataToSave.length);
                   onExport(dataToSave);
                 }
               }
@@ -144,9 +132,7 @@ function DrawIOEmbed({ drawingId, onSave, onLoad, onExport }: DrawIOEmbedProps) 
             
             // Handle template event - user selected a template
             if (msg.event === 'template') {
-              console.log('Template selected');
               if (msg.xml) {
-                console.log('Template XML received, saving...');
                 saveDiagramToDatabase(msg.xml);
               }
             }
