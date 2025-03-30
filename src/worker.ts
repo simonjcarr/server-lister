@@ -2,7 +2,6 @@ import { Worker } from "bullmq"
 import IORedis from "ioredis"
 import dotenv from "dotenv"
 import { insertScan } from "@/app/actions/scan/crudActions"
-import { SelectNotification } from "@/db/schema"
 
 dotenv.config()
 
