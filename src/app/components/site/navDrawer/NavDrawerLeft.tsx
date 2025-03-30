@@ -129,7 +129,14 @@ const App: React.FC = () => {
           key: 'project-list',
           label: <ProjectList><div>Project List</div></ProjectList>,
           icon: <FaRegListAlt />,
-
+        },
+        {
+          key: 'booking-codes',
+          label: 'Booking Codes',
+          icon: <FaRegListAlt />,
+          onClick: () => {
+            router.push('/project/booking-codes');
+          },
         }
       ],
     },

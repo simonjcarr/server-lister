@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, Form, Input, Select, notification, Card, Drawer } from 'antd';
+import { Button, Form, Input, Select, notification, Card, Drawer, App } from 'antd';
 import { useRouter } from 'next/navigation';
 import { createProject } from '@/app/actions/projects/crudActions';
 import { getBusinesses } from '@/app/actions/business/crudActions';
@@ -14,6 +14,7 @@ function FormAddProject({ children }: { children: React.ReactNode }) {
   const [form] = Form.useForm();
   const router = useRouter();
   const queryClient = useQueryClient();
+  const [notificationApi, contextHolder] = notification.useNotification();
 
   const { data: businesses, isLoading: isLoadingBusinesses } = useQuery({
     queryKey: ['businesses'],
@@ -23,7 +24,7 @@ function FormAddProject({ children }: { children: React.ReactNode }) {
   const mutation = useMutation({
     mutationFn: (values: InsertProject) => createProject(values),
     onSuccess: () => {
-      notification.success({
+      notificationApi.success({
         message: 'Success',
         description: 'Project created successfully!',
       });
@@ -33,7 +34,7 @@ function FormAddProject({ children }: { children: React.ReactNode }) {
     },
     onError: (error: unknown) => {
       console.error('Error creating project:', error);
-      notification.error({
+      notificationApi.error({
         message: 'Error',
         description: error instanceof Error ? error.message : 'Failed to create project. Please try again.',
       });
@@ -46,6 +47,7 @@ function FormAddProject({ children }: { children: React.ReactNode }) {
 
   return (
     <>
+      {contextHolder}
       <span onClick={() => setOpen(true)}>{children}</span>
       <Drawer title="Add New Project" open={open} onClose={() => setOpen(false)} placement="right" >
         <Card

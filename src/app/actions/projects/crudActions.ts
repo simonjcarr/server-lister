@@ -93,7 +93,7 @@ export async function getProjectById(id: number) {
       updatedAt: projects.updatedAt,
     })
     .from(projects)
-    .innerJoin(business, eq(projects.business, business.id))
+    .leftJoin(business, eq(projects.business, business.id))
     .where(eq(projects.id, id))
     .limit(1);
     if (projectData.length === 0) {

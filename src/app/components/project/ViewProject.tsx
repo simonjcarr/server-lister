@@ -3,6 +3,7 @@ import { Card, Tabs } from "antd"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { createProjectDrawing, getProjectById, getProjectDrawingIds } from "@/app/actions/projects/crudActions"
 import ClickToCopy from "../utils/ClickToCopy"
+import ProjectBookingCodeDisplay from "../bookingCode/ProjectBookingCodeDisplay"
 import type { TabsProps } from "antd"
 import ProjectTab from "./projectTabs/projectTab/ProjectTab"
 import PrimaryEngineerTab from "./projectTabs/primaryEngineerTab/PrimaryEngineerTab"
@@ -61,10 +62,10 @@ const ViewProject = ({ projectId }: { projectId: number }) => {
   ]
   return (
     <Card
-      title={`Project: ${data?.name} | Business: ${data?.businessName}`}
+      title={`Project: ${data?.name}${data?.businessName ? ` | Business: ${data?.businessName}` : ''}`}
       extra={(
         <div className="flex items-center gap-2">
-          <div className="text-gray-600 text-sm">Booking Code:</div>
+          <div className="text-gray-600 text-sm">Project Code:</div>
           <ClickToCopy text={data?.code ?? ""} />
         </div>
       )}>
@@ -72,9 +73,8 @@ const ViewProject = ({ projectId }: { projectId: number }) => {
       {error && <p>Error: {error.message}</p>}
       {data && (
         <>
+          <ProjectBookingCodeDisplay projectId={projectId} />
           <Tabs className="max-h-[90vh]" tabPosition="top" items={items} defaultActiveKey="0" />
-
-
         </>
       )}
     </Card>
