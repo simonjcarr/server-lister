@@ -1,0 +1,22 @@
+// This file is used to break circular dependencies
+// It imports and re-exports tables that are referenced across files
+
+import { users } from './users';
+import { servers } from './servers';
+import { projects } from './projects';
+import { os } from './os';
+import { locations } from './locations';
+import { drawings } from './drawings';
+import { tags } from './tags';
+import { notes } from './users';
+
+export {
+  users,
+  servers,
+  projects,
+  os,
+  locations,
+  drawings,
+  tags,
+  notes
+};
