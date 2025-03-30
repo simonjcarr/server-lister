@@ -116,22 +116,35 @@ export async function getServers(
     const offset = (page - 1) * pageSize;
     
     // Get total count for pagination
-    let countQueryBuilder = db
-      .select({ count: count() })
-      .from(servers);
-      
-    // Handle collection filter for count query
-    if (filters.collectionId !== undefined) {
-      countQueryBuilder = countQueryBuilder.innerJoin(
-        servers_collections,
-        and(
-          eq(servers.id, servers_collections.serverId),
-          eq(servers_collections.collectionId, filters.collectionId)
-        )
-      );
-    }
+    // Create the count query based on whether we need a collection filter
+    let totalCountResult;
     
-    const totalCountResult = await countQueryBuilder.where(whereClause);
+    if (filters.collectionId !== undefined) {
+      // With collection filter
+      const countQuery = db
+        .select({ count: count() })
+        .from(servers)
+        .innerJoin(
+          servers_collections,
+          and(
+            eq(servers.id, servers_collections.serverId),
+            eq(servers_collections.collectionId, filters.collectionId)
+          )
+        );
+      
+      totalCountResult = whereClause
+        ? await countQuery.where(whereClause)
+        : await countQuery;
+    } else {
+      // Without collection filter
+      const countQuery = db
+        .select({ count: count() })
+        .from(servers);
+      
+      totalCountResult = whereClause
+        ? await countQuery.where(whereClause)
+        : await countQuery;
+    }
       
     const totalCount = Number(totalCountResult[0].count);
 
