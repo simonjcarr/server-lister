@@ -35,7 +35,7 @@ const SpaceAvailable = ({ record }: { record: Storage }) => {
 
 const ServerStorage = ({ serverId }: { serverId: number }) => {
   const { data, error, isLoading } = useQuery({
-    queryKey: ["server", serverId],
+    queryKey: ["serverStorage", serverId],
     queryFn: () => getServerStorage(serverId),
     enabled: !!serverId,
   })
