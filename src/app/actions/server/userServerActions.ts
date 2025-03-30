@@ -57,8 +57,8 @@ export async function addServerToUser(serverId: number, userId: string) {
     await db.insert(users_servers).values({
       userId,
       serverId,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
     });
     return { success: true };
   } catch (error) {

@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import { Button, Card, Transfer, message, Spin, App } from 'antd';
+import React, { useEffect, useState, useCallback } from 'react';
+import { Button, Card, Transfer, Spin, App, Alert } from 'antd';
 import { TransferProps } from 'antd/es/transfer';
 import { useSession } from 'next-auth/react';
 import { FaHeart, FaServer } from 'react-icons/fa';
@@ -15,11 +15,16 @@ interface ServerItem {
   description: string;
 }
 
-const FavouriteServersPage = () => {
+// Main content component that uses the App context for message API
+const FavouritesPageContent = () => {
   const { data: session, status } = useSession();
   const router = useRouter();
   const queryClient = useQueryClient();
   const [targetKeys, setTargetKeys] = useState<string[]>([]);
+  const { message } = App.useApp();
+  
+  // Handle mutation errors in the UI
+  const [mutationError, setMutationError] = useState<string | null>(null);
 
   // Query to get all servers
   const { data: allServers = [], isLoading: isLoadingServers } = useQuery({
@@ -50,7 +55,7 @@ const FavouriteServersPage = () => {
   }, [favoriteServerIds]);
 
   // Mutation to update favorite servers
-  const { mutate: updateFavorites, isPending } = useMutation({
+  const { mutate: updateFavorites, isPending, isError, error } = useMutation({
     mutationFn: async (serverIds: string[]) => {
       // Convert string IDs to numbers
       const numericIds = serverIds.map(id => parseInt(id, 10));
@@ -59,18 +64,23 @@ const FavouriteServersPage = () => {
     onSuccess: () => {
       message.success('Favourite servers updated successfully');
       queryClient.invalidateQueries({ queryKey: ['favoriteServerIds'] });
+      // Clear any previous error
+      setMutationError(null);
     },
-    onError: () => {
-      message.error('An error occurred while saving your favourites');
+    onError: (error) => {
+      console.error('Favorites update error:', error);
+      message.error(`Error updating favorites: ${error?.message || 'Unknown error'}`);
+      // Set the error message for display in the UI
+      setMutationError(error?.message || 'Failed to update favorites. Please try again.');
     },
   });
 
-  const onChange: TransferProps['onChange'] = async (nextTargetKeys) => {
+  const onChange: TransferProps['onChange'] = (nextTargetKeys) => {
     setTargetKeys(nextTargetKeys);
     
     // Immediately save when changed (just like in PrimaryEngineerTab)
     if (session?.user?.id) {
-      await updateFavorites(nextTargetKeys);
+      updateFavorites(nextTargetKeys);
     } else {
       message.error('You must be logged in to save favourites');
     }
@@ -82,14 +92,39 @@ const FavouriteServersPage = () => {
   };
 
   // Format servers for Transfer component
-  const serverItems = allServers.map((server: any) => ({
-    key: server.id.toString(),
-    title: server.hostname || 'Unnamed Server',
-    description: `${server.ipv4 || 'No IP'} - ${server.description || 'No description'}`,
-  }));
+  const serverItems = Array.isArray(allServers) 
+    ? allServers.map((server: any) => ({
+        key: server.id.toString(),
+        title: server.hostname || 'Unnamed Server',
+        description: `${server.ipv4 || 'No IP'} - ${server.description || 'No description'}`,
+      }))
+    : [];
 
   const isLoading = isLoadingServers || isLoadingUserServers;
 
+  // Query error state handler
+  const { isError: isQueryError, error: queryError } = useQueryClient().getQueryState(['allServers']) || {};
+
+  if (isQueryError) {
+    return (
+      <div className="container mx-auto p-4">
+        <Alert
+          message="Error Loading Servers"
+          description={
+            <div>
+              <p>There was a problem loading the server data. Please try again later.</p>
+              <p className="text-gray-500 text-sm mt-2">{queryError?.message || 'Unknown error'}</p>
+            </div>
+          }
+          type="error"
+          className="mb-4"
+        />
+        <Button type="primary" onClick={() => window.location.reload()}>Refresh Page</Button>
+      </div>
+    );
+  }
+
+  // Loading state handler
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-screen">
@@ -99,51 +134,70 @@ const FavouriteServersPage = () => {
   }
 
   return (
-    <App>
-      <div className="container mx-auto p-4">
-        <Card 
-        title={
-          <div className="flex items-center gap-2">
-            <FaHeart className="text-red-500" />
-            <span>Manage Favourite Servers</span>
-          </div>
-        }
-        variant="bordered"
-        className="shadow-md"
-      >
-        <p className="mb-4">
-          Add servers to your favourites for quick access to the servers you work with regularly.
-        </p>
-        
-      <Transfer
-          dataSource={serverItems}
-          titles={['Available Servers', 'Favourite Servers']}
-          targetKeys={targetKeys}
-          onChange={onChange}
-          filterOption={filterOption}
-          showSearch
-          listStyle={{
-            width: '100%',
-            height: 500,
-          }}
-          operations={['Add to favourites', 'Remove from favourites']}
-          render={(item) => (
-            <div className="flex items-center gap-2">
-              <FaServer className="text-blue-500" />
-              <div>
-                <div className="font-semibold">{item.title}</div>
-                <div className="text-xs text-gray-500">{item.description}</div>
-              </div>
-            </div>
-          )}
-          locale={{
-            itemUnit: 'server',
-            itemsUnit: 'servers',
-            searchPlaceholder: 'Search servers...',
-          }}
+    <div className="container mx-auto p-4">
+      <Card 
+      title={
+        <div className="flex items-center gap-2">
+          <FaHeart className="text-red-500" />
+          <span>Manage Favourite Servers</span>
+        </div>
+      }
+      variant="bordered"
+      className="shadow-md"
+    >
+      <p className="mb-4">
+        Add servers to your favourites for quick access to the servers you work with regularly.
+      </p>
+      
+      {/* Error message in case there are issues with the mutation */}
+      {mutationError && (
+        <Alert
+          message="Error Updating Favorites"
+          description={mutationError}
+          type="error"
+          className="mb-4"
+          closable
+          onClose={() => setMutationError(null)}
         />
-        </Card>
-      </div>
+      )}
+      
+      <Transfer
+        dataSource={serverItems}
+        titles={['Available Servers', 'Favourite Servers']}
+        targetKeys={targetKeys}
+        onChange={onChange}
+        filterOption={filterOption}
+        showSearch
+        listStyle={{
+          width: '100%',
+          height: 500,
+        }}
+        operations={['Add to favourites', 'Remove from favourites']}
+        render={(item) => (
+          <div className="flex items-center gap-2">
+            <FaServer className="text-blue-500" />
+            <div>
+              <div className="font-semibold">{item.title}</div>
+              <div className="text-xs text-gray-500">{item.description}</div>
+            </div>
+          </div>
+        )}
+        locale={{
+          itemUnit: 'server',
+          itemsUnit: 'servers',
+          searchPlaceholder: 'Search servers...',
+        }}
+      />
+      </Card>
+    </div>
+  );
+};
+
+// Wrapper component that provides the App context for Ant Design theming and message API
+const FavouriteServersPage = () => {
+  return (
+    <App>
+      <FavouritesPageContent />
     </App>
   );
 };
