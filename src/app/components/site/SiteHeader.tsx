@@ -18,7 +18,7 @@ export function SiteHeader() {
   return (
     <div className='flex justify-between py-4 items-center'>
       <div className='flex gap-2 items-center'>
-        <Link href="/" className='text-2xl font-semibold dark:text-gray-200'>Server List</Link>
+        <Link href="/" className='text-2xl font-semibold dark:text-gray-200'>IMS</Link>
         <NavDrawerLeft />
       </div>
       <div className='flex gap-2'>

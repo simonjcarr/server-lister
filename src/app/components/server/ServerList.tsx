@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Table, Card, Space, Button, Tag, Typography, App } from 'antd'
+import { Table, Card, Space, Button, Tag, Typography, App, Tooltip } from 'antd'
 import { useQuery, useQueries, useMutation} from '@tanstack/react-query'
 import { HeartFilled, HeartOutlined, PlusOutlined } from '@ant-design/icons'
 import ServerFilters from './ServerFilters'
@@ -343,7 +343,14 @@ function ServerList() {
       sorter: true,
       sortOrder: sort.field === 'hostname' ? (sort.direction === 'asc' ? 'ascend' : 'descend') : undefined,
       render: (text: string, record: ServerData) => (
-        <ClickToCopy text={record.hostname ?? ''} />
+        <div className="flex items-center gap-2">
+          <ClickToCopy text={record.hostname ?? ''} />
+          {record.onboarded === false && (
+            <Tooltip title="This server is new and has not been onboarded yet">
+              <Tag color="gold">New</Tag>
+            </Tooltip>
+          )}
+        </div>
       ),
     },
     {

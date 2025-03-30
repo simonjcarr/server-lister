@@ -52,6 +52,7 @@ const ServerFilters: React.FC<ServerFiltersProps> = ({
     if (filters.osId) count++
     if (filters.locationId) count++
     if (filters.collectionId) count++
+    if (filters.onboardingStatus) count++
     return count
   }
   
@@ -107,6 +108,16 @@ const ServerFilters: React.FC<ServerFiltersProps> = ({
         {filters.collectionId && (
           <Tag closable onClose={() => onFilterChange('collectionId', undefined)} color="blue">
             Collection: {collectionOptions.find(c => c.id === filters.collectionId)?.name}
+          </Tag>
+        )}
+        
+        {filters.onboardingStatus && (
+          <Tag 
+            closable 
+            onClose={() => onFilterChange('onboardingStatus', undefined)}
+            color={filters.onboardingStatus === 'not_onboarded' ? 'gold' : 'green'}
+          >
+            {filters.onboardingStatus === 'not_onboarded' ? 'New Servers' : 'Onboarded Servers'}
           </Tag>
         )}
         
@@ -249,6 +260,23 @@ const ServerFilters: React.FC<ServerFiltersProps> = ({
             </Space>
           </div>
           
+          <Divider style={{ margin: '12px 0' }} />
+          
+          <div>
+            <div className="mb-2 font-medium">Onboarding Status</div>
+            <Select
+              placeholder="All Servers"
+              style={{ width: '100%' }}
+              value={filters.onboardingStatus || 'all'}
+              onChange={value => onFilterChange('onboardingStatus', value === 'all' ? undefined : value)}
+              options={[
+                { value: 'all', label: 'All Servers' },
+                { value: 'not_onboarded', label: 'New Servers (Not Onboarded)' },
+                { value: 'onboarded', label: 'Onboarded Servers' }
+              ]}
+            />
+          </div>
+
           <Divider style={{ margin: '12px 0' }} />
           
           <div>

@@ -1,4 +1,4 @@
-import { Tabs } from "antd"
+import { Tabs, App } from "antd"
 import { useQuery } from "@tanstack/react-query"
 import { getServerById } from "@/app/actions/server/crudActions"
 import HardwareTabData from "./HardwareTabData"
@@ -11,6 +11,7 @@ import ServerServices from "./services/ServerServices"
 import ServerUsers from "./users/ServerUsers"
 import ServerOS from "./os/ServerOS"
 import ServerDrawings from "./drawings/ServerDrawings"
+import ServerOnboardingStatus from "./ServerOnboardingStatus"
 
 const ViewServerTabs = ({ serverId }: { serverId: number }) => {
   const { data, error, isLoading } = useQuery({
@@ -33,15 +34,16 @@ const ViewServerTabs = ({ serverId }: { serverId: number }) => {
     { key: 'notes', label: 'Notes', children: <ViewServerNotes serverId={serverId} /> },
   ]
   return (
-    <>
+    <App>
       {isLoading && <p>Loading...</p>}
       {error && <p>Error: {error.message}</p>}
       {data && (
         <>
+          <ServerOnboardingStatus serverId={serverId} />
           <Tabs className="max-h-[90vh]" tabPosition="left" items={items} />
         </>
       )}
-    </>
+    </App>
   )
 }
 

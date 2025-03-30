@@ -42,6 +42,7 @@ export type ServerFilter = {
   locationId?: number;
   collectionId?: number;
   search?: string;
+  onboardingStatus?: 'onboarded' | 'not_onboarded' | 'all';
 };
 
 // All possible sort fields
@@ -95,6 +96,15 @@ export async function getServers(
     if (filters.collectionId !== undefined) {
       // For collection filter, we need to join with the servers_collections table
       // This will be handled separately
+    }
+    
+    if (filters.onboardingStatus) {
+      if (filters.onboardingStatus === 'onboarded') {
+        whereConditions.push(eq(servers.onboarded, true));
+      } else if (filters.onboardingStatus === 'not_onboarded') {
+        whereConditions.push(eq(servers.onboarded, false));
+      }
+      // For 'all', we don't need to add any condition
     }
     
     if (filters.search) {
@@ -284,5 +294,17 @@ export async function getLocationOptions() {
   } catch (error) {
     console.error("Error getting location options:", error);
     return [];
+  }
+}
+
+export async function updateServerOnboardingStatus(serverId: number, onboarded: boolean) {
+  try {
+    await db.update(servers)
+      .set({ onboarded, updatedAt: new Date() })
+      .where(eq(servers.id, serverId));
+    return { success: true };
+  } catch (error) {
+    console.error("Error updating server onboarding status:", error);
+    return { success: false };
   }
 }

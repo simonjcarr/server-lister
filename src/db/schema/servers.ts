@@ -38,6 +38,7 @@ export const servers = pgTable(
     cores: integer("cores"),
     ram: integer("ram"),
     diskSpace: integer("diskSpace"),
+    onboarded: boolean("onboarded").notNull().default(false),
     rack: text("rack"),
     position: text("position"),
     serial: text("serial"),

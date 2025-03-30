@@ -17,6 +17,7 @@ export async function insertScan(data: ScanResults) {
         cores: data.host.cores,
         ipv4: data.host.ipv4,
         ipv6: data.host.ipv6,
+        onboarded: false, // New server, not yet onboarded
         createdAt: new Date(),
         updatedAt: new Date(),
       }).returning()
