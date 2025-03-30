@@ -1,15 +1,12 @@
 'use server'
 
 import { db } from "@/db";
-import { and, eq, inArray } from "drizzle-orm";
-import { auth } from "@/auth";
+import { eq, inArray } from "drizzle-orm";
 import { 
-  notifications, 
   users_servers, 
   server_collection_subscriptions, 
   servers_collections, 
   servers,
-  users,
   chatCategories 
 } from "@/db/schema";
 import { ChatMessage } from "./chatActions";
