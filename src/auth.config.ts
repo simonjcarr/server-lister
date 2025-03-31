@@ -2,6 +2,7 @@ import { NextAuthConfig } from "next-auth";
 
 // Edge-compatible configuration (no database imports)
 const authConfig: NextAuthConfig = {
+  trustHost: true,
   providers: [
     {
       id: "dex",
