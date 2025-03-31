@@ -50,7 +50,7 @@ const App: React.FC = () => {
           label: 'Server List',
           icon: <FaRegListAlt />,
           onClick: () => {
-            router.push('/');
+            router.push('/server/list');
           },
         },
         {
@@ -201,6 +201,14 @@ const App: React.FC = () => {
       icon: <FaFileInvoiceDollar />,
       onClick: () => {
         router.push('/reports');
+      },
+    },
+    {
+      key: 'dashboard',
+      label: 'Dashboard',
+      icon: <FaRegListAlt />,
+      onClick: () => {
+        router.push('/');
       },
     }
   ]
