@@ -28,7 +28,7 @@ const NetworkTabData = ({ serverId }: { serverId: number }) => {
               <Row key={item.key} className='border-b border-gray-700 py-2'>
                 <Col span={8}>{item.label}</Col>
                 <Col span={16}>
-                  <ClickToCopy text={item.value} />
+                  <ClickToCopy text={item.value || ''} />
                 </Col>
               </Row>
             ))}
