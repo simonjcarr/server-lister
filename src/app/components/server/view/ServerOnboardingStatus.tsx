@@ -16,7 +16,7 @@ const ServerOnboardingStatus: React.FC<ServerOnboardingStatusProps> = ({ serverI
   const [form] = Form.useForm()
   const [modalVisible, setModalVisible] = useState(false)
   const [onboardingComplete, setOnboardingComplete] = useState(false)
-  const [formChanged, setFormChanged] = useState(false)
+  const [shouldAutoSetComplete, setShouldAutoSetComplete] = useState(true)
 
   // Query server data to get onboarding status
   const { data: server, isLoading } = useQuery({
@@ -82,12 +82,11 @@ const ServerOnboardingStatus: React.FC<ServerOnboardingStatusProps> = ({ serverI
       itar: server?.itar || false,
       onboardingComplete: false
     })
-    setFormChanged(false)
+    setShouldAutoSetComplete(true)
     setModalVisible(true)
   }
 
-  // Create a stable reference to the check function
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+  // Check if all required fields are filled
   const checkRequiredFields = useCallback(() => {
     try {
       const values = form.getFieldsValue()
@@ -95,32 +94,37 @@ const ServerOnboardingStatus: React.FC<ServerOnboardingStatusProps> = ({ serverI
       const allFilled = requiredFields.every(field => values[field] !== undefined && values[field] !== null)
       
       setOnboardingComplete(allFilled)
-      if (allFilled && !formChanged) {
-        form.setFieldValue('onboardingComplete', true)
+      
+      // Only auto-set the checkbox if we haven't manually changed it yet
+      if (allFilled && shouldAutoSetComplete) {
+        // Use a timeout to break the circular reference
+        setTimeout(() => {
+          form.setFieldValue('onboardingComplete', true)
+        }, 0)
       }
     } catch (error) {
       console.error('Error checking required fields:', error)
     }
-  }, [form, formChanged])
+  }, [form, shouldAutoSetComplete])
 
   // Handle form changes
-  const handleFormChange = () => {
-    setFormChanged(true)
-    // Use a timeout to ensure the form values are updated before checking
-    setTimeout(() => {
+  const handleFormChange = (changedValues: any) => {
+    // If the onboardingComplete checkbox was manually changed, disable auto-setting
+    if ('onboardingComplete' in changedValues) {
+      setShouldAutoSetComplete(false)
+    } else {
+      // If a required field changed, check if all are filled
       checkRequiredFields()
-    }, 0)
+    }
   }
 
   // Effect to check required fields whenever modal becomes visible
   useEffect(() => {
     if (modalVisible) {
-      // Wait a frame for the form to be fully mounted
-      setTimeout(() => {
-        checkRequiredFields()
-      }, 0)
+      // Wait for the form to be fully mounted
+      setTimeout(checkRequiredFields, 0)
     }
-  }, [modalVisible, checkRequiredFields]) // Only depend on modalVisible and the stable checkRequiredFields function
+  }, [modalVisible, checkRequiredFields])
 
   // Handle form submission
   const handleSubmit = () => {
