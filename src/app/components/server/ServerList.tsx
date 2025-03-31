@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Table, Card, Space, Button, Tag, Typography, App, Tooltip } from 'antd'
 import { useQuery, useQueries, useMutation} from '@tanstack/react-query'
 import { HeartFilled, HeartOutlined, PlusOutlined } from '@ant-design/icons'
@@ -37,6 +37,20 @@ function ServerList() {
   // State for active filters
   const [filters, setFilters] = useState<ServerFilter>({})
   const [searchText, setSearchText] = useState('')
+  
+  // Callback for handling filter changes
+  const handleFilterChange = useCallback((key: keyof ServerFilter, value: any) => {
+    setFilters(prev => ({
+      ...prev,
+      [key]: value,
+    }))
+
+    // Reset to first page when filter changes
+    setPagination(prev => ({
+      ...prev,
+      page: 1,
+    }))
+  }, [])
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false)
 
   // State for sorting
@@ -191,6 +205,23 @@ function ServerList() {
     refetchInterval: filters.collectionId ? 3000 : 5 * 60 * 1000 // More frequent refresh with collection filter
   })
 
+  // Listen for custom events to apply filters
+  useEffect(() => {
+    const handleApplyFilters = (event: CustomEvent) => {
+      const { onboardingStatus } = event.detail;
+      if (onboardingStatus) {
+        handleFilterChange('onboardingStatus', onboardingStatus);
+      }
+    };
+
+    // Add event listener for custom filter event
+    window.addEventListener('applyServerFilters', handleApplyFilters as EventListener);
+    
+    return () => {
+      window.removeEventListener('applyServerFilters', handleApplyFilters as EventListener);
+    };
+  }, [handleFilterChange]);
+
   // Effect to refetch when collection filter is active
   useEffect(() => {
     // If we're filtering by a collection, make sure we stay up to date
@@ -280,18 +311,9 @@ function ServerList() {
     }
   }
 
-  // Handle filter changes
-  const handleFilterChange = (key: keyof ServerFilter, value: number | undefined) => {
-    setFilters(prev => ({
-      ...prev,
-      [key]: value,
-    }))
-
-    // Reset to first page when filter changes
-    setPagination(prev => ({
-      ...prev,
-      page: 1,
-    }))
+  // Expose the filter change handler through the component interface
+  const handleExternalFilterChange = (key: keyof ServerFilter, value: number | undefined) => {
+    handleFilterChange(key, value);
   }
 
   // Handle search
@@ -430,7 +452,7 @@ function ServerList() {
       {/* Use the new ServerFilters component */}
       <ServerFilters 
         filters={filters}
-        onFilterChange={handleFilterChange}
+        onFilterChange={handleExternalFilterChange}
         searchText={searchText}
         onSearchTextChange={setSearchText}
         onSearch={handleSearch}
