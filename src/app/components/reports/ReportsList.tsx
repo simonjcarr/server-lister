@@ -22,8 +22,8 @@ const ReportsList = () => {
     },
     {
       id: 2,
-      name: 'Report 2',
-      link: '/reports/report_2'
+      name: 'Booking Code Status',
+      link: '/reports/report/booking_code_status'
     },
     {
       id: 3,
