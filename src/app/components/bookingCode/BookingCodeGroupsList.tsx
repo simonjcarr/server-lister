@@ -188,7 +188,24 @@ const BookingCodeGroupsList: React.FC = () => {
         title: 'Valid To',
         dataIndex: 'validTo',
         key: 'validTo',
-        render: (date: string) => dayjs(date).format('YYYY-MM-DD'),
+        render: (date: string) => {
+          const expiryDate = dayjs(date);
+          const today = dayjs();
+          const daysUntilExpiry = expiryDate.diff(today, 'day');
+          
+          // If the code is still valid and expires within 31 days
+          if (daysUntilExpiry >= 0 && daysUntilExpiry <= 30) {
+            return (
+              <>
+                <span className="mr-2">{expiryDate.format('YYYY-MM-DD')}</span>
+                <Tag color="orange">
+                  {daysUntilExpiry === 0 ? 'Expires today' : `${daysUntilExpiry} day${daysUntilExpiry !== 1 ? 's' : ''} left`}
+                </Tag>
+              </>
+            );
+          }
+          return expiryDate.format('YYYY-MM-DD');
+        },
       },
       {
         title: 'Status',
