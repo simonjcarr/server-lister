@@ -11,7 +11,7 @@ import { users } from './users';
 import { drawings } from './drawings';
 
 // Get the notes constant from the users module
-const { notes } = require('./users');
+import { notes } from './users';
 
 export const serverTypeEnum = pgEnum("serverTypeEnum", ["Physical", "Virtual"]);
 export type ServerType = (typeof serverTypeEnum.enumValues)[number];
