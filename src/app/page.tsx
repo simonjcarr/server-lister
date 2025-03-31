@@ -5,7 +5,8 @@ import Dashboard from "@/app/components/dashboard/Dashboard";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 
 export default function Home() {
-  const [activeTab, setActiveTab] = useState<string>('servers');
+  // State is used by the handleTabChange function
+  const [, setActiveTab] = useState<string>('servers');
 
   const handleTabChange = (key: string) => {
     setActiveTab(key);

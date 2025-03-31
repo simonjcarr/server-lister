@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
+import Image from 'next/image'
 import { useQuery } from '@tanstack/react-query'
 import { Alert, Button, Card, Col, Empty, Modal, Radio, Row, Space, Spin, Table, Typography } from 'antd'
 import { AppstoreOutlined, EditOutlined, LinkOutlined, TableOutlined } from '@ant-design/icons'
@@ -99,10 +100,12 @@ const ServerDrawings: React.FC<ServerDrawingsProps> = ({ serverId }) => {
               }}
               onClick={() => handlePreviewClick(drawing)}
             >
-              <img
+              <Image
                 alt={drawing.name}
                 src={`data:image/png;base64,${drawing.webp}`}
                 style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }}
+                width={300}
+                height={200}
               />
             </div>
           ) : (
@@ -222,10 +225,12 @@ const ServerDrawings: React.FC<ServerDrawingsProps> = ({ serverId }) => {
         {previewDrawing && (
           <div style={{ height: '70vh', overflow: 'auto' }}>
             {previewDrawing.webp && isValidBase64(previewDrawing.webp) ? (
-              <img
+              <Image
                 alt={previewDrawing.name}
                 src={`data:image/png;base64,${previewDrawing.webp}`}
                 style={{ maxWidth: '100%', display: 'block', margin: '0 auto' }}
+                width={900}
+                height={600}
               />
             ) : (
               <div style={{ 

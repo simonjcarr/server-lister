@@ -2,7 +2,7 @@
 
 import { db } from "@/db";
 import { servers, os, locations, business, bookingCodeGroups, bookingCodes } from "@/db/schema";
-import { count, eq, sql, and, gt, lt, or, isNull } from "drizzle-orm";
+import { count, eq } from "drizzle-orm";
 
 export async function getNonOnboardedServerCount() {
   try {

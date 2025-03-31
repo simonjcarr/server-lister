@@ -29,7 +29,7 @@ export const getRoomMessages = (chatRoomId: string, lastMessageId: number | null
     .then((messages) => messages.reverse());
 };
 
-export const insertChatMessage = (message: string, chatRoomId: string) => {
+export const insertChatMessage = (message: string, chatRoomId: string, categoryId: number = 1) => {
   if (!session?.user.id) {
     throw new Error("Unauthorized");
   }
@@ -39,6 +39,7 @@ export const insertChatMessage = (message: string, chatRoomId: string) => {
       message,
       chatRoomId,
       userId: session?.user.id,
+      categoryId,
       createdAt: new Date(),
       updatedAt: new Date(),
     })

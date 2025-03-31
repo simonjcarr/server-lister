@@ -5,13 +5,13 @@ import { Button, Input, Typography, Spin, Tabs, Badge, Avatar, Empty, Flex } fro
 import { SendOutlined, UserOutlined } from '@ant-design/icons'
 import { ChatProvider, useChat } from './ChatContext'
 import { ChatCategory, getChatCategoriesWithCounts } from '@/app/actions/chat/chatActions'
-import { LucideIcon } from '@/types/icons'
 import dynamic from 'next/dynamic'
 import type { TabsProps } from 'antd'
 import DistanceToNow from '../utils/DistanceToNow'
 
 // Dynamically import the icons to match those in the database
-const Icons: Record<string, LucideIcon> = {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const Icons: Record<string, any> = {
   'message-square': dynamic(() => import('lucide-react').then(mod => mod.MessageSquare)),
   'alert-triangle': dynamic(() => import('lucide-react').then(mod => mod.AlertTriangle)),
   'refresh-cw': dynamic(() => import('lucide-react').then(mod => mod.RefreshCw)),
@@ -86,7 +86,7 @@ function ChatPanelContent() {
   const [messageText, setMessageText] = useState('')
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const messagesContainerRef = useRef<HTMLDivElement>(null)
-  const chatContainerRef = useRef<HTMLDivElement>(null)
+  // chatContainerRef removed as it was unused
   const [sending, setSending] = useState(false)
 
   // Scroll to bottom when new messages are added or component mounts

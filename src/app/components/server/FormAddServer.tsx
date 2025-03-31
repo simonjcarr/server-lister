@@ -56,7 +56,7 @@ function FormAddServer({ children }: { children: React.ReactNode }) {
         return result.map(project => ({
           ...project,
           description: project.description === null ? undefined : project.description,
-          business: project.business === null ? undefined : project.business,
+          businessId: project.businessId === null ? undefined : project.businessId,
           createdAt: project.createdAt.toISOString(),
           updatedAt: project.updatedAt.toISOString()
         }));
@@ -138,7 +138,7 @@ function FormAddServer({ children }: { children: React.ReactNode }) {
               ipv6: "",
               locationId: null,
               osId: null,
-              business: null,
+              businessId: null,
               projectId: null,
               description: "",
               itar: false,

@@ -1,11 +1,11 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { db } from '@/db';
 import { eq, desc } from 'drizzle-orm';
 import { notifications } from '@/db/schema';
 import { auth } from '@/auth';
 
 // GET /api/notifications - Get all notifications for the current user
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const session = await auth();
     if (!session?.user?.id) {

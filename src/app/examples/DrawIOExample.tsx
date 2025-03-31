@@ -20,6 +20,7 @@ const DrawIOExample: React.FC = () => {
   const handleLoad = () => {
     console.log('DrawIO loaded!');
     setIsLoaded(true);
+    return diagramXml || ''; // Return the current diagram XML or empty string
   };
 
   return (
@@ -31,10 +32,9 @@ const DrawIOExample: React.FC = () => {
       </div>
 
       <DrawIOEmbed
-        initialDiagramXml={diagramXml}
+        drawingId={1} // Use a valid drawing ID or create a state to manage this
         onSave={handleSave}
         onLoad={handleLoad}
-        diagramId="example-diagram-001"
       />
 
       {diagramXml && (

@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, useState, useRef, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useRef, useEffect, ReactNode, useCallback } from 'react';
 import { ChatMessage, ChatCategory } from '@/app/actions/chat/chatActions';
 
 interface ChatContextType {
@@ -40,34 +40,8 @@ export function ChatProvider({ children, chatRoomId, initialCategories }: ChatPr
   // Track currently selected category for event handlers
   const selectedCategoryIdRef = useRef<number | null>(selectedCategoryId);
 
-  // Function to select a category and load messages
-  const selectCategory = async (categoryId: number) => {
-    if (categoryId === selectedCategoryId) return;
-    
-    setSelectedCategoryId(categoryId);
-    setMessages([]);
-    setMessageOffset(0);
-    setHasMore(true);
-    
-    // Reset the counter for the selected category
-    setCategories((prevCategories) =>
-      prevCategories.map((category) =>
-        category.id === categoryId
-          ? { ...category, messageCount: 0 } // Reset count when switching to this category
-          : category
-      )
-    );
-    
-    try {
-      setLoading(true);
-      await fetchMessages(categoryId, 0);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   // Function to fetch messages from the server
-  const fetchMessages = async (categoryId: number, offset: number) => {
+  const fetchMessages = useCallback(async (categoryId: number, offset: number) => {
     try {
       const response = await fetch(
         `/api/chat/messages?chatRoomId=${encodeURIComponent(chatRoomId)}&categoryId=${categoryId}&limit=50&offset=${offset}`
@@ -100,10 +74,36 @@ export function ChatProvider({ children, chatRoomId, initialCategories }: ChatPr
     } catch (error) {
       console.error('Error fetching messages:', error);
     }
-  };
+  }, [chatRoomId]);
+
+  // Function to select a category and load messages
+  const selectCategory = useCallback(async (categoryId: number) => {
+    if (categoryId === selectedCategoryId) return;
+    
+    setSelectedCategoryId(categoryId);
+    setMessages([]);
+    setMessageOffset(0);
+    setHasMore(true);
+    
+    // Reset the counter for the selected category
+    setCategories((prevCategories) =>
+      prevCategories.map((category) =>
+        category.id === categoryId
+          ? { ...category, messageCount: 0 } // Reset count when switching to this category
+          : category
+      )
+    );
+    
+    try {
+      setLoading(true);
+      await fetchMessages(categoryId, 0);
+    } finally {
+      setLoading(false);
+    }
+  }, [fetchMessages, selectedCategoryId]);
 
   // Function to load more messages (pagination)
-  const loadMoreMessages = async () => {
+  const loadMoreMessages = useCallback(async () => {
     if (!selectedCategoryId || loadingMore || !hasMore) return;
     
     try {
@@ -112,7 +112,7 @@ export function ChatProvider({ children, chatRoomId, initialCategories }: ChatPr
     } finally {
       setLoadingMore(false);
     }
-  };
+  }, [selectedCategoryId, loadingMore, hasMore, fetchMessages, messageOffset]);
 
   // Helper function to just update category counts without adding to messages array
   const updateCategoryCount = (categoryId: number) => {
@@ -129,7 +129,7 @@ export function ChatProvider({ children, chatRoomId, initialCategories }: ChatPr
   };
 
   // Function to add a new message to the state
-  const addMessage = (message: ChatMessage) => {
+  const addMessage = useCallback((message: ChatMessage) => {
     // Check if the message is already in the list to prevent duplicates
     const messageExists = messages.some((m) => m.id === message.id);
     
@@ -142,7 +142,7 @@ export function ChatProvider({ children, chatRoomId, initialCategories }: ChatPr
       setMessages((prev) => [message, ...prev]);
       lastEventIdRef.current = Math.max(lastEventIdRef.current || 0, message.id);
     }
-  };
+  }, [selectedCategoryId, messages]);
 
   // Function to send a message
   const sendMessage = async (message: string) => {
@@ -236,7 +236,7 @@ export function ChatProvider({ children, chatRoomId, initialCategories }: ChatPr
       }
       eventSourceInitialized.current = false;
     };
-  }, [chatRoomId]);
+  }, [chatRoomId, addMessage]);
 
   // Update the ref when the selected category changes
   useEffect(() => {
@@ -250,7 +250,7 @@ export function ChatProvider({ children, chatRoomId, initialCategories }: ChatPr
       fetchMessages(selectedCategoryId, 0)
         .finally(() => setLoading(false));
     }
-  }, [selectedCategoryId]);
+  }, [selectedCategoryId, fetchMessages]);
 
   const value = {
     messages,

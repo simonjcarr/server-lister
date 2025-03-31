@@ -2,7 +2,7 @@
 
 import { db } from "@/db";
 import { bookingCodeGroups, bookingCodes } from "@/db/schema";
-import { eq, lt, gte } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 
 export type BookingCodeStatusType = 'expired' | 'expiring_soon' | 'no_codes';
 

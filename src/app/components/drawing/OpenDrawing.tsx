@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import Image from 'next/image'
 import { Button, Drawer, Table, Radio, Empty, Row, Col, Card, Typography, Space } from "antd"
 import { SelectDrawing } from '@/db/schema'
 import { TableOutlined, AppstoreOutlined } from '@ant-design/icons'
@@ -89,14 +90,16 @@ const OpenDrawing = ({
                             alignItems: 'center',
                             background: '#f5f5f5'
                           }}>
-                            <img 
+                            <Image 
                               alt={drawing.name} 
                               src={`data:image/webp;base64,${drawing.webp}`} 
                               style={{ 
                                 maxHeight: '100%',
                                 maxWidth: '100%',
                                 objectFit: 'contain'
-                              }} 
+                              }}
+                              width={200}
+                              height={150} 
                             />
                           </div>
                         ) : (

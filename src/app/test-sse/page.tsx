@@ -1,8 +1,5 @@
 // This is a diagnostic page used for testing SSE connections
-// It's currently disabled for production use
-// To re-enable, remove the comments below
-
-/*
+// It's currently disabled for production use but contains valid syntax
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -45,7 +42,7 @@ export default function TestSSEPage() {
       setEventSource(newEventSource);
       setMessages(prev => [...prev, 'Connecting to SSE...']);
 
-      newEventSource.addEventListener('connected', (event) => {
+      newEventSource.addEventListener('connected', () => {
         setConnected(true);
         setMessages(prev => [...prev, 'SSE connection established!']);
         setError(null);
@@ -167,4 +164,3 @@ export default function TestSSEPage() {
     </div>
   );
 }
-*/

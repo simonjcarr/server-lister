@@ -7,7 +7,7 @@ import { auth } from '@/auth';
 // PATCH /api/notifications/[id] - Mark a notification as read
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await auth();
@@ -15,7 +15,8 @@ export async function PATCH(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const id = parseInt(params.id, 10);
+    const { id: idString } = await params;
+    const id = parseInt(idString, 10);
     if (isNaN(id)) {
       return NextResponse.json({ error: 'Invalid notification ID' }, { status: 400 });
     }
@@ -54,7 +55,7 @@ export async function PATCH(
 // DELETE /api/notifications/[id] - Delete a notification
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await auth();
@@ -62,7 +63,8 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const id = parseInt(params.id, 10);
+    const { id: idString } = await params;
+    const id = parseInt(idString, 10);
     if (isNaN(id)) {
       return NextResponse.json({ error: 'Invalid notification ID' }, { status: 400 });
     }

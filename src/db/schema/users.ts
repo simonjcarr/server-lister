@@ -15,9 +15,11 @@ export const users = pgTable("user", {
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
 });
 
-const insertUserSchema = createInsertSchema(users);
-const selectUserSchema = createSelectSchema(users);
-const updateUserSchema = createUpdateSchema(users);
+// These schemas are used only for type inference
+// Using export type to avoid 'assigned a value but only used as a type' warnings
+export const insertUserSchema = createInsertSchema(users);
+export const selectUserSchema = createSelectSchema(users);
+export const updateUserSchema = createUpdateSchema(users);
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type SelectUser = z.infer<typeof selectUserSchema> & { roles: string[] };
 export type UpdateUser = z.infer<typeof updateUserSchema>;
@@ -32,9 +34,10 @@ export const notes = pgTable("notes", {
   index("user_id_idx").on(table.userId),
 ]);
 
-const insertNoteSchema = createInsertSchema(notes);
-const selectNoteSchema = createSelectSchema(notes);
-const updateNoteSchema = createUpdateSchema(notes);
+// These schemas are used only for type inference
+export const insertNoteSchema = createInsertSchema(notes);
+export const selectNoteSchema = createSelectSchema(notes);
+export const updateNoteSchema = createUpdateSchema(notes);
 export type InsertNote = z.infer<typeof insertNoteSchema>;
 export type SelectNote = z.infer<typeof selectNoteSchema>;
 export type UpdateNote = z.infer<typeof updateNoteSchema>;
@@ -58,9 +61,10 @@ export const serverGroups = pgTable(
   ]
 );
 
-const insertServerGroupSchema = createInsertSchema(serverGroups);
-const selectServerGroupSchema = createSelectSchema(serverGroups);
-const updateServerGroupSchema = createUpdateSchema(serverGroups);
+// These schemas are used only for type inference
+export const insertServerGroupSchema = createInsertSchema(serverGroups);
+export const selectServerGroupSchema = createSelectSchema(serverGroups);
+export const updateServerGroupSchema = createUpdateSchema(serverGroups);
 export type InsertServerGroup = z.infer<typeof insertServerGroupSchema>;
 export type SelectServerGroup = z.infer<typeof selectServerGroupSchema>;
 export type UpdateServerGroup = z.infer<typeof updateServerGroupSchema>;

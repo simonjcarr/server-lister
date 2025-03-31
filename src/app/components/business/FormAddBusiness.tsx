@@ -6,7 +6,7 @@ import { createBusiness } from '@/app/actions/business/crudActions';
 import { useMutation } from '@tanstack/react-query';
 import type { InsertBusiness } from '@/db/schema'
 
-function FormAddBusiness({ children }: { children: React.ReactNode }) {
+function FormAddBusiness({ children }: { children?: React.ReactNode }) {
   const [form] = Form.useForm();
   const [open, setOpen] = useState(false);
   const [messageApi, contextHolder] = message.useMessage();
@@ -33,7 +33,7 @@ function FormAddBusiness({ children }: { children: React.ReactNode }) {
 
   return (
     <>
-      <span onClick={() => setOpen(true)}>{children}</span>
+      <span onClick={() => setOpen(true)}>{children || <Button type="primary">Add Business</Button>}</span>
       {contextHolder}
       <Drawer title="Add New Business" placement='right' open={open} onClose={() => setOpen(false)}>
         <Card

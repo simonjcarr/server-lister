@@ -1,6 +1,6 @@
 import React from 'react'
 import ListCollections from '@/app/components/server/collections/ListCollections'
-import { Card } from 'antd'
+// Card component used in other parts of the application
 
 export const metadata = {
   title: 'Server Collections',

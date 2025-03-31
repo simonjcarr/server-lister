@@ -8,7 +8,7 @@ interface FormInputSelectOSProps {
 }
 
 const FormInputSelectOS = ({ value, onChange }: FormInputSelectOSProps) => {
-  const { data: os, isLoading, error } = useQuery({
+  const { data: os, isLoading } = useQuery({
     queryKey: ["os"],
     queryFn: () => getOS(),
   })

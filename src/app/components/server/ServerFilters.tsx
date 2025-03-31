@@ -1,13 +1,13 @@
 'use client'
 
 import React, { useState } from 'react'
-import { Input, Select, Checkbox, Button, Space, Drawer, Row, Col, Tag, Divider } from 'antd'
+import { Input, Select, Checkbox, Button, Space, Drawer, Tag, Divider } from 'antd'
 import { FilterOutlined, SearchOutlined, CloseOutlined, HeartOutlined, ReloadOutlined } from '@ant-design/icons'
 import { ServerFilter } from '@/app/actions/server/crudActions'
 
 interface ServerFiltersProps {
   filters: ServerFilter
-  onFilterChange: (key: keyof ServerFilter, value: number | undefined) => void
+  onFilterChange: (key: keyof ServerFilter, value: number | string | undefined) => void
   searchText: string
   onSearchTextChange: (text: string) => void
   onSearch: () => void

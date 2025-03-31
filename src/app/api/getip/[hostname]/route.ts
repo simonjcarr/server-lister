@@ -1,7 +1,7 @@
 import { default as dns } from "node:dns";
 import { auth } from "@/auth";
 
-export async function GET(request: Request, { params }: { params: { hostname: string } }) {
+export async function GET(request: Request, { params }: { params: Promise<{ hostname: string }> }) {
   const session = await auth();
   if (!session) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });

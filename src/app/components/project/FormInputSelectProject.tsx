@@ -8,7 +8,7 @@ interface FormInputSelectProjectProps {
 }
 
 const FormInputSelectProject = ({ value, onChange }: FormInputSelectProjectProps) => {
-  const { data: projects, isLoading, error } = useQuery({
+  const { data: projects, isLoading } = useQuery({
     queryKey: ["projects"],
     queryFn: () => getProjects(),
   })

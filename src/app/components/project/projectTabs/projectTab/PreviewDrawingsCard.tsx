@@ -1,8 +1,9 @@
 import React, { useState } from 'react'
 import { useQuery } from "@tanstack/react-query"
 import { getProjectDrawings } from "@/app/actions/projects/crudActions"
-import { Button, Card, Typography, Radio, Table, Row, Col, Space } from 'antd'
+import { Button, Card, Typography, Radio, Table, Row, Col } from 'antd'
 import { ArrowRightOutlined, TableOutlined, AppstoreOutlined } from '@ant-design/icons'
+import Image from 'next/image'
 
 /**
  * Component for displaying technology stacks from project drawings
@@ -115,10 +116,12 @@ const PreviewDrawingsCard = ({ projectId }: { projectId: number }) => {
                 
                 <div className="h-36 flex items-center justify-center bg-gray-100 mt-4 mb-6 overflow-hidden">
                   {drawing.webp ? (
-                    <img
+                    <Image
                       alt={drawing.name}
                       src={`data:image/webp;base64,${drawing.webp}`}
                       className="max-h-full max-w-full object-contain"
+                      width={300}
+                      height={150}
                     />
                   ) : (
                     <Typography.Text className="text-gray-400 text-center">

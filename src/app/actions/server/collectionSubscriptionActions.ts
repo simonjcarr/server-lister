@@ -1,7 +1,7 @@
 "use server";
 import { db } from "@/db";
 import { collections, server_collection_subscriptions } from "@/db/schema";
-import { eq, and } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { auth } from '@/auth';
 import { SelectCollection } from "@/db/schema";
 

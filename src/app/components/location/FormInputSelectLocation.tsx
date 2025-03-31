@@ -9,7 +9,7 @@ interface FormInputSelectLocationProps {
 }
 
 const FormInputSelectLocation = ({ value, onChange }: FormInputSelectLocationProps) => {
-  const { data: locations, isLoading, error } = useQuery({
+  const { data: locations, isLoading } = useQuery({
     queryKey: ["locations"],
     queryFn: () => getLocations(),
   })

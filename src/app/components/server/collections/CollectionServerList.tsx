@@ -1,10 +1,10 @@
 'use client'
 import { App, Button, Card, Empty, Table } from 'antd'
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { getServerCollection, getServersInCollection, removeServerFromCollection } from '@/app/actions/server/serverCollectionActions';
 import { MdDelete, MdEdit } from 'react-icons/md';
 import { ColumnsType } from 'antd/es/table';
-import type { SelectCollection } from '@/db/schema';
+// SelectCollection import removed as it was unused
 import { getServerById } from '@/app/actions/server/crudActions';
 import SubscribeCollectionSwitch from './SubscribeCollectionSwitch';
 import CollectionSubscribedUsers from './CollectionSubscribedUsers';
@@ -27,7 +27,7 @@ interface RemoveResult {
 
 function CollectionServerList({ collectionId }: { collectionId: number }) {
   const queryClient = useQueryClient();
-  const { notification: api, notification } = App.useApp();
+  const { notification } = App.useApp();
   
   // Using a ref for storing notification config to avoid calling during render
   const notificationConfig = React.useRef<{

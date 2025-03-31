@@ -2,7 +2,7 @@ import React from "react"
 import { Alert, Button, Card, Spin, App, Space, Dropdown } from "antd"
 import NewDrawing from "./NewDrawing"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import OpenDrawing from "./OpenDrawing"
 import EditDrawing from "./EditDrawing"
 import { updateDrawingXML, updateDrawingWebp, getDrawing, getDrawingsByIds, deleteDrawing } from "@/app/actions/drawings/crudDrawings"
@@ -64,7 +64,19 @@ const DrawingsComponent = ({ drawingIds, drawingId, drawingUpdated }: {
       const { drawingId } = event.detail;
       if (drawingId && drawingsAvailable.length > 0) {
         // Find the drawing in the available drawings and open it
-        drawingSelected(drawingId);
+        const selectedDrawing = drawingsAvailable.find(d => d.id === drawingId);
+        if (selectedDrawing) {
+          setInitialXml(null)
+          setIsEditing(false)
+          
+          setCardTitle(selectedDrawing.name)
+          
+          // Invalidate queries before changing the ID to ensure proper fetch
+          queryClient.invalidateQueries({ queryKey: ["drawing", drawingId] })
+          
+          // Then set the new drawing ID
+          setOpenDrawingId(drawingId)
+        }
       }
     };
 
@@ -75,7 +87,7 @@ const DrawingsComponent = ({ drawingIds, drawingId, drawingUpdated }: {
     return () => {
       document.removeEventListener('openDrawing', handleOpenDrawing as EventListener);
     };
-  }, [drawingIds, drawingsAvailable]);
+  }, [drawingIds, drawingsAvailable, queryClient]);
 
   // Reference for the Edit Drawing button click
   const [triggerEditDrawing, setTriggerEditDrawing] = useState<boolean>(false);
@@ -144,7 +156,7 @@ const DrawingsComponent = ({ drawingIds, drawingId, drawingUpdated }: {
     }
   })
 
-  const drawingSelected = (id: number) => {
+  const drawingSelected = useCallback((id: number) => {
     // Clear state first before changing the drawing
     setInitialXml(null)
     setIsEditing(false)
@@ -159,7 +171,7 @@ const DrawingsComponent = ({ drawingIds, drawingId, drawingUpdated }: {
     
     // Then set the new drawing ID
     setOpenDrawingId(id)
-  }
+  }, [drawingsAvailable, queryClient])
 
   useEffect(() => {
     if (data?.name) {

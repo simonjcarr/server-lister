@@ -1,6 +1,6 @@
 'use client'
 // DrawIO.tsx - Self-hosted DrawIO component
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useCallback } from 'react';
 import { useMutation } from '@tanstack/react-query'
 import { updateDrawingXML } from '@/app/actions/drawings/crudDrawings';
 
@@ -25,15 +25,15 @@ function DrawIOEmbed({ drawingId, onSave, onLoad, onExport }: DrawIOEmbedProps) 
     }
   });
 
-  // Function to save diagram to database
-  const saveDiagramToDatabase = (xml: string) => {
+  // Function to save diagram to database inside useCallback to prevent dependency changes
+  const saveDiagramToDatabase = useCallback((xml: string) => {
     xmlMutation.mutate(xml);
     
     // Call the onSave callback if provided
     if (onSave) {
       onSave(xml);
     }
-  };
+  }, [xmlMutation, onSave]);
 
   // Post a message to the iframe
   const postMessage = (message: unknown) => {
@@ -50,6 +50,7 @@ function DrawIOEmbed({ drawingId, onSave, onLoad, onExport }: DrawIOEmbedProps) 
 
   // Setup communication with Draw.io
   useEffect(() => {
+    // Define saveDiagramToDatabase inside the effect to ensure it's captured as a dependency
     const messageHandler = (event: MessageEvent) => {
       if (typeof event.data === 'string') {
         try {
@@ -148,7 +149,7 @@ function DrawIOEmbed({ drawingId, onSave, onLoad, onExport }: DrawIOEmbedProps) 
     return () => {
       window.removeEventListener('message', messageHandler);
     };
-  }, [drawingId, onLoad, onSave, onExport]);
+  }, [drawingId, onLoad, onSave, onExport, saveDiagramToDatabase]);
 
   return (
     <div style={{ width: '100%', height: '70vh', border: '1px solid #ccc', position: 'relative' }}>

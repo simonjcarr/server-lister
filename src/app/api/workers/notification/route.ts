@@ -43,7 +43,7 @@ export async function POST(request: Request) {
       if (notification) {
         createdNotifications.push(notification);
       }
-    } catch (error) {
+    } catch {
       errors.push(`error creating notification for user ${user.id}`);
     }
   }

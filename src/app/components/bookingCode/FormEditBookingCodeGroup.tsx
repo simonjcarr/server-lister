@@ -5,7 +5,6 @@ import {
   getBookingCodeGroupById 
 } from '@/app/actions/bookingCodes/crudActions';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { SelectBookingCodeGroup } from '@/db/schema/bookingCodes';
 
 interface FormEditBookingCodeGroupProps {
   children: React.ReactNode;

@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
       pingInterval = setInterval(() => {
         try {
           controller.enqueue(encoder.encode(': ping\n\n'));
-        } catch (error) {
+        } catch {
           if (pingInterval) {
             clearInterval(pingInterval);
             pingInterval = null;
@@ -67,7 +67,7 @@ export async function GET(request: NextRequest) {
 }
 
 // Helper function to send an event to a specific user
-export function sendEventToUser(userId: string, event: string, data: any) {
+export function sendEventToUser(userId: string, event: string, data: Record<string, unknown>) {
   // Check if user has an active connection
   const controller = connections.get(userId);
   if (!controller) {
@@ -79,20 +79,20 @@ export function sendEventToUser(userId: string, event: string, data: any) {
     const encoder = new TextEncoder();
     controller.enqueue(encoder.encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`));
     return true;
-  } catch (error) {
+  } catch {
     return false;
   }
 }
 
 // Helper function to send a notification event to all connected users
-export function broadcastEvent(event: string, data: any) {
+export function broadcastEvent(event: string, data: Record<string, unknown>) {
   let sentCount = 0;
   connections.forEach((controller, userId) => {
     try {
       const encoder = new TextEncoder();
       controller.enqueue(encoder.encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`));
       sentCount++;
-    } catch (error) {
+    } catch {
       // Remove the connection if we can't send to it
       connections.delete(userId);
     }

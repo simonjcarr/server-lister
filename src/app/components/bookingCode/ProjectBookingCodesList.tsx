@@ -1,5 +1,15 @@
 import React from 'react';
 import { Table, Button, Space, Popconfirm, Typography, Tag, App } from 'antd';
+
+interface ProjectWithBookingCode {
+  projectId: number;
+  projectName: string;
+  bookingCodeGroupId: number | null;
+  bookingCodeGroupName: string | null;
+  key?: number;
+}
+
+// ActiveBookingCodeData removed as it was unused
 import { 
   DeleteOutlined, 
   LinkOutlined, 
@@ -17,7 +27,7 @@ import dayjs from 'dayjs';
 const { Title } = Typography;
 
 const ProjectBookingCodesList: React.FC = () => {
-  const { message, notification } = App.useApp();
+  const { message } = App.useApp();
 
   const { data, isLoading, refetch } = useQuery({
     queryKey: ['projectsWithBookingCodes'],
@@ -55,7 +65,9 @@ const ProjectBookingCodesList: React.FC = () => {
       return <span>-</span>;
     }
 
-    const { data: activeCode, isExpired } = activeCodeData;
+    const activeCode = activeCodeData.data;
+    // Check if data has an isExpired property
+    const isExpired = 'isExpired' in activeCodeData && activeCodeData.isExpired === true;
 
     return (
       <Space direction="vertical" size="small">
@@ -89,7 +101,7 @@ const ProjectBookingCodesList: React.FC = () => {
     {
       title: 'Active Booking Code',
       key: 'activeCode',
-      render: (_: any, record: any) => {
+      render: (_: unknown, record: ProjectWithBookingCode) => {
         if (!record.bookingCodeGroupId) {
           return '-';
         }
@@ -99,7 +111,7 @@ const ProjectBookingCodesList: React.FC = () => {
     {
       title: 'Actions',
       key: 'actions',
-      render: (_: any, record: any) => (
+      render: (_: unknown, record: ProjectWithBookingCode) => (
         <Space size="small">
           {!record.bookingCodeGroupId ? (
             <AssignBookingCodeToProject
@@ -118,10 +130,14 @@ const ProjectBookingCodesList: React.FC = () => {
             <Popconfirm
               title="Remove Booking Code"
               description="Are you sure you want to remove this booking code from the project?"
-              onConfirm={() => removeMutation.mutate({
-                projectId: record.projectId,
-                bookingCodeGroupId: record.bookingCodeGroupId,
-              })}
+              onConfirm={() => {
+                if (record.bookingCodeGroupId) {
+                  removeMutation.mutate({
+                    projectId: record.projectId,
+                    bookingCodeGroupId: record.bookingCodeGroupId,
+                  });
+                }
+              }}
               okText="Yes"
               cancelText="No"
               icon={<QuestionCircleOutlined style={{ color: 'red' }} />}
@@ -145,8 +161,8 @@ const ProjectBookingCodesList: React.FC = () => {
       <Title level={4}>Project Booking Codes</Title>
       <Table
         columns={columns}
-        dataSource={data?.success ? 
-          data.data.map((project: any) => ({
+        dataSource={data?.success && data.data ? 
+          data.data.map((project: ProjectWithBookingCode) => ({
             ...project,
             key: project.projectId,
           })) : 

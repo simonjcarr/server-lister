@@ -1,7 +1,6 @@
 "use client";
-import { Card, Row, Col, Spin, Alert, Button, Tag } from 'antd'
+import { Card, Row, Col, Spin, Alert, Tag, Table } from 'antd'
 import React, { useState } from 'react'
-import { Table } from 'antd'
 import { useQuery } from '@tanstack/react-query'
 import { getAllUsers } from '@/app/actions/users/userActions'
 import { ColumnsType } from 'antd/es/table'

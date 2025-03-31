@@ -3,11 +3,11 @@
 import React from 'react'
 import { useQuery } from "@tanstack/react-query"
 import { getServerById } from "@/app/actions/server/crudActions"
-import { Alert, Row, Spin, Col, Divider, Typography, Tag } from 'antd'
+import { Alert, Row, Spin, Col, Divider } from 'antd'
 import ServerBookingCode from '../bookingCode/ServerBookingCode'
 import { getProjectById } from '@/app/actions/projects/crudActions'
 
-const { Text } = Typography;
+// Typography components are used in other files
 
 const ProjectTabData = ({ serverId }: { serverId: number }) => {
   const { data: server, error: serverError, isLoading: isLoadingServer } = useQuery({

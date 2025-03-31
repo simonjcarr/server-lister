@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import { List, Typography, Button, Popover, Empty, Badge, Spin, Checkbox, Divider } from 'antd'
+import { List, Button, Popover, Empty, Badge, Spin, Checkbox } from 'antd'
 import { BellOutlined, CheckOutlined, DeleteOutlined } from '@ant-design/icons'
 import { useNotifications } from './NotificationContext'
 import { useTheme } from '@/app/theme/ThemeProvider'

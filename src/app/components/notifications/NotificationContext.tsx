@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, useState, useEffect, ReactNode, useRef } from 'react'
+import { createContext, useContext, useState, useEffect, ReactNode, useRef, useCallback } from 'react'
 import { Badge, notification, Button } from 'antd'
 import { BellOutlined } from '@ant-design/icons'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
@@ -37,7 +37,8 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   const [api, contextHolder] = notification.useNotification()
   const eventSourceRef = useRef<EventSource | null>(null)
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
-  const [sseConnected, setSseConnected] = useState(false)
+  // We still need setSseConnected for the eventListener
+  const [, setSseConnected] = useState(false)
 
   // Fetch notifications
   const { data: notifications = [] } = useQuery<UserNotification[]>({
@@ -60,8 +61,8 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   // Calculate unread count
   const unreadCount = notifications.filter(n => !n.read).length
 
-  // Mark a notification as read
-  const markAsRead = async (id: number) => {
+  // Mark a notification as read (wrapped in useCallback to prevent dependency issues)
+  const markAsRead = useCallback(async (id: number) => {
     try {
       const res = await fetch(`/api/notifications/${id}`, {
         method: 'PATCH',
@@ -76,7 +77,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error('Error marking notification as read:', error)
     }
-  }
+  }, [queryClient, session?.user?.id])
 
   // Mark all notifications as read
   const markAllAsRead = async () => {
@@ -113,7 +114,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   }
 
   // Function to establish SSE connection
-  const connectToSSE = () => {
+  const connectToSSE = useCallback(() => {
     if (!session?.user?.id) return
     
     try {
@@ -170,7 +171,24 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
             placement: 'topRight',
             duration: 5,
             onClick: () => {
-              markAsRead(newNotification.id)
+              // Define the mark as read inline instead of using the function
+              // to avoid the circular dependency
+              (async (notificationId: number) => {
+                try {
+                  const res = await fetch(`/api/notifications/${notificationId}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ read: true }),
+                  })
+                  
+                  if (!res.ok) throw new Error('Failed to mark notification as read')
+                  
+                  // Invalidate query to refresh the notifications
+                  queryClient.invalidateQueries({ queryKey: ['notifications', session?.user?.id] })
+                } catch (error) {
+                  console.error('Error marking notification as read:', error)
+                }
+              })(newNotification.id)
             },
           })
         } catch (error) {
@@ -201,7 +219,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       console.error('Error setting up SSE connection:', error)
       setSseConnected(false)
     }
-  }
+  }, [session?.user?.id, queryClient, api])
   
   // Set up SSE connection
   useEffect(() => {
@@ -219,7 +237,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
         reconnectTimeoutRef.current = null
       }
     }
-  }, [session?.user?.id]) // Re-connect if user ID changes
+  }, [session?.user?.id, connectToSSE]) // Re-connect if user ID changes
 
   return (
     <NotificationContext.Provider value={{ notifications, unreadCount, markAsRead, markAllAsRead, deleteNotifications }}>

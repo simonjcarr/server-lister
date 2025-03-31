@@ -2,12 +2,14 @@
 
 import React from 'react';
 import { Card, Transfer, Button, App } from 'antd';
+import type { TransferDirection } from 'antd/es/transfer';
+import type { Key } from 'react';
 import { debugDumpUserServers } from '@/app/actions/server/userServerActions';
 import { FaServer } from 'react-icons/fa';
 
 // This page creates a simple Transfer component with hardcoded data to test the component in isolation
 const DebugTransfer = () => {
-  const [targetKeys, setTargetKeys] = React.useState<string[]>(['1', '3']);
+  const [targetKeys, setTargetKeys] = React.useState<Key[]>(['1', '3']);
 
   // Example data for Transfer component
   const mockData = [
@@ -38,7 +40,8 @@ const DebugTransfer = () => {
   ];
 
   // Event handlers for the Transfer component
-  const handleChange = (nextTargetKeys: string[]) => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const handleChange = (nextTargetKeys: Key[], _direction: TransferDirection, _moveKeys: Key[]) => {
     console.log('Target Keys changed:', nextTargetKeys);
     setTargetKeys(nextTargetKeys);
   };
@@ -48,7 +51,7 @@ const DebugTransfer = () => {
     console.log('Database dump result:', result);
   };
 
-  const filterOption = (inputValue: string, item: any) => {
+  const filterOption = (inputValue: string, item: { title: string, description: string }) => {
     return item.title.indexOf(inputValue) !== -1 || item.description.indexOf(inputValue) !== -1;
   };
 
@@ -58,7 +61,7 @@ const DebugTransfer = () => {
         <Card title="Debug Transfer Component" className="mb-4">
           <p className="mb-4">
             This is a test page for the Transfer component with hardcoded data.
-            Initial target keys are set to ['1', '3'].
+            Initial target keys are set to [&apos;1&apos;, &apos;3&apos;].
           </p>
           
           <Button onClick={handleDumpDatabase} className="mb-4">Dump Database</Button>

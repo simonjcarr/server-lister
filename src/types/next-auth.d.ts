@@ -1,5 +1,5 @@
 import { DefaultSession } from "next-auth";
-import { JWT } from "next-auth/jwt";
+// JWT import is used in the module declarations below
 
 declare module "next-auth" {
   /**

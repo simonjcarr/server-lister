@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { getServerById, updateServer } from "@/app/actions/server/crudActions"
 import FormInputSelectLocation from '../location/FormInputSelectLocation'
 import { UpdateServer } from '@/db/schema'
-import { useRouter } from 'next/navigation'
+// Removed unused router import
 import FormInputSelectBusiness from '../business/FormInputSelectBusiness'
 import FormInputSelectProject from '../project/FormInputSelectProject'
 import FormInputSelectOS from '../os/FormInputSelectOS'
@@ -13,7 +13,7 @@ import { useState } from 'react'
 const FormEditServer = ({ children, serverId }: { children: React.ReactNode, serverId: number }) => {
   const queryClient = useQueryClient()
   const [open, setOpen] = useState(false);
-  const router = useRouter()
+  // Removed unused router variable
   const [form] = Form.useForm();
   const { data: serverData, isLoading, error } = useQuery({
     queryKey: ["server", serverId],

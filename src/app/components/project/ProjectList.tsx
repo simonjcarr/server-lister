@@ -5,7 +5,8 @@ import {
   deleteProject
 } from "@/app/actions/projects/crudActions";
 import { getProjectsWithBookingCodes } from "@/app/actions/bookingCodes/crudActions";
-import { Card, Input, Table, Typography, Space, Button, App, Popconfirm } from "antd";
+import { Card, Input, Table, Space, Button, App, Popconfirm } from "antd";
+import type { ColumnsType } from 'antd/es/table';
 import { SearchOutlined, EditOutlined, DeleteOutlined } from "@ant-design/icons";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -35,8 +36,8 @@ const ProjectList = ({ compact = false, onSelect }: ProjectListProps) => {
 
   // Create a map of projectId to booking code group name
   const projectBookingCodeMap = new Map<number, string>();
-  if (bookingCodesData?.success) {
-    bookingCodesData.data.forEach((item: any) => {
+  if (bookingCodesData?.success && bookingCodesData.data) {
+    bookingCodesData.data.forEach((item) => {
       if (item.bookingCodeGroupName) {
         projectBookingCodeMap.set(item.projectId, item.bookingCodeGroupName);
       }
@@ -62,13 +63,13 @@ const ProjectList = ({ compact = false, onSelect }: ProjectListProps) => {
       } else {
         message.error(result.error || "Failed to delete project");
       }
-    } catch (error) {
+    } catch {
       message.error("An error occurred while deleting the project");
     }
   };
 
   // Define columns based on compact mode and requirements
-  const columns = [
+  const columns: ColumnsType<ProjectData> = [
     {
       title: "Name",
       dataIndex: "name",
@@ -90,7 +91,7 @@ const ProjectList = ({ compact = false, onSelect }: ProjectListProps) => {
     {
       title: "Booking Code Group",
       key: "bookingCodeGroup",
-      render: (_: any, record: ProjectData) => 
+      render: (_: unknown, record: ProjectData) => 
         projectBookingCodeMap.get(record.id) || "-",
     },
   ];
@@ -101,7 +102,7 @@ const ProjectList = ({ compact = false, onSelect }: ProjectListProps) => {
       title: "Actions",
       key: "actions",
       width: 120,
-      render: (_: any, record: ProjectData) => (
+      render: (_: unknown, record: ProjectData) => (
         <Space size="small" onClick={(e) => e.stopPropagation()}>
           <Link href={`/project/edit/${record.id}`} passHref>
             <Button

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Button, Form, Input, Modal, notification } from 'antd';
 import { updateCollection } from '@/app/actions/server/collectionActions';
 import { useQueryClient } from '@tanstack/react-query';

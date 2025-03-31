@@ -46,7 +46,8 @@ const ProjectBookingCodeDisplay: React.FC<ProjectBookingCodeDisplayProps> = ({ p
     );
   }
 
-  const { data: bookingCode, isExpired } = data;
+  const bookingCode = data.data;
+  const isExpired = 'isExpired' in data ? data.isExpired : false;
 
   return (
     <Card 

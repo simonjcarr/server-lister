@@ -10,13 +10,15 @@ import {
   insertProjectBookingCodeSchema,
   updateBookingCodeGroupSchema,
   updateBookingCodeSchema,
-  SelectBookingCodeGroup,
-  SelectBookingCode,
-  SelectProjectBookingCode,
 } from "@/db/schema/bookingCodes";
 import { projects } from "@/db/schema/projects";
-import { and, asc, desc, eq, gte, lt, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gte, lt } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
+
+// Define error type to replace any
+type ErrorWithMessage = {
+  message: string;
+};
 
 // BookingCodeGroup CRUD operations
 export async function createBookingCodeGroup(data: {
@@ -33,9 +35,10 @@ export async function createBookingCodeGroup(data: {
     const result = await db.insert(bookingCodeGroups).values(validatedData).returning();
     revalidatePath("/project/booking-codes");
     return { success: true, data: result[0] };
-  } catch (error: any) {
-    console.error("Error creating booking code group:", error);
-    return { success: false, error: error.message || "Failed to create booking code group" };
+  } catch (error) {
+    const typedError = error as ErrorWithMessage;
+    console.error("Error creating booking code group:", typedError);
+    return { success: false, error: typedError.message || "Failed to create booking code group" };
   }
 }
 
@@ -57,9 +60,10 @@ export async function updateBookingCodeGroup(
 
     revalidatePath("/project/booking-codes");
     return { success: true, data: result[0] };
-  } catch (error: any) {
-    console.error("Error updating booking code group:", error);
-    return { success: false, error: error.message || "Failed to update booking code group" };
+  } catch (error) {
+    const typedError = error as ErrorWithMessage;
+    console.error("Error updating booking code group:", typedError);
+    return { success: false, error: typedError.message || "Failed to update booking code group" };
   }
 }
 
@@ -73,9 +77,10 @@ export async function deleteBookingCodeGroup(id: number) {
 
     revalidatePath("/project/booking-codes");
     return { success: true, data: result[0] };
-  } catch (error: any) {
-    console.error("Error deleting booking code group:", error);
-    return { success: false, error: error.message || "Failed to delete booking code group" };
+  } catch (error) {
+    const typedError = error as ErrorWithMessage;
+    console.error("Error deleting booking code group:", typedError);
+    return { success: false, error: typedError.message || "Failed to delete booking code group" };
   }
 }
 
@@ -86,9 +91,10 @@ export async function getBookingCodeGroups() {
       .from(bookingCodeGroups)
       .orderBy(asc(bookingCodeGroups.name));
     return { success: true, data: result };
-  } catch (error: any) {
-    console.error("Error fetching booking code groups:", error);
-    return { success: false, error: error.message || "Failed to fetch booking code groups" };
+  } catch (error) {
+    const typedError = error as ErrorWithMessage;
+    console.error("Error fetching booking code groups:", typedError);
+    return { success: false, error: typedError.message || "Failed to fetch booking code groups" };
   }
 }
 
@@ -100,9 +106,10 @@ export async function getBookingCodeGroupById(id: number) {
       .where(eq(bookingCodeGroups.id, id));
     
     return { success: true, data: result[0] };
-  } catch (error: any) {
-    console.error("Error fetching booking code group:", error);
-    return { success: false, error: error.message || "Failed to fetch booking code group" };
+  } catch (error) {
+    const typedError = error as ErrorWithMessage;
+    console.error("Error fetching booking code group:", typedError);
+    return { success: false, error: typedError.message || "Failed to fetch booking code group" };
   }
 }
 
@@ -125,9 +132,10 @@ export async function createBookingCode(data: {
     const result = await db.insert(bookingCodes).values(validatedData).returning();
     revalidatePath("/project/booking-codes");
     return { success: true, data: result[0] };
-  } catch (error: any) {
-    console.error("Error creating booking code:", error);
-    return { success: false, error: error.message || "Failed to create booking code" };
+  } catch (error) {
+    const typedError = error as ErrorWithMessage;
+    console.error("Error creating booking code:", typedError);
+    return { success: false, error: typedError.message || "Failed to create booking code" };
   }
 }
 
@@ -155,9 +163,10 @@ export async function updateBookingCode(
 
     revalidatePath("/project/booking-codes");
     return { success: true, data: result[0] };
-  } catch (error: any) {
-    console.error("Error updating booking code:", error);
-    return { success: false, error: error.message || "Failed to update booking code" };
+  } catch (error) {
+    const typedError = error as ErrorWithMessage;
+    console.error("Error updating booking code:", typedError);
+    return { success: false, error: typedError.message || "Failed to update booking code" };
   }
 }
 
@@ -170,28 +179,33 @@ export async function deleteBookingCode(id: number) {
 
     revalidatePath("/project/booking-codes");
     return { success: true, data: result[0] };
-  } catch (error: any) {
-    console.error("Error deleting booking code:", error);
-    return { success: false, error: error.message || "Failed to delete booking code" };
+  } catch (error) {
+    const typedError = error as ErrorWithMessage;
+    console.error("Error deleting booking code:", typedError);
+    return { success: false, error: typedError.message || "Failed to delete booking code" };
   }
 }
 
 export async function getBookingCodes(groupId?: number) {
   try {
-    let query = db
+    if (groupId) {
+      const result = await db
+        .select()
+        .from(bookingCodes)
+        .where(eq(bookingCodes.groupId, groupId))
+        .orderBy(desc(bookingCodes.validFrom));
+      return { success: true, data: result };
+    }
+    
+    const result = await db
       .select()
       .from(bookingCodes)
       .orderBy(desc(bookingCodes.validFrom));
-
-    if (groupId) {
-      query = query.where(eq(bookingCodes.groupId, groupId));
-    }
-
-    const result = await query;
     return { success: true, data: result };
-  } catch (error: any) {
-    console.error("Error fetching booking codes:", error);
-    return { success: false, error: error.message || "Failed to fetch booking codes" };
+  } catch (error) {
+    const typedError = error as ErrorWithMessage;
+    console.error("Error fetching booking codes:", typedError);
+    return { success: false, error: typedError.message || "Failed to fetch booking codes" };
   }
 }
 
@@ -203,9 +217,10 @@ export async function getBookingCodeById(id: number) {
       .where(eq(bookingCodes.id, id));
     
     return { success: true, data: result[0] };
-  } catch (error: any) {
-    console.error("Error fetching booking code:", error);
-    return { success: false, error: error.message || "Failed to fetch booking code" };
+  } catch (error) {
+    const typedError = error as ErrorWithMessage;
+    console.error("Error fetching booking code:", typedError);
+    return { success: false, error: typedError.message || "Failed to fetch booking code" };
   }
 }
 
@@ -251,9 +266,10 @@ export async function getActiveBookingCode(groupId: number) {
       data: recentExpired.length > 0 ? recentExpired[0] : null,
       isExpired: recentExpired.length > 0
     };
-  } catch (error: any) {
-    console.error("Error fetching active booking code:", error);
-    return { success: false, error: error.message || "Failed to fetch active booking code" };
+  } catch (error) {
+    const typedError = error as ErrorWithMessage;
+    console.error("Error fetching active booking code:", typedError);
+    return { success: false, error: typedError.message || "Failed to fetch active booking code" };
   }
 }
 
@@ -273,9 +289,10 @@ export async function assignBookingCodeToProject(data: {
     revalidatePath("/project/booking-codes");
     revalidatePath(`/project/${data.projectId}`);
     return { success: true, data: result[0] };
-  } catch (error: any) {
-    console.error("Error assigning booking code to project:", error);
-    return { success: false, error: error.message || "Failed to assign booking code to project" };
+  } catch (error) {
+    const typedError = error as ErrorWithMessage;
+    console.error("Error assigning booking code to project:", typedError);
+    return { success: false, error: typedError.message || "Failed to assign booking code to project" };
   }
 }
 
@@ -294,9 +311,10 @@ export async function removeBookingCodeFromProject(projectId: number, bookingCod
     revalidatePath("/project/booking-codes");
     revalidatePath(`/project/${projectId}`);
     return { success: true, data: result[0] };
-  } catch (error: any) {
-    console.error("Error removing booking code from project:", error);
-    return { success: false, error: error.message || "Failed to remove booking code from project" };
+  } catch (error) {
+    const typedError = error as ErrorWithMessage;
+    console.error("Error removing booking code from project:", typedError);
+    return { success: false, error: typedError.message || "Failed to remove booking code from project" };
   }
 }
 
@@ -318,9 +336,10 @@ export async function getProjectBookingCodes(projectId: number) {
       .where(eq(projectBookingCodes.projectId, projectId));
 
     return { success: true, data: result };
-  } catch (error: any) {
-    console.error("Error fetching project booking codes:", error);
-    return { success: false, error: error.message || "Failed to fetch project booking codes" };
+  } catch (error) {
+    const typedError = error as ErrorWithMessage;
+    console.error("Error fetching project booking codes:", typedError);
+    return { success: false, error: typedError.message || "Failed to fetch project booking codes" };
   }
 }
 
@@ -348,11 +367,12 @@ export async function getBookingCodeGroupsWithCodes() {
     );
 
     return { success: true, data: result };
-  } catch (error: any) {
-    console.error("Error fetching booking code groups with codes:", error);
+  } catch (error) {
+    const typedError = error as ErrorWithMessage;
+    console.error("Error fetching booking code groups with codes:", typedError);
     return {
       success: false,
-      error: error.message || "Failed to fetch booking code groups with codes",
+      error: typedError.message || "Failed to fetch booking code groups with codes",
     };
   }
 }
@@ -378,11 +398,12 @@ export async function getProjectsWithBookingCodes() {
       .orderBy(asc(projects.name));
 
     return { success: true, data: result };
-  } catch (error: any) {
-    console.error("Error fetching projects with booking codes:", error);
+  } catch (error) {
+    const typedError = error as ErrorWithMessage;
+    console.error("Error fetching projects with booking codes:", typedError);
     return {
       success: false,
-      error: error.message || "Failed to fetch projects with booking codes",
+      error: typedError.message || "Failed to fetch projects with booking codes",
     };
   }
 }
@@ -424,11 +445,12 @@ export async function getProjectActiveBookingCode(projectId: number) {
         isExpired: activeCodeResult.isExpired || false,
       },
     };
-  } catch (error: any) {
-    console.error("Error fetching project active booking code:", error);
+  } catch (error) {
+    const typedError = error as ErrorWithMessage;
+    console.error("Error fetching project active booking code:", typedError);
     return {
       success: false,
-      error: error.message || "Failed to fetch project active booking code",
+      error: typedError.message || "Failed to fetch project active booking code",
     };
   }
 }

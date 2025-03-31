@@ -19,7 +19,11 @@ import FormAddServer from './FormAddServer'
 
 const { Title } = Typography
 
-type ServerData = Awaited<ReturnType<typeof getServers>>['data'][number] & { key: number }
+// Define the server data type with all needed fields
+type ServerData = Awaited<ReturnType<typeof getServers>>['data'][number] & { 
+  key: number;
+  onboarded?: boolean;
+}
 
 function ServerList() {
   const router = useRouter()
@@ -39,7 +43,7 @@ function ServerList() {
   const [searchText, setSearchText] = useState('')
   
   // Callback for handling filter changes
-  const handleFilterChange = useCallback((key: keyof ServerFilter, value: any) => {
+  const handleFilterChange = useCallback((key: keyof ServerFilter, value: string | number | boolean | null | undefined) => {
     setFilters(prev => ({
       ...prev,
       [key]: value,
@@ -262,8 +266,8 @@ function ServerList() {
   }
 
   // Map the Ant Design field keys to our backend sort field names
-  const mapFieldToSortField = (field: string): string => {
-    const fieldMap: Record<string, string> = {
+  const mapFieldToSortField = (field: string): ServerSort['field'] => {
+    const fieldMap: Record<string, ServerSort['field']> = {
       // Direct mappings
       'hostname': 'hostname',
       'ipv4': 'ipv4',
@@ -304,15 +308,14 @@ function ServerList() {
       const sortField = mapFieldToSortField(fieldName)
 
       setSort({
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        field: sortField as any,
+          field: sortField,
         direction: sorter.order === 'ascend' ? 'asc' : 'desc',
       })
     }
   }
 
   // Expose the filter change handler through the component interface
-  const handleExternalFilterChange = (key: keyof ServerFilter, value: number | undefined) => {
+  const handleExternalFilterChange = (key: keyof ServerFilter, value: string | number | undefined) => {
     handleFilterChange(key, value);
   }
 

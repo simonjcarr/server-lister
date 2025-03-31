@@ -3,7 +3,7 @@
 import { db } from "@/db";
 import { osFamily, os } from "@/db/schema";
 import { eq } from "drizzle-orm";
-import type { InsertOSFamily, UpdateOSFamily, SelectOSFamily } from "@/db/schema";
+import type { InsertOSFamily, UpdateOSFamily } from "@/db/schema";
 
 export async function getOSFamilies() {
   try {
@@ -48,12 +48,12 @@ export async function updateOSFamily(id: number, data: UpdateOSFamily) {
 export async function deleteOSFamily(id: number) {
   try {
     // First check if any OS is using this family
-    const osCount = await db
-      .select({ count: db.fn.count() })
+    const osRecords = await db
+      .select()
       .from(os)
       .where(eq(os.osFamilyId, id));
     
-    if (osCount[0].count > 0) {
+    if (osRecords.length > 0) {
       return { 
         success: false,
         message: "Cannot delete OS Family that is in use by Operating Systems"

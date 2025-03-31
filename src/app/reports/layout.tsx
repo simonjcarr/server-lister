@@ -1,28 +1,20 @@
 'use client'
 import { Card } from 'antd';
-import React, { createContext, useContext } from 'react'
+import React from 'react'
 import ReportDrawer from '../components/reports/ReportDrawer';
 import { MenuOutlined, ReloadOutlined } from '@ant-design/icons';
 import { usePathname } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
+import { ReportRefreshContext } from './reportRefreshContext';
 
-// Create a context to expose refetch functionality
-export const ReportRefreshContext = createContext({
-  refreshReport: () => {},
-});
-
-export function useReportRefresh() {
-  return useContext(ReportRefreshContext);
-}
 
 
 export default function ReportLayout({
   children,
-  showRefresh = true,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-  showRefresh?: boolean;
-}>) {
+}) {
+  const showRefresh = true;
   const pathname = usePathname();
   const queryClient = useQueryClient();
   

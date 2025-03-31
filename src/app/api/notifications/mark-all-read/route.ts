@@ -1,11 +1,11 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { db } from '@/db';
 import { eq, and } from 'drizzle-orm';
 import { notifications } from '@/db/schema';
 import { auth } from '@/auth';
 
 // POST /api/notifications/mark-all-read - Mark all notifications as read
-export async function POST(request: NextRequest) {
+export async function POST() {
   try {
     const session = await auth();
     if (!session?.user?.id) {

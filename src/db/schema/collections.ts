@@ -1,7 +1,6 @@
 import { pgTable, text, timestamp, serial, uniqueIndex, index, integer } from "drizzle-orm/pg-core";
 import { createInsertSchema, createSelectSchema, createUpdateSchema } from "drizzle-zod";
 import { z } from "zod";
-import { type PgTableWithColumns } from "drizzle-orm/pg-core";
 
 // Import the actual tables for references
 import { servers } from './servers';

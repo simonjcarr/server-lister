@@ -2,7 +2,7 @@
 
 import { db } from "@/db";
 import { servers } from "@/db/schema";
-import { count, desc, sql } from "drizzle-orm";
+import { count, sql } from "drizzle-orm";
 
 // Get server activity (creation/updates) over the past 30 days
 export async function getRecentServerActivity() {
@@ -42,18 +42,26 @@ export async function getRecentServerActivity() {
 
     // Populate with actual data
     creationActivity.forEach(item => {
-      const dateStr = new Date(item.date).toISOString().split('T')[0];
-      const dayEntry = last30Days.find(day => day.date === dateStr);
-      if (dayEntry) {
-        dayEntry.created = Number(item.count);
+      if (item.date) {
+        // Ensure date is a string or Date object before converting
+        const dateObj = item.date instanceof Date ? item.date : new Date(String(item.date));
+        const dateStr = dateObj.toISOString().split('T')[0];
+        const dayEntry = last30Days.find(day => day.date === dateStr);
+        if (dayEntry) {
+          dayEntry.created = Number(item.count);
+        }
       }
     });
 
     updateActivity.forEach(item => {
-      const dateStr = new Date(item.date).toISOString().split('T')[0];
-      const dayEntry = last30Days.find(day => day.date === dateStr);
-      if (dayEntry) {
-        dayEntry.updated = Number(item.count);
+      if (item.date) {
+        // Ensure date is a string or Date object before converting
+        const dateObj = item.date instanceof Date ? item.date : new Date(String(item.date));
+        const dateStr = dateObj.toISOString().split('T')[0];
+        const dayEntry = last30Days.find(day => day.date === dateStr);
+        if (dayEntry) {
+          dayEntry.updated = Number(item.count);
+        }
       }
     });
 

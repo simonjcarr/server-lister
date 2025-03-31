@@ -1,11 +1,10 @@
 'use server'
 
 import { db } from "@/db";
-import { asc, count, desc, eq, and, like } from "drizzle-orm";
+import { asc, count, desc, eq, and } from "drizzle-orm";
 import { chatCategories, chatMessages, users } from "@/db/schema";
 import { auth } from "@/auth";
 import { revalidatePath } from "next/cache";
-import { headers } from "next/headers";
 
 // Type for message payload
 export type ChatMessage = {

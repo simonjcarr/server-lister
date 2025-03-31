@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import Image from 'next/image';
 import { Button, Card, Empty, Space, Typography, List, Tag, Spin,  Collapse, Radio, Table, Row, Col, } from 'antd';
 import { CloudServerOutlined, LinkOutlined, AppstoreOutlined, UnorderedListOutlined, TableOutlined, } from '@ant-design/icons';
 import { SelectDrawing } from '@/db/schema';
@@ -256,7 +257,7 @@ const DrawingPreview: React.FC<DrawingPreviewProps> = ({ drawing }) => {
         }}
       >
         {isValidBase64(drawing.webp) ? (
-          <img
+          <Image
             alt={drawing.name}
             src={`data:image/png;base64,${drawing.webp}`}
             style={{
@@ -265,6 +266,8 @@ const DrawingPreview: React.FC<DrawingPreviewProps> = ({ drawing }) => {
               objectFit: 'contain',
               boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)'
             }}
+            width={800}
+            height={600}
           />
         ) : (
           <div 

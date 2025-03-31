@@ -19,7 +19,7 @@ const FormEditOS = ({ children, id }: { children: React.ReactNode, id: number })
   // Fetch OS data
   const { data: os, isLoading, isFetching } = useQuery<SelectOS, Error>({ // Specify types
     queryKey: ['os', id],
-    queryFn: () => getOSById(id, Date.now()), // Add timestamp to bust cache
+    queryFn: () => getOSById(id), // Remove the timestamp parameter
     enabled: open, // Only fetch when drawer is open
     staleTime: 0, // Always consider data stale
     refetchOnWindowFocus: false, // Don't refetch on window focus

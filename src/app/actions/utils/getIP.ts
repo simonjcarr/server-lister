@@ -11,7 +11,7 @@ export async function getIP(hostname: string) {
   try {
     const result = await dns.promises.lookup(hostname);
     return { ip: result.address }
-  } catch (error) {
+  } catch {
     return { ip: null }
   }
 }

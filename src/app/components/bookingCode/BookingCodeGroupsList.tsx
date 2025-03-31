@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Table, Button, Space, Popconfirm, Card, Typography, Tag, Tooltip, message, App } from 'antd';
+import { Table, Button, Space, Popconfirm, Card, Typography, Tag, message, App } from 'antd';
 import { 
   DeleteOutlined, 
   EditOutlined, 
@@ -19,6 +19,32 @@ import FormEditBookingCode from './FormEditBookingCode';
 import dayjs from 'dayjs';
 
 const { Title, Text } = Typography;
+
+// Define proper TypeScript interfaces for our data structures
+interface BookingCode {
+  id: number;
+  code: string;
+  description: string | null;
+  validFrom: Date | string;
+  validTo: Date | string;
+  enabled: boolean;
+  groupId: number;
+  key?: number;
+}
+
+interface BookingCodeGroup {
+  id: number;
+  name: string;
+  description: string | null;
+  codes: BookingCode[];
+  key?: number;
+}
+
+interface ApiResponse<T> {
+  success: boolean;
+  data: T;
+  error?: string;
+}
 
 const BookingCodeGroupsList: React.FC = () => {
   const queryClient = useQueryClient();
@@ -44,9 +70,12 @@ const BookingCodeGroupsList: React.FC = () => {
     queryFn: getBookingCodeGroupsWithCodes,
   });
 
-  const deleteGroupMutation = useMutation({
-    mutationFn: deleteBookingCodeGroup,
-    onSuccess: (data) => {
+  const deleteGroupMutation = useMutation<ApiResponse<unknown>, Error, number>({
+    mutationFn: async (id: number) => {
+      const result = await deleteBookingCodeGroup(id);
+      return result as ApiResponse<unknown>;
+    },
+    onSuccess: (data: ApiResponse<unknown>) => {
       if (data.success) {
         messageApi.success('Booking code group deleted successfully');
         refetch();
@@ -59,9 +88,12 @@ const BookingCodeGroupsList: React.FC = () => {
     },
   });
 
-  const deleteCodeMutation = useMutation({
-    mutationFn: deleteBookingCode,
-    onSuccess: (data) => {
+  const deleteCodeMutation = useMutation<ApiResponse<unknown>, Error, number>({
+    mutationFn: async (id: number) => {
+      const result = await deleteBookingCode(id);
+      return result as ApiResponse<unknown>;
+    },
+    onSuccess: (data: ApiResponse<unknown>) => {
       if (data.success) {
         messageApi.success('Booking code deleted successfully');
         refetch();
@@ -78,7 +110,7 @@ const BookingCodeGroupsList: React.FC = () => {
     queryClient.invalidateQueries({ queryKey: ['bookingCodeGroupsWithCodes'] });
   };
 
-  const handleExpand = (expanded: boolean, record: any) => {
+  const handleExpand = (expanded: boolean, record: BookingCodeGroup) => {
     setExpandedRowKeys(expanded ? [record.id] : []);
   };
 
@@ -97,7 +129,7 @@ const BookingCodeGroupsList: React.FC = () => {
     {
       title: 'Actions',
       key: 'actions',
-      render: (_: any, record: any) => (
+      render: (_: string, record: BookingCodeGroup) => (
         <Space size="small">
           <FormEditBookingCodeGroup
             bookingCodeGroupId={record.id}
@@ -151,7 +183,7 @@ const BookingCodeGroupsList: React.FC = () => {
     );
   };
 
-  const getValidityStatusTag = (validFrom: string, validTo: string) => {
+  const getValidityStatusTag = (validFrom: Date | string, validTo: Date | string) => {
     const now = dayjs();
     const fromDate = dayjs(validFrom);
     const toDate = dayjs(validTo);
@@ -165,7 +197,7 @@ const BookingCodeGroupsList: React.FC = () => {
     }
   };
 
-  const expandedRowRender = (record: any) => {
+  const expandedRowRender = (record: BookingCodeGroup) => {
     const codeColumns = [
       {
         title: 'Booking Code',
@@ -182,13 +214,13 @@ const BookingCodeGroupsList: React.FC = () => {
         title: 'Valid From',
         dataIndex: 'validFrom',
         key: 'validFrom',
-        render: (date: string) => dayjs(date).format('YYYY-MM-DD'),
+        render: (date: Date | string) => dayjs(date).format('YYYY-MM-DD'),
       },
       {
         title: 'Valid To',
         dataIndex: 'validTo',
         key: 'validTo',
-        render: (date: string) => {
+        render: (date: Date | string) => {
           const expiryDate = dayjs(date);
           const today = dayjs();
           const daysUntilExpiry = expiryDate.diff(today, 'day');
@@ -210,7 +242,7 @@ const BookingCodeGroupsList: React.FC = () => {
       {
         title: 'Status',
         key: 'status',
-        render: (_: any, code: any) => (
+        render: (_: string, code: BookingCode) => (
           <Space>
             {getEnabledStatusTag(code.enabled)}
             {getValidityStatusTag(code.validFrom, code.validTo)}
@@ -220,7 +252,7 @@ const BookingCodeGroupsList: React.FC = () => {
       {
         title: 'Actions',
         key: 'actions',
-        render: (_: any, code: any) => (
+        render: (_: string, code: BookingCode) => (
           <Space size="small">
             <FormEditBookingCode
               bookingCodeId={code.id}
@@ -260,7 +292,7 @@ const BookingCodeGroupsList: React.FC = () => {
         {record.codes && record.codes.length > 0 ? (
           <Table
             columns={codeColumns}
-            dataSource={record.codes.map((code: any) => ({ ...code, key: code.id }))}
+            dataSource={record.codes.map((code: BookingCode) => ({ ...code, key: code.id }))}
             pagination={false}
             size="small"
           />
@@ -286,7 +318,7 @@ const BookingCodeGroupsList: React.FC = () => {
         
         <Table
           columns={columns}
-          dataSource={data?.success ? data.data.map((group: any) => ({ ...group, key: group.id })) : []}
+          dataSource={data?.success && data.data ? data.data.map((group: BookingCodeGroup) => ({ ...group, key: group.id })) : []}
           loading={isLoading}
           expandable={{
             expandedRowRender,

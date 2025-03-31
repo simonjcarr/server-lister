@@ -31,7 +31,7 @@ export async function getFavoriteServerIds() {
     `);
     
     // Handle possible case sensitivity
-    const serverIds = result.rows.map((row: any) => {
+    const serverIds = result.rows.map((row: Record<string, unknown>) => {
       if ('serverId' in row) return row.serverId;
       if ('serverid' in row) return row.serverid;
       if ('SERVERID' in row) return row.SERVERID;
@@ -186,7 +186,7 @@ export async function getUserFavoriteServersWithDetailsDirect() {
     `);
 
     // Format the result to match the expected structure
-    const formattedResult = result.rows.map((row: any) => {
+    const formattedResult = result.rows.map((row: Record<string, unknown>) => {
       // Extract the serverId, carefully handling case sensitivity
       let serverId;
       if ('serverId' in row) serverId = row.serverId;

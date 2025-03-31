@@ -8,7 +8,7 @@ import FormAddOS from '../components/os/FormAddOS'
 import ListOSFamily from '../components/os/ListOSFamily'
 import { CalendarOutlined, PlusOutlined, DeleteOutlined, EditOutlined } from '@ant-design/icons'
 import type { TabsProps } from 'antd'
-const { TabPane } = Tabs;
+import type { ColumnType } from 'antd/es/table'
 
 type TabKey = 'os' | 'osFamily';
 
@@ -62,7 +62,7 @@ const Page = () => {
   };
 
   // Define columns for the OS table
-  const columns = [
+  const columns: ColumnType<OSWithPatchVersion>[] = [
     {
       title: 'Name',
       dataIndex: 'name',
@@ -79,9 +79,9 @@ const Page = () => {
       dataIndex: 'familyName',
       key: 'familyName',
       render: (text: string | null) => text || 'Not Assigned',
-      filters: Array.from(new Set(data?.map(os => os.familyName).filter(Boolean) || []))
-        .map(family => ({ text: family, value: family })),
-      onFilter: (value: string, record: OSWithPatchVersion) => record.familyName === value,
+      filters: Array.from(new Set(data?.map(os => os.familyName).filter(Boolean) || [])) 
+        .map(family => ({ text: family, value: family as React.Key })),
+      onFilter: (value, record) => record.familyName === value,
     },
     {
       title: (<div className='flex items-center gap-2'><CalendarOutlined /> EOL Date</div>),

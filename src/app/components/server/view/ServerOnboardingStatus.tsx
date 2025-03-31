@@ -4,10 +4,19 @@ import React, { useState, useEffect, useCallback } from 'react'
 import { Alert, Button, Space, Tooltip, App, Modal, Form, Select, Checkbox, Spin } from 'antd'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { getServerById, updateServer, getBusinessOptions, getLocationOptions, getOSOptions, getProjectOptions } from '@/app/actions/server/crudActions'
-import { CheckCircleOutlined, ExclamationCircleOutlined, EditOutlined } from '@ant-design/icons'
+import { ExclamationCircleOutlined, EditOutlined } from '@ant-design/icons'
 
 interface ServerOnboardingStatusProps {
   serverId: number
+}
+
+interface ServerOnboardingFormValues {
+  projectId: number;
+  locationId: number;
+  business: number;
+  osId: number;
+  itar: boolean;
+  onboardingComplete?: boolean;
 }
 
 const ServerOnboardingStatus: React.FC<ServerOnboardingStatusProps> = ({ serverId }) => {
@@ -48,7 +57,7 @@ const ServerOnboardingStatus: React.FC<ServerOnboardingStatusProps> = ({ serverI
 
   // Mutation to update server with onboarding details
   const { mutate: updateServerDetails, isPending } = useMutation({
-    mutationFn: async (values: any) => {
+    mutationFn: async (values: ServerOnboardingFormValues) => {
       // Include the onboarded flag in the update
       const updateData = {
         ...values,
@@ -77,7 +86,7 @@ const ServerOnboardingStatus: React.FC<ServerOnboardingStatusProps> = ({ serverI
     form.setFieldsValue({
       projectId: server?.projectId,
       locationId: server?.locationId,
-      business: server?.business,
+      business: server?.business || null,
       osId: server?.osId,
       itar: server?.itar || false,
       onboardingComplete: false
@@ -108,7 +117,7 @@ const ServerOnboardingStatus: React.FC<ServerOnboardingStatusProps> = ({ serverI
   }, [form, shouldAutoSetComplete])
 
   // Handle form changes
-  const handleFormChange = (changedValues: any) => {
+  const handleFormChange = (changedValues: Partial<ServerOnboardingFormValues>) => {
     // If the onboardingComplete checkbox was manually changed, disable auto-setting
     if ('onboardingComplete' in changedValues) {
       setShouldAutoSetComplete(false)

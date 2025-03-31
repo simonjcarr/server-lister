@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button, Form, Input, Modal, notification } from 'antd';
 import { createCollection } from '@/app/actions/server/collectionActions';
 import { useQueryClient } from '@tanstack/react-query';
@@ -96,6 +96,8 @@ const FormAddCollection: React.FC<FormAddCollectionProps> = ({ children }) => {
       const result = await createCollection({
         name: values.name,
         description: values.description || null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
       });
 
       // Set the result to trigger the effect instead of showing notification directly

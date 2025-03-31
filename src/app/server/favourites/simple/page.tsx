@@ -4,14 +4,20 @@ import React, { useState, useEffect } from 'react';
 import { Card, Checkbox, List, Button, message, App, Spin } from 'antd';
 import { FaHeart, FaServer } from 'react-icons/fa';
 import { useSession } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
 import { getAllServers, updateUserFavoriteServers, getUserFavoriteServersWithDetailsDirect } from '@/app/actions/server/userServerActions';
+
+interface ServerWithFavorite {
+  id: number;
+  hostname: string;
+  ipv4: string | null;
+  description: string | null;
+  checked: boolean;
+}
 
 const SimpleFavouritesPage = () => {
   const { data: session } = useSession();
-  const router = useRouter();
   const [loading, setLoading] = useState(true);
-  const [servers, setServers] = useState<any[]>([]);
+  const [servers, setServers] = useState<ServerWithFavorite[]>([]);
   const [selectedServerIds, setSelectedServerIds] = useState<number[]>([]);
 
   // Load all servers and user's favorites
@@ -29,7 +35,11 @@ const SimpleFavouritesPage = () => {
         const favorites = await getUserFavoriteServersWithDetailsDirect();
         
         // Set selected server IDs from favorites
-        const favoriteIds = favorites.map(fav => fav.serverId);
+        // Type check favoriteIds
+        const favoriteIds = favorites.map(fav => {
+          const serverId = fav.serverId;
+          return typeof serverId === 'number' ? serverId : Number(serverId);
+        }).filter((id): id is number => !isNaN(id));  // Filter out any NaN values for safety
         setSelectedServerIds(favoriteIds);
         
         // Set servers with checked property
@@ -110,7 +120,7 @@ const SimpleFavouritesPage = () => {
               <span>Manage Favourite Servers (Simple View)</span>
             </div>
           }
-          variant="bordered"
+          variant="outlined"
           className="shadow-md"
         >
           <p className="mb-4">

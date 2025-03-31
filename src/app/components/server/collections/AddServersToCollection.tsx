@@ -8,7 +8,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { SelectCollection } from '@/db/schema';
 import { MdAddCircleOutline } from 'react-icons/md';
 import { TableRowSelection } from 'antd/es/table/interface';
-import { SearchOutlined, FilterOutlined, ClearOutlined, CloseOutlined } from '@ant-design/icons';
+import { SearchOutlined, FilterOutlined, CloseOutlined } from '@ant-design/icons';
 import { useQuery } from '@tanstack/react-query';
 
 interface Server {
@@ -16,14 +16,14 @@ interface Server {
   hostname: string;
   ipv4: string | null;
   description: string | null;
-  osId?: number;
-  osName?: string;
-  projectId?: number;
-  projectName?: string; 
-  businessId?: number;
-  businessName?: string;
-  locationId?: number;
-  locationName?: string;
+  osId: number | null;
+  osName: string | null;
+  projectId: number | null;
+  projectName: string | null; 
+  businessId: number | null;
+  businessName: string | null;
+  locationId: number | null;
+  locationName: string | null;
 }
 
 interface ActionResult {
@@ -46,7 +46,7 @@ const AddServersToCollection: React.FC<AddServersToCollectionProps> = ({ collect
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedServerIds, setSelectedServerIds] = useState<number[]>([]);
-  const [loading, setLoading] = useState(false);
+  // loading state removed as it was unused
   const [actionResult, setActionResult] = useState<ActionResult | null>(null);
   const [warningMessage, setWarningMessage] = useState<string | null>(null);
   const { notification } = App.useApp();
@@ -111,13 +111,13 @@ const AddServersToCollection: React.FC<AddServersToCollectionProps> = ({ collect
   
   // Count active filters
   const getActiveFilterCount = (): number => {
-    let count = 0;
-    if (searchTerm) count++;
-    if (filters.osIds?.length) count++;
-    if (filters.projectIds?.length) count++;
-    if (filters.businessIds?.length) count++;
-    if (filters.locationIds?.length) count++;
-    return count;
+  let count = 0;
+  if (searchTerm) count++;
+  if (filters.osIds && filters.osIds.length > 0) count++;
+  if (filters.projectIds && filters.projectIds.length > 0) count++;
+  if (filters.businessIds && filters.businessIds.length > 0) count++;
+  if (filters.locationIds && filters.locationIds.length > 0) count++;
+  return count;
   };
   
   const activeFilterCount = getActiveFilterCount();
@@ -144,27 +144,31 @@ const AddServersToCollection: React.FC<AddServersToCollectionProps> = ({ collect
     let filtered = availableServersData;
     
     // Apply dropdown filters (multi-select)
-    if (filters.osIds?.length > 0) {
+    if (filters.osIds && filters.osIds.length > 0) {
       filtered = filtered.filter(server => 
-        server.osId !== undefined && filters.osIds?.includes(server.osId)
+        server.osId !== null && 
+        filters.osIds && filters.osIds.includes(server.osId)
       );
     }
     
-    if (filters.projectIds?.length > 0) {
+    if (filters.projectIds && filters.projectIds.length > 0) {
       filtered = filtered.filter(server => 
-        server.projectId !== undefined && filters.projectIds?.includes(server.projectId)
+        server.projectId !== null && 
+        filters.projectIds && filters.projectIds.includes(server.projectId)
       );
     }
     
-    if (filters.businessIds?.length > 0) {
+    if (filters.businessIds && filters.businessIds.length > 0) {
       filtered = filtered.filter(server => 
-        server.businessId !== undefined && filters.businessIds?.includes(server.businessId)
+        server.businessId !== null && 
+        filters.businessIds && filters.businessIds.includes(server.businessId)
       );
     }
     
-    if (filters.locationIds?.length > 0) {
+    if (filters.locationIds && filters.locationIds.length > 0) {
       filtered = filtered.filter(server => 
-        server.locationId !== undefined && filters.locationIds?.includes(server.locationId)
+        server.locationId !== null && 
+        filters.locationIds && filters.locationIds.includes(server.locationId)
       );
     }
 
@@ -340,7 +344,7 @@ const AddServersToCollection: React.FC<AddServersToCollectionProps> = ({ collect
           </Tag>
         )}
         
-        {filters.osIds?.length > 0 && filters.osIds.map(id => {
+        {filters.osIds && filters.osIds.length > 0 && filters.osIds.map(id => {
           const option = osOptions.find(o => o.id === id);
           return option && (
             <Tag 
@@ -356,7 +360,7 @@ const AddServersToCollection: React.FC<AddServersToCollectionProps> = ({ collect
           );
         })}
         
-        {filters.projectIds?.length > 0 && filters.projectIds.map(id => {
+        {filters.projectIds && filters.projectIds.length > 0 && filters.projectIds.map(id => {
           const option = projectOptions.find(p => p.id === id);
           return option && (
             <Tag 
@@ -372,7 +376,7 @@ const AddServersToCollection: React.FC<AddServersToCollectionProps> = ({ collect
           );
         })}
         
-        {filters.businessIds?.length > 0 && filters.businessIds.map(id => {
+        {filters.businessIds && filters.businessIds.length > 0 && filters.businessIds.map(id => {
           const option = businessOptions.find(b => b.id === id);
           return option && (
             <Tag 
@@ -388,7 +392,7 @@ const AddServersToCollection: React.FC<AddServersToCollectionProps> = ({ collect
           );
         })}
         
-        {filters.locationIds?.length > 0 && filters.locationIds.map(id => {
+        {filters.locationIds && filters.locationIds.length > 0 && filters.locationIds.map(id => {
           const option = locationOptions.find(l => l.id === id);
           return option && (
             <Tag 

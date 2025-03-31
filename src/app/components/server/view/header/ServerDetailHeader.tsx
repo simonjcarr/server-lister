@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getServerById } from '@/app/actions/server/crudActions';
 import { getServerBookingCode } from '@/app/actions/server/bookingCode/getServerBookingCode';
-import { Alert, Spin, Space, Divider, Typography, Tooltip, Tag, message } from 'antd';
+import { Alert, Spin, Typography, Tooltip, Tag, message } from 'antd';
 import { CopyOutlined, InfoCircleOutlined, CheckOutlined } from '@ant-design/icons';
 
 const { Text } = Typography;

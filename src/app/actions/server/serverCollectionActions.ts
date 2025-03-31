@@ -6,7 +6,6 @@ import {
   servers,
   servers_collections,
   users,
-  users_servers,
 } from "@/db/schema";
 import { and, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
@@ -14,11 +13,11 @@ import { auth } from '@/auth'
 
 export async function getServerCollections() {
   try {
-    const servers = await db
+    const serverCollections = await db
       .select()
       .from(collections)
       .orderBy(collections.name);
-    return servers;
+    return serverCollections;
   } catch (error) {
     console.error("Error getting server collections:", error);
     return [];
@@ -169,9 +168,9 @@ export async function subscribeUserToCollection(collectionId: number) {
   const session = await auth()
   const userId = session?.user?.id
   if(!userId) {
-    return;
+    return false;
   }
-  const result = await db.insert(server_collection_subscriptions).values({
+  await db.insert(server_collection_subscriptions).values({
     collectionId,
     userId,
     createdAt: new Date(),
@@ -186,7 +185,7 @@ export async function unsubscribeUserFromCollection(collectionId: number) {
   if(!userId) {
     return false;
   }
-  const result = await db
+  await db
     .delete(server_collection_subscriptions)
     .where(
       and(

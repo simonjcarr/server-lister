@@ -1,15 +1,14 @@
 'use client';
 
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Button, Card, Transfer, Spin, App, Alert } from 'antd';
 import { TransferProps } from 'antd/es/transfer';
 import { useSession } from 'next-auth/react';
 import { FaHeart, FaServer } from 'react-icons/fa';
-import { useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getAllServers, updateUserFavoriteServers, getFavoriteServerIds } from '@/app/actions/server/userServerActions';
 
-interface ServerItem {
+interface TransferItem {
   key: string;
   title: string;
   description: string;
@@ -18,7 +17,6 @@ interface ServerItem {
 // Main content component that uses the App context for message API
 const FavouritesPageContent = () => {
   const { data: session, status } = useSession();
-  const router = useRouter();
   const queryClient = useQueryClient();
   const [targetKeys, setTargetKeys] = useState<string[]>([]);
   const { message } = App.useApp();
@@ -47,15 +45,15 @@ const FavouritesPageContent = () => {
 
   // Set targetKeys when favoriteServerIds data loads
   useEffect(() => {
-    if (favoriteServerIds && favoriteServerIds.length > 0) {
+    if (favoriteServerIds && Array.isArray(favoriteServerIds) && favoriteServerIds.length > 0) {
       // Convert to strings since the Transfer component expects string keys
-      const serverIdStrings = favoriteServerIds.map(id => id.toString());
+      const serverIdStrings = favoriteServerIds.map(id => (typeof id === 'number' ? id.toString() : String(id)));
       setTargetKeys(serverIdStrings);
     }
   }, [favoriteServerIds]);
 
   // Mutation to update favorite servers
-  const { mutate: updateFavorites, isPending, isError, error } = useMutation({
+  const { mutate: updateFavorites } = useMutation({
     mutationFn: async (serverIds: string[]) => {
       // Convert string IDs to numbers
       const numericIds = serverIds.map(id => parseInt(id, 10));
@@ -76,24 +74,36 @@ const FavouritesPageContent = () => {
   });
 
   const onChange: TransferProps['onChange'] = (nextTargetKeys) => {
-    setTargetKeys(nextTargetKeys);
+    // Convert nextTargetKeys to string[] as that's what our state expects
+    setTargetKeys(nextTargetKeys.map(key => String(key)));
     
     // Immediately save when changed (just like in PrimaryEngineerTab)
     if (session?.user?.id) {
-      updateFavorites(nextTargetKeys);
+      // Convert to string[] before passing to updateFavorites
+      updateFavorites(nextTargetKeys.map(key => String(key)));
     } else {
       message.error('You must be logged in to save favourites');
     }
   };
 
-  const filterOption = (inputValue: string, item: any) => {
-    return item.title.indexOf(inputValue) !== -1 || 
-           (item.description && item.description.indexOf(inputValue) !== -1);
+  const filterOption = (inputValue: string, item: TransferItem) => {
+    return (
+      item.title.indexOf(inputValue) !== -1 || 
+      (item.description && item.description.indexOf(inputValue) !== -1) || 
+      false
+    );
   };
+
+interface ServerData {
+  id: number;
+  hostname: string;
+  ipv4: string | null;
+  description: string | null;
+}
 
   // Format servers for Transfer component
   const serverItems = Array.isArray(allServers) 
-    ? allServers.map((server: any) => ({
+    ? allServers.map((server: ServerData) => ({
         key: server.id.toString(),
         title: server.hostname || 'Unnamed Server',
         description: `${server.ipv4 || 'No IP'} - ${server.description || 'No description'}`,
@@ -103,7 +113,9 @@ const FavouritesPageContent = () => {
   const isLoading = isLoadingServers || isLoadingUserServers;
 
   // Query error state handler
-  const { isError: isQueryError, error: queryError } = useQueryClient().getQueryState(['allServers']) || {};
+  const queryState = useQueryClient().getQueryState(['allServers']);
+  const isQueryError = queryState ? queryState.status === 'error' : false;
+  const queryError = queryState ? queryState.error : undefined;
 
   if (isQueryError) {
     return (
@@ -142,7 +154,7 @@ const FavouritesPageContent = () => {
           <span>Manage Favourite Servers</span>
         </div>
       }
-      variant="bordered"
+      variant="outlined"
       className="shadow-md"
     >
       <p className="mb-4">

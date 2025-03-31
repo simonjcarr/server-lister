@@ -8,7 +8,7 @@ interface FormInputSelectBusinessProps {
 }
 
 const FormInputSelectBusiness = ({ value, onChange }: FormInputSelectBusinessProps) => {
-  const { data: businesses, isLoading, error } = useQuery({
+  const { data: businesses, isLoading } = useQuery({
     queryKey: ["businesses"],
     queryFn: () => getBusinesses(),
   })

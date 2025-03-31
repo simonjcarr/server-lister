@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { ReadableStream, TransformStream } from 'stream/web';
+// We don't need the TextEncoderStream implementation anymore
 import { z } from 'zod';
 import { db } from '@/db';
 import { eq, gt, and } from 'drizzle-orm';
@@ -41,10 +41,15 @@ export async function POST(request: NextRequest) {
 
     // Insert message to database
     const now = new Date();
+    // Ensure all required fields are non-null and of the right type
+    if (!userId) {
+      return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
+    }
+    
     const inserted = await db
       .insert(chatMessages)
       .values({
-        userId,
+        userId: userId, // Ensure it's a string
         message,
         chatRoomId,
         categoryId,
@@ -88,8 +93,8 @@ export async function POST(request: NextRequest) {
     await sendChatNotifications(chatMessage);
 
     return NextResponse.json(chatMessage);
-  } catch (error) {
-    console.error('Error creating chat message:', error);
+  } catch (err) {
+    console.error('Error creating chat message:', err);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
@@ -112,106 +117,106 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'chatRoomId is required' }, { status: 400 });
     }
 
-    // Create a transform stream to handle the SSE
-    const { readable, writable } = new TransformStream();
-    const writer = writable.getWriter();
-    
-    // Function to send an event
-    const sendEvent = async (event: string, data: any) => {
-      try {
-        await writer.write(
-          new TextEncoder().encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`)
-        );
-      } catch (error) {
-        console.error('Error sending SSE event:', error);
-      }
-    };
+    // Create a text encoder stream for SSE
+    const encoder = new TextEncoder();
+    const stream = new ReadableStream({
+      start(controller) {
+        // Function to send an event
+        const sendEvent = async (event: string, data: Record<string, unknown>) => {
+          try {
+            controller.enqueue(encoder.encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`));
+          } catch (sendErr) {
+            console.error('Error sending SSE event:', sendErr);
+          }
+        };
 
-    // If lastEventId is provided, send any messages that occurred since then
-    if (lastEventId && !isNaN(Number(lastEventId))) {
-      const lastId = parseInt(lastEventId, 10);
-      
-      // Get messages newer than lastEventId for this chat room
-      const historicalMessages = await db
-        .select({
-          id: chatMessages.id,
-          userId: chatMessages.userId,
-          message: chatMessages.message,
-          chatRoomId: chatMessages.chatRoomId,
-          categoryId: chatMessages.categoryId,
-          createdAt: chatMessages.createdAt,
-        })
-        .from(chatMessages)
-        .where(
-          and(
-            eq(chatMessages.chatRoomId, chatRoomId),
-            gt(chatMessages.id, lastId)
-          )
-        )
-        .orderBy(chatMessages.createdAt);
-      
-      // Get user details for each message
-      for (const msg of historicalMessages) {
-        const userInfo = await db
-          .select({
-            name: users.name,
-            image: users.image,
-          })
-          .from(users)
-          .where(eq(users.id, msg.userId))
-          .then(results => results[0]);
+        // If lastEventId is provided, send any messages that occurred since then
+        if (lastEventId && !isNaN(Number(lastEventId))) {
+          const lastId = parseInt(lastEventId, 10);
           
-        // Send each historical message
-        await sendEvent('message', {
-          id: msg.id,
-          userId: msg.userId,
-          userName: userInfo?.name || 'Unknown User',
-          userImage: userInfo?.image || undefined,
-          message: msg.message,
-          chatRoomId: msg.chatRoomId,
-          categoryId: msg.categoryId,
-          createdAt: msg.createdAt,
+          // Get messages newer than lastEventId for this chat room
+          db.select({
+            id: chatMessages.id,
+            userId: chatMessages.userId,
+            message: chatMessages.message,
+            chatRoomId: chatMessages.chatRoomId,
+            categoryId: chatMessages.categoryId,
+            createdAt: chatMessages.createdAt,
+          })
+          .from(chatMessages)
+          .where(
+            and(
+              eq(chatMessages.chatRoomId, chatRoomId),
+              gt(chatMessages.id, lastId)
+            )
+          )
+          .orderBy(chatMessages.createdAt)
+          .then(async (historicalMessages) => {
+            // Get user details for each message
+            for (const msg of historicalMessages) {
+              const userInfo = await db
+                .select({
+                  name: users.name,
+                  image: users.image,
+                })
+                .from(users)
+                .where(eq(users.id, msg.userId))
+                .then(results => results[0]);
+                
+              // Send each historical message
+              await sendEvent('message', {
+                id: msg.id,
+                userId: msg.userId,
+                userName: userInfo?.name || 'Unknown User',
+                userImage: userInfo?.image || undefined,
+                message: msg.message,
+                chatRoomId: msg.chatRoomId,
+                categoryId: msg.categoryId,
+                createdAt: msg.createdAt,
+              });
+            }
+          });
+        }
+
+        // Function to handle new messages
+        const messageHandler = async (message: { chatRoomId: string; [key: string]: unknown }) => {
+          // Only send messages for the requested chat room
+          if (message.chatRoomId === chatRoomId) {
+            await sendEvent('message', message);
+          }
+        };
+
+        // Listen for new messages
+        chatEventEmitter.on('message', messageHandler);
+
+        // Send a ping every 30 seconds to keep the connection alive
+        const pingInterval = setInterval(async () => {
+          try {
+            await sendEvent('ping', { time: new Date().toISOString() });
+          } catch {
+            clearInterval(pingInterval);
+          }
+        }, 30000);
+
+        // Handle client disconnect
+        request.signal.addEventListener('abort', () => {
+          chatEventEmitter.off('message', messageHandler);
+          clearInterval(pingInterval);
+          controller.close();
         });
       }
-    }
-
-    // Function to handle new messages
-    const messageHandler = async (message: any) => {
-      // Only send messages for the requested chat room
-      if (message.chatRoomId === chatRoomId) {
-        await sendEvent('message', message);
-      }
-    };
-
-    // Listen for new messages
-    chatEventEmitter.on('message', messageHandler);
-
-    // Send a ping every 30 seconds to keep the connection alive
-    const pingInterval = setInterval(async () => {
-      try {
-        await sendEvent('ping', { time: new Date().toISOString() });
-      } catch (error) {
-        clearInterval(pingInterval);
-      }
-    }, 30000);
-
-    // Handle client disconnect
-    request.signal.addEventListener('abort', () => {
-      chatEventEmitter.off('message', messageHandler);
-      clearInterval(pingInterval);
-      writer.close().catch(console.error);
     });
 
     // Return the readable stream as the response
-    return new Response(readable, {
+    return new Response(stream, {
       headers: {
         'Content-Type': 'text/event-stream',
         'Cache-Control': 'no-cache, no-transform',
         'Connection': 'keep-alive',
       },
     });
-  } catch (error) {
-    console.error('Error setting up SSE:', error);
+  } catch (sseError) {
+    console.error('Error setting up SSE:', sseError);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
