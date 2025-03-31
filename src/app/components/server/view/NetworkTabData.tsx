@@ -2,6 +2,7 @@ import React from 'react'
 import { useQuery } from "@tanstack/react-query"
 import { getServerById } from "@/app/actions/server/crudActions"
 import { Alert, Row, Spin, Col } from 'antd'
+import ClickToCopy from '../../utils/ClickToCopy'
 
 const NetworkTabData = ({ serverId }: { serverId: number }) => {
   const { data, error, isLoading } = useQuery({
@@ -26,7 +27,9 @@ const NetworkTabData = ({ serverId }: { serverId: number }) => {
             {tableData.map((item) => (
               <Row key={item.key} className='border-b border-gray-700 py-2'>
                 <Col span={8}>{item.label}</Col>
-                <Col span={16}>{item.value}</Col>
+                <Col span={16}>
+                  <ClickToCopy text={item.value} />
+                </Col>
               </Row>
             ))}
           </div>
