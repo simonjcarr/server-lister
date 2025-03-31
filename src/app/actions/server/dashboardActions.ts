@@ -1,8 +1,8 @@
 'use server';
 
 import { db } from "@/db";
-import { servers, os, locations, business } from "@/db/schema";
-import { count, eq, sql } from "drizzle-orm";
+import { servers, os, locations, business, bookingCodeGroups, bookingCodes } from "@/db/schema";
+import { count, eq, sql, and, gt, lt, or, isNull } from "drizzle-orm";
 
 export async function getNonOnboardedServerCount() {
   try {
@@ -131,17 +131,100 @@ export async function getItarServerCount() {
   }
 }
 
+export type BookingCodeStatus = 'expired' | 'expiring_soon' | 'no_codes' | 'active';
+
+export interface BookingCodeStatusCounts {
+  expired: number;
+  expiringSoon: number;
+  noCodes: number;
+  active: number;
+}
+
+export async function getBookingCodeStatusCounts(): Promise<BookingCodeStatusCounts> {
+  try {
+    const now = new Date();
+    const oneMonthFromNow = new Date();
+    oneMonthFromNow.setMonth(now.getMonth() + 1);
+    
+    // First, get all booking code groups
+    const allGroups = await db
+      .select({
+        id: bookingCodeGroups.id,
+      })
+      .from(bookingCodeGroups);
+
+    // Initialize counters
+    let expiredCount = 0;
+    let expiringSoonCount = 0;
+    let noCodesCount = 0;
+    let activeCount = 0;
+    
+    // Process each group to determine its status
+    for (const group of allGroups) {
+      // Get all codes for this group
+      const codesForGroup = await db
+        .select({
+          id: bookingCodes.id,
+          validTo: bookingCodes.validTo,
+        })
+        .from(bookingCodes)
+        .where(eq(bookingCodes.groupId, group.id));
+      
+      if (codesForGroup.length === 0) {
+        // No booking codes in this group
+        noCodesCount++;
+        continue;
+      }
+      
+      // Check if all codes have expired
+      const allExpired = codesForGroup.every(code => new Date(code.validTo) < now);
+      if (allExpired) {
+        expiredCount++;
+        continue;
+      }
+      
+      // Check if all valid codes will expire within a month
+      const validCodes = codesForGroup.filter(code => new Date(code.validTo) >= now);
+      const allExpiringSoon = validCodes.every(code => new Date(code.validTo) < oneMonthFromNow);
+      if (allExpiringSoon) {
+        expiringSoonCount++;
+        continue;
+      }
+      
+      // If we get here, the group has at least one code that is valid beyond one month
+      activeCount++;
+    }
+    
+    return {
+      expired: expiredCount,
+      expiringSoon: expiringSoonCount,
+      noCodes: noCodesCount,
+      active: activeCount
+    };
+  } catch (error) {
+    console.error("Error getting booking code status counts:", error);
+    return {
+      expired: 0,
+      expiringSoon: 0,
+      noCodes: 0,
+      active: 0
+    };
+  }
+}
+
 export async function getDashboardStats() {
   // Get all stats in parallel for efficiency
-  const [totalCount, nonOnboardedCount, itarCount] = await Promise.all([
+  const [totalCount, nonOnboardedCount, itarCount, bookingCodeStatusCounts] = await Promise.all([
     getTotalServerCount(),
     getNonOnboardedServerCount(),
-    getItarServerCount()
+    getItarServerCount(),
+    getBookingCodeStatusCounts()
   ]);
   
   return {
     totalServers: totalCount.count,
     nonOnboardedServers: nonOnboardedCount.count,
     itarServers: itarCount.count,
+    bookingCodeStatuses: bookingCodeStatusCounts
   };
 }

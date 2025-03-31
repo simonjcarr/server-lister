@@ -1,17 +1,18 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { Card, Statistic, Row, Col, Button, Spin, Divider } from 'antd';
-import { WarningOutlined, LockOutlined, DesktopOutlined } from '@ant-design/icons';
+import { Card, Statistic, Row, Col, Button, Spin, Divider, Tooltip } from 'antd';
+import { WarningOutlined, LockOutlined, DesktopOutlined, CalendarOutlined, ClockCircleOutlined, ExclamationCircleOutlined, CheckCircleOutlined } from '@ant-design/icons';
 import { getDashboardStats } from '@/app/actions/server/dashboardActions';
 import { useRouter } from 'next/navigation';
 import ServerDistributionChart from './ServerDistributionChart';
 import ServerActivityChart from './ServerActivityChart';
+import { DashboardStats } from '@/app/types/dashboard';
 
 const Dashboard = () => {
   const router = useRouter();
 
-  const { data: dashboardStats, isLoading } = useQuery({
+  const { data: dashboardStats, isLoading } = useQuery<DashboardStats>({
     queryKey: ['dashboardStats'],
     queryFn: getDashboardStats,
     staleTime: 5 * 60 * 1000, // 5 minutes
@@ -20,6 +21,12 @@ const Dashboard = () => {
   const handleViewNonOnboardedServers = () => {
     // Navigate to server list with filter for non-onboarded servers
     router.push('/server?onboardingStatus=not_onboarded');
+  };
+  
+  const handleViewBookingCodes = (tabKey?: string) => {
+    // Navigate to booking code management page
+    const path = tabKey ? `/project/booking-codes?tab=${tabKey}` : '/project/booking-codes';
+    router.push(path);
   };
 
   return (
@@ -74,6 +81,107 @@ const Dashboard = () => {
                 prefix={<LockOutlined style={{ color: '#f5222d' }} />}
               />
             </Card>
+          </Col>
+
+          {/* Booking Code Status Section */}
+          <Col span={24}>
+            <Divider orientation="left">Booking Code Status</Divider>
+          </Col>
+          
+          <Col xs={24} sm={12} md={6} lg={6} xl={6}>
+            <Tooltip title="Groups where all booking codes have expired">
+              <Card 
+                hoverable 
+                className="cursor-pointer transition-all hover:shadow-md"
+                onClick={() => handleViewBookingCodes('groups')}
+              >
+                <Statistic
+                  title="Expired Booking Codes"
+                  value={dashboardStats?.bookingCodeStatuses?.expired || 0}
+                  prefix={<ExclamationCircleOutlined style={{ color: '#f5222d' }} />}
+                />
+                <div className="mt-4">
+                  <Button type="primary" size="small" danger onClick={(e) => {
+                    e.stopPropagation();
+                    handleViewBookingCodes('groups');
+                  }}>
+                    View Details
+                  </Button>
+                </div>
+              </Card>
+            </Tooltip>
+          </Col>
+          
+          <Col xs={24} sm={12} md={6} lg={6} xl={6}>
+            <Tooltip title="Groups where all booking codes will expire within 1 month">
+              <Card 
+                hoverable 
+                className="cursor-pointer transition-all hover:shadow-md"
+                onClick={() => handleViewBookingCodes('groups')}
+              >
+                <Statistic
+                  title="Expiring Soon"
+                  value={dashboardStats?.bookingCodeStatuses?.expiringSoon || 0}
+                  prefix={<ClockCircleOutlined style={{ color: '#faad14' }} />}
+                />
+                <div className="mt-4">
+                  <Button type="primary" size="small" onClick={(e) => {
+                    e.stopPropagation();
+                    handleViewBookingCodes('groups');
+                  }}>
+                    View Details
+                  </Button>
+                </div>
+              </Card>
+            </Tooltip>
+          </Col>
+          
+          <Col xs={24} sm={12} md={6} lg={6} xl={6}>
+            <Tooltip title="Groups with no booking codes">
+              <Card 
+                hoverable 
+                className="cursor-pointer transition-all hover:shadow-md"
+                onClick={() => handleViewBookingCodes('groups')}
+              >
+                <Statistic
+                  title="No Booking Codes"
+                  value={dashboardStats?.bookingCodeStatuses?.noCodes || 0}
+                  prefix={<CalendarOutlined style={{ color: '#1890ff' }} />}
+                />
+                <div className="mt-4">
+                  <Button type="primary" size="small" onClick={(e) => {
+                    e.stopPropagation();
+                    handleViewBookingCodes('groups');
+                  }}>
+                    View Details
+                  </Button>
+                </div>
+              </Card>
+            </Tooltip>
+          </Col>
+          
+          <Col xs={24} sm={12} md={6} lg={6} xl={6}>
+            <Tooltip title="Groups with active booking codes valid beyond 1 month">
+              <Card 
+                hoverable 
+                className="cursor-pointer transition-all hover:shadow-md"
+                onClick={() => handleViewBookingCodes('groups')}
+              >
+                <Statistic
+                  title="Active Booking Codes"
+                  value={dashboardStats?.bookingCodeStatuses?.active || 0}
+                  prefix={<CheckCircleOutlined style={{ color: '#52c41a' }} />}
+                />
+                <div className="mt-4">
+                  <Button type="primary" size="small" onClick={(e) => {
+                    e.stopPropagation();
+                    handleViewBookingCodes('groups');
+                  }}>
+                    View Details
+                  </Button>
+                </div>
+              </Card>
+            </Tooltip>
           </Col>
 
           {/* Distribution Charts Section */}
