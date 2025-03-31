@@ -41,6 +41,8 @@ const BookingCodeStatusReport = () => {
   };
 
   const navigateToBookingCodeGroup = (groupId: number) => {
+    // Store the group ID in sessionStorage so BookingCodeGroupsList can read it
+    sessionStorage.setItem('expandBookingCodeGroupId', groupId.toString());
     router.push(`/project/booking-codes?tab=groups`);
   };
 

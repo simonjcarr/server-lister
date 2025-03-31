@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Table, Button, Space, Popconfirm, Card, Typography, Tag, Tooltip, message, App } from 'antd';
 import { 
   DeleteOutlined, 
@@ -24,6 +24,20 @@ const BookingCodeGroupsList: React.FC = () => {
   const queryClient = useQueryClient();
   const [expandedRowKeys, setExpandedRowKeys] = useState<React.Key[]>([]);
   const [messageApi, contextHolder] = message.useMessage();
+  
+  // Check for stored group ID to expand on initial load
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const storedGroupId = sessionStorage.getItem('expandBookingCodeGroupId');
+      if (storedGroupId) {
+        // Convert to number and set as expanded
+        const groupId = parseInt(storedGroupId, 10);
+        setExpandedRowKeys([groupId]);
+        // Clear the stored value to prevent it from expanding on future visits
+        sessionStorage.removeItem('expandBookingCodeGroupId');
+      }
+    }
+  }, []);
 
   const { data, isLoading, refetch } = useQuery({
     queryKey: ['bookingCodeGroupsWithCodes'],
