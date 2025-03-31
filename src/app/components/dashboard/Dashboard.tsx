@@ -28,6 +28,11 @@ const Dashboard = () => {
     const path = tabKey ? `/project/booking-codes?tab=${tabKey}` : '/project/booking-codes';
     router.push(path);
   };
+  
+  const navigateToBookingCodeReport = () => {
+    // Navigate to the booking code status report
+    router.push('/reports/report/booking_code_status');
+  };
 
   return (
     <div className="space-y-6">
@@ -93,7 +98,7 @@ const Dashboard = () => {
               <Card 
                 hoverable 
                 className="cursor-pointer transition-all hover:shadow-md"
-                onClick={() => handleViewBookingCodes('groups')}
+                onClick={navigateToBookingCodeReport}
               >
                 <Statistic
                   title="Expired Booking Codes"
@@ -103,9 +108,9 @@ const Dashboard = () => {
                 <div className="mt-4">
                   <Button type="primary" size="small" danger onClick={(e) => {
                     e.stopPropagation();
-                    handleViewBookingCodes('groups');
+                    navigateToBookingCodeReport();
                   }}>
-                    View Details
+                    View Report
                   </Button>
                 </div>
               </Card>
@@ -117,7 +122,7 @@ const Dashboard = () => {
               <Card 
                 hoverable 
                 className="cursor-pointer transition-all hover:shadow-md"
-                onClick={() => handleViewBookingCodes('groups')}
+                onClick={navigateToBookingCodeReport}
               >
                 <Statistic
                   title="Expiring Soon"
@@ -127,9 +132,9 @@ const Dashboard = () => {
                 <div className="mt-4">
                   <Button type="primary" size="small" onClick={(e) => {
                     e.stopPropagation();
-                    handleViewBookingCodes('groups');
+                    navigateToBookingCodeReport();
                   }}>
-                    View Details
+                    View Report
                   </Button>
                 </div>
               </Card>
@@ -141,7 +146,7 @@ const Dashboard = () => {
               <Card 
                 hoverable 
                 className="cursor-pointer transition-all hover:shadow-md"
-                onClick={() => handleViewBookingCodes('groups')}
+                onClick={navigateToBookingCodeReport}
               >
                 <Statistic
                   title="No Booking Codes"
@@ -151,9 +156,9 @@ const Dashboard = () => {
                 <div className="mt-4">
                   <Button type="primary" size="small" onClick={(e) => {
                     e.stopPropagation();
-                    handleViewBookingCodes('groups');
+                    navigateToBookingCodeReport();
                   }}>
-                    View Details
+                    View Report
                   </Button>
                 </div>
               </Card>
