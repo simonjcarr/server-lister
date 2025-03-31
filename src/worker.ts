@@ -5,7 +5,17 @@ import { insertScan } from "@/app/actions/scan/crudActions"
 
 dotenv.config()
 
-const connection = new IORedis(process.env.REDIS_URL || 'redis://localhost:6379', {
+if (!process.env.REDIS_USER || !process.env.REDIS_PASSWORD) {
+  throw new Error('REDIS_USER or REDIS_PASSWORD is not defined in .env')
+}
+
+const redisUrl = new URL(process.env.REDIS_URL || 'redis://localhost:6379')
+
+const connection = new IORedis({
+  host: redisUrl.hostname,
+  port: Number(redisUrl.port || 6379),
+  username: process.env.REDIS_USER,
+  password: process.env.REDIS_PASSWORD,
   maxRetriesPerRequest: null
 })
 
