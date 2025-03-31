@@ -1,53 +1,37 @@
-import { NextResponse } from "next/server";
-import { NextRequest } from "next/server";
-import { getToken } from "next-auth/jwt";
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+import { auth } from '@/auth';
 
-export async function middleware(req: NextRequest) {
-  // Get the pathname
-  const path = req.nextUrl.pathname;
-
-  // Ensure the middleware only runs on admin routes
-  if (path.startsWith('/admin')) {
-    try {
-      // Get the token (with detailed error handling)
-      const token = await getToken({
-        req,
-        secret: process.env.AUTH_SECRET,
-      });
-
-      // Not authenticated - redirect to login
-      if (!token) {
-        const loginUrl = new URL('/api/auth/signin', req.url);
-        loginUrl.searchParams.set('callbackUrl', req.url);
-        return NextResponse.redirect(loginUrl);
-      }
-
-      // Check for roles property
-      if (!token.roles) {
-        return NextResponse.redirect(new URL('/', req.url));
-      }
-
-      // Force cast to array
-      const roles = Array.isArray(token.roles) ? token.roles : [token.roles];
-
-      // Check admin role
-      if (!roles.includes('admin')) {
-        return NextResponse.redirect(new URL('/', req.url));
-      }
-    } catch (error) {
-      console.error('Middleware error:', error);
-      return NextResponse.redirect(new URL('/', req.url));
-    }
+export async function middleware(request: NextRequest) {
+  // Log the requested URL for debugging
+  console.log('Middleware request URL:', request.url);
+  
+  // Add trusted headers for Auth.js
+  if (request.nextUrl.pathname.startsWith('/api/auth')) {
+    const requestHeaders = new Headers(request.headers);
+    
+    // Get the hostname from NEXTAUTH_URL
+    const nextAuthUrl = process.env.NEXTAUTH_URL || 'https://ims.apps.soxprox.com';
+    const url = new URL(nextAuthUrl);
+    
+    // Add headers that help Auth.js identify the correct host
+    requestHeaders.set('x-forwarded-host', url.host);
+    requestHeaders.set('x-forwarded-proto', url.protocol.replace(':', ''));
+    requestHeaders.set('host', url.host);
+    
+    // Return response with modified headers
+    return NextResponse.next({
+      request: {
+        headers: requestHeaders,
+      },
+    });
   }
-
+  
+  // Process all other routes normally
   return NextResponse.next();
 }
 
-// Configure which paths the middleware should run on
+// Run middleware on auth routes
 export const config = {
-  matcher: [
-    // Be explicit about admin routes
-    '/admin',
-    '/admin/:path*',
-  ],
+  matcher: ['/api/auth/:path*'],
 };

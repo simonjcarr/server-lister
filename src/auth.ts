@@ -5,6 +5,7 @@ import { eq } from "drizzle-orm";
 import { users } from "./db/schema";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
+  trustHost: true,
   adapter: CustomDrizzleAdapter(db),
   providers: [
     {
