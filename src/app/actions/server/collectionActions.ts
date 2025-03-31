@@ -3,7 +3,11 @@ import { db } from "@/db";
 import {
   InsertCollection,
   SelectCollection,
+  business,
   collections,
+  locations,
+  os,
+  projects,
   servers,
   servers_collections,
 } from "@/db/schema";
@@ -68,16 +72,33 @@ export async function deleteCollection(id: number): Promise<{ success: boolean; 
 // Get all available servers that are not in a specific collection
 export async function getServersNotInCollection(collectionId: number) {
   try {
-    // Use the simple, effective approach - get all servers that are not in the collection
-    // Get all servers first
+    // Get all servers with their related data first
     const allServers = await db
       .select({
         id: servers.id,
         hostname: servers.hostname,
         ipv4: servers.ipv4,
+        ipv6: servers.ipv6,
         description: servers.description,
+        docLink: servers.docLink,
+        itar: servers.itar,
+        secureServer: servers.secureServer,
+        projectId: servers.projectId,
+        projectName: projects.name,
+        businessId: servers.business,
+        businessName: business.name,
+        osId: servers.osId,
+        osName: os.name,
+        locationId: servers.locationId,
+        locationName: locations.name,
+        createdAt: servers.createdAt,
+        updatedAt: servers.updatedAt,
       })
-      .from(servers);
+      .from(servers)
+      .leftJoin(projects, eq(servers.projectId, projects.id))
+      .leftJoin(business, eq(servers.business, business.id))
+      .leftJoin(os, eq(servers.osId, os.id))
+      .leftJoin(locations, eq(servers.locationId, locations.id));
     
     // Get servers that are in the collection
     const serversInCollection = await db

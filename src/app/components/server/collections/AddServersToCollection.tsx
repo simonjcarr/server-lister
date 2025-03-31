@@ -2,8 +2,8 @@
 
 import React, { useEffect, useState } from 'react';
 import { App, Button, Modal, Table, Input, Select, Space, Drawer, Tag } from 'antd';
-import { addServersToCollection } from '@/app/actions/server/collectionActions';
-import { getServers, getOSOptions, getProjectOptions, getBusinessOptions, getLocationOptions, ServerFilter } from '@/app/actions/server/crudActions';
+import { getOSOptions, getProjectOptions, getBusinessOptions, getLocationOptions } from '@/app/actions/server/crudActions';
+import { getServersNotInCollection, addServersToCollection } from '@/app/actions/server/collectionActions';
 import { useQueryClient } from '@tanstack/react-query';
 import { SelectCollection } from '@/db/schema';
 import { MdAddCircleOutline } from 'react-icons/md';
@@ -56,52 +56,33 @@ const AddServersToCollection: React.FC<AddServersToCollectionProps> = ({ collect
   const [searchTerm, setSearchTerm] = useState('');
   const [filters, setFilters] = useState<FilterOptions>({});
   const [isDrawerVisible, setIsDrawerVisible] = useState(false);
-  const [serversInCollection, setServersInCollection] = useState<Set<number>>(new Set());
+  // We don't need serversInCollection state anymore as we're using getServersNotInCollection
+  // which handles filtering on the server side
+  
+  
 
-  // Create server filter for API
-  const createServerFilter = (): ServerFilter => {
-    const apiFilter: ServerFilter = {};
-    
-    if (searchTerm) {
-      apiFilter.search = searchTerm;
-    }
-    
-    // For API compatibility, the multi-select filter state needs to be mapped differently
-    // For now, we'll handle the multi-select filtering on the client side
-    
-    return apiFilter;
-  };
-
-  // Fetch all servers with their related data
-  const { data: serverData, isLoading: isLoadingServers, refetch: refetchServers } = useQuery({
-    queryKey: ['all-servers', searchTerm],
+  // Fetch all servers that are not in this collection
+  const { data: availableServersData, isLoading: isLoadingAvailableServers, refetch: refetchAvailableServers } = useQuery({
+    queryKey: ['available-servers', collection.id, searchTerm],
     queryFn: async () => {
-      return getServers(
-        createServerFilter(),
-        { field: 'hostname', direction: 'asc' },
-        { page: 1, pageSize: 1000 } // Get all servers to filter client-side
-      );
+      // Use the server-side filtering approach
+      const availableServers = await getServersNotInCollection(collection.id);
+      
+      // If search term, filter the available servers
+      if (searchTerm) {
+        return availableServers.filter(server => 
+          server.hostname.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          (server.ipv4 && server.ipv4.includes(searchTerm)) ||
+          (server.description && server.description.toLowerCase().includes(searchTerm.toLowerCase()))
+        );
+      }
+      
+      return availableServers;
     },
     enabled: isModalOpen,
   });
 
-  // Query for servers in this collection to exclude them
-  const { data: collectionServersData } = useQuery({
-    queryKey: ['servers-in-collection', collection.id],
-    queryFn: async () => {
-      return getServers(
-        { collectionId: collection.id },
-        { field: 'hostname', direction: 'asc' },
-        { page: 1, pageSize: 1000 }
-      );
-    },
-    enabled: isModalOpen,
-    onSuccess: (data) => {
-      // Create a set of server IDs in the collection for fast lookups
-      const serverIds = new Set(data.data.map(server => server.id));
-      setServersInCollection(serverIds);
-    }
-  });
+  // We don't need to fetch collection servers separately anymore as getServersNotInCollection does the filtering
 
   // Fetch filter options
   const { data: osOptions = [] } = useQuery({
@@ -148,12 +129,19 @@ const AddServersToCollection: React.FC<AddServersToCollectionProps> = ({ collect
     description: string;
   } | null>(null);
 
-  // Filter servers based on all criteria
+  // Effect to refetch available servers when modal is opened
+  useEffect(() => {
+    if (isModalOpen) {
+      refetchAvailableServers();
+    }
+  }, [isModalOpen, refetchAvailableServers]);
+  
+  // Filter available servers based on dropdown filters
   const filteredServers = React.useMemo(() => {
-    if (!serverData?.data) return [];
+    if (!availableServersData) return [];
     
-    // Start with all servers that are not in the collection
-    let filtered = serverData.data.filter(server => !serversInCollection.has(server.id));
+    // Start with all available servers
+    let filtered = availableServersData;
     
     // Apply dropdown filters (multi-select)
     if (filters.osIds?.length > 0) {
@@ -181,7 +169,7 @@ const AddServersToCollection: React.FC<AddServersToCollectionProps> = ({ collect
     }
 
     return filtered;
-  }, [serverData?.data, serversInCollection, filters]);
+  }, [availableServersData, filters]);
 
   // First effect to update notification config but not trigger API calls during render
   useEffect(() => {
@@ -202,20 +190,15 @@ const AddServersToCollection: React.FC<AddServersToCollectionProps> = ({ collect
         setSearchTerm('');
         setFilters({});
         
-        // Invalidate all queries to force a complete refresh
-        queryClient.invalidateQueries();
-        
-        // Explicitly invalidate these specific queries to ensure UI updates
+        // Invalidate relevant queries
+        queryClient.invalidateQueries({ queryKey: ['collection-servers'] });
+        queryClient.invalidateQueries({ queryKey: ['collection', collection.id] });
+        queryClient.invalidateQueries({ queryKey: ['available-servers'] });
         queryClient.invalidateQueries({ queryKey: ['servers'] });
-        queryClient.refetchQueries({ queryKey: ['servers'] });
         
-        // Use a timeout to ensure the server-side changes are complete
-        setTimeout(() => {
-          // Explicitly invalidate these specific queries to ensure UI updates
-          queryClient.invalidateQueries({ queryKey: ['collections'] });
-          queryClient.invalidateQueries({ queryKey: ['collection', collection.id] });
-          queryClient.invalidateQueries({ queryKey: ['collection-servers', collection.id] });
-        }, 500);
+        // Force immediate refetch of specific queries
+        queryClient.refetchQueries({ queryKey: ['collection-servers', collection.id] });
+        queryClient.refetchQueries({ queryKey: ['available-servers', collection.id] });
       } else {
         notificationConfig.current = {
           type: 'error',
@@ -282,7 +265,7 @@ const AddServersToCollection: React.FC<AddServersToCollectionProps> = ({ collect
     setSearchTerm('');
     setFilters({});
     // Make sure we have the latest data
-    refetchServers();
+    refetchAvailableServers();
   };
 
   const handleCancel = () => {
@@ -301,15 +284,20 @@ const AddServersToCollection: React.FC<AddServersToCollectionProps> = ({ collect
 
     setIsSubmitting(true);
     try {
-      console.log('Submitting servers to add:', selectedServerIds);
       const result = await addServersToCollection(selectedServerIds, collection.id);
-      console.log('Add servers result:', result);
       
       // Set result to trigger the effect
       setActionResult(result);
       
       // Immediately force React Query to refetch all data
-      queryClient.invalidateQueries();
+      queryClient.invalidateQueries({ queryKey: ['collection-servers'] });
+      queryClient.invalidateQueries({ queryKey: ['collection', collection.id] });
+      queryClient.invalidateQueries({ queryKey: ['available-servers'] });
+      queryClient.invalidateQueries({ queryKey: ['servers'] });
+      
+      // Force immediate refetch of specific queries
+      queryClient.refetchQueries({ queryKey: ['collection-servers', collection.id] });
+      queryClient.refetchQueries({ queryKey: ['available-servers', collection.id] });
     } catch (error) {
       console.error('Error adding servers to collection:', error);
       setActionResult({
@@ -501,6 +489,7 @@ const AddServersToCollection: React.FC<AddServersToCollectionProps> = ({ collect
       >
         <div className="mb-4">
           <p>Select servers to add to the <strong>{collection.name}</strong> collection:</p>
+          <p className="text-gray-500 text-sm">(Only servers not already in the collection are displayed below)</p>
         </div>
         
         {/* Search and Filter button */}
@@ -536,7 +525,7 @@ const AddServersToCollection: React.FC<AddServersToCollectionProps> = ({ collect
           rowSelection={rowSelection}
           columns={columns}
           dataSource={filteredServers.map(server => ({ ...server, key: server.id }))}
-          loading={isLoadingServers}
+          loading={isLoadingAvailableServers}
           size="small"
           pagination={{ pageSize: 10 }}
           className="collections-table"
