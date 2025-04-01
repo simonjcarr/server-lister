@@ -2,7 +2,9 @@ import { NextAuthConfig } from "next-auth";
 
 // Edge-compatible configuration (no database imports)
 const authConfig: NextAuthConfig = {
-  trustHost: true,
+  trustHost: process.env.NODE_ENV === 'development' ? false : true,
+  // Explicitly define the URL to prevent protocol switching
+  basePath: process.env.NEXTAUTH_URL,
   providers: [
     {
       id: "dex",

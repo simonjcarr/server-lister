@@ -10,7 +10,10 @@ export async function middleware(request: NextRequest) {
     const requestHeaders = new Headers(request.headers);
     
     // Get the hostname from NEXTAUTH_URL
-    const nextAuthUrl = process.env.NEXTAUTH_URL || 'https://ims.apps.soxprox.com';
+    const nextAuthUrl = process.env.NEXTAUTH_URL;
+    if (!nextAuthUrl) {
+      throw new Error('NEXTAUTH_URL is not defined');
+    }
     const url = new URL(nextAuthUrl);
     
     // Add headers that help Auth.js identify the correct host
