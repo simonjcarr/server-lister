@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "concurrently \"next dev --turbopack\" \"tsx src/worker\"",
     "build": "next build",
-    "start": "next start -p 3000 -H 0.0.0.0",
+    "start": "concurrently \"next start -p 3000 -H 0.0.0.0\" \"tsx src/worker\"",
     "lint": "next lint",
     "lint:fix": "node lint-fix.js",
     "db:migrate": "drizzle-kit migrate",
@@ -24,6 +24,7 @@
   },
   "dependencies": {
     "@ant-design/cssinjs": "^1.23.0",
+    "concurrently": "^9.1.2",
     "@auth/drizzle-adapter": "^1.8.0",
     "@preact/signals-react": "^3.0.1",
     "@tanstack/react-form": "^1.1.2",
