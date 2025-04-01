@@ -40,7 +40,7 @@ node scripts/setup-chat.js
 
 This will create the necessary categories and seed sample messages.
 
-For more information, see the [chat system documentation](docs/chat-system.md).
+For more information, see the [chat system documentation](docs/chat-system.md)
 
 ## Learn More
 
