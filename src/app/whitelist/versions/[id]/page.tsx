@@ -204,7 +204,9 @@ export default function VersionsPage() {
     return (
       <ProtectedRoute>
         <div className="flex justify-center p-8">
-          <Spin tip="Loading..." />
+          <Spin>
+            <div className="p-12">Loading...</div>
+          </Spin>
         </div>
       </ProtectedRoute>
     );

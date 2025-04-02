@@ -107,7 +107,13 @@ export function SoftwareWhitelistTable() {
   ];
 
   if (isLoading) {
-    return <div className="flex justify-center p-8"><Spin tip="Loading..." /></div>;
+    return (
+      <div className="flex justify-center p-8">
+        <Spin>
+          <div className="p-12">Loading...</div>
+        </Spin>
+      </div>
+    );
   }
 
   if (error) {
