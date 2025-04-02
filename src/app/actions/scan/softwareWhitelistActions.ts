@@ -1,11 +1,7 @@
 'use server';
 
 import { db } from "@/db";
-import { serverScans } from "@/db/schema";
-import { softwareWhitelist, softwareWhitelistVersions } from "@/db/schema/softwareWhitelist";
-import { osFamily } from "@/db/schema/osFamily";
-import { eq, sql } from "drizzle-orm";
-import { differenceInDays } from "date-fns";
+import { sql } from "drizzle-orm";
 
 interface WhitelistSoftwareInfo {
   name: string;
@@ -16,13 +12,7 @@ interface WhitelistSoftwareInfo {
   installLocation: string;
 }
 
-/**
- * Normalize a software name for consistent comparison
- * Removes special characters, whitespace, and makes lowercase
- */
-function normalizeSoftwareName(name: string): string {
-  return name.toLowerCase().trim().replace(/[^a-z0-9]/g, '');
-}
+
 
 export async function getServerSoftwareWithWhitelist(serverId: number, filterByWhitelist: boolean = true) {
   try {

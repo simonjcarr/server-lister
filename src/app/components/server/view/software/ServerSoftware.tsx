@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query"
 import { getServerSoftwareWithWhitelist } from "@/app/actions/scan/softwareWhitelistActions"
-import { Alert, Empty, Form, Input, Spin, Table, Switch, Tooltip, Badge, Tag, message } from "antd"
+import { Alert, Form, Input, Spin, Table, Switch, Tooltip, Badge, Tag, message } from "antd"
 import type { ColumnsType } from "antd/es/table"
 import { useState } from "react"
 import { SearchOutlined, CheckCircleOutlined, CloseCircleOutlined } from "@ant-design/icons"
@@ -157,7 +157,13 @@ const ServerSoftware = ({ serverId }: { serverId: number }) => {
           </Form.Item>
         </Form>
       </div>
-      {isLoading && <div className="py-8"><Spin size="large" tip="Loading software data..." /></div>}
+      {isLoading && (
+        <div className="py-8 flex justify-center">
+          <Spin size="large">
+            <div className="p-10 rounded bg-white/5">Loading software data...</div>
+          </Spin>
+        </div>
+      )}
       {error && (
         <Alert
           message="Error Loading Software Data"

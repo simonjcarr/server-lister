@@ -10,8 +10,9 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 export function SoftwareWhitelistTable() {
   // We'll need a custom type for the whitelist items with the OS family name included
-  type WhitelistItem = SelectSoftwareWhitelist & {
+  type WhitelistItem = Omit<SelectSoftwareWhitelist, 'versionInfo'> & {
     osFamilyName: string | null;
+    versionInfo?: string | null;
   };
   
   const router = useRouter();
