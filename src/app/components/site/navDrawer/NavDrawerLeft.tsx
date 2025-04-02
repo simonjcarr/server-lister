@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import type { DrawerProps, MenuProps } from 'antd';
 import { Button, Drawer, Space, Menu } from 'antd';
 import Link from 'next/link';
-import { FaCertificate, FaFileInvoiceDollar, FaMap, FaProjectDiagram, FaRegListAlt, FaRegObjectGroup, FaServer, FaTools, FaUsers, FaWindows } from 'react-icons/fa';
+import { FaCertificate, FaFileInvoiceDollar, FaMap, FaProjectDiagram, FaRegListAlt, FaRegObjectGroup, FaServer, FaTools, FaUsers, FaWindows, FaClipboardCheck } from 'react-icons/fa';
 import { MdAddBox, MdAdminPanelSettings, MdNetworkPing } from 'react-icons/md';
 import { useRouter } from 'next/navigation';
 import { IoIosBusiness } from 'react-icons/io';
@@ -92,6 +92,14 @@ const App: React.FC = () => {
         }
 
       ],
+    },
+    {
+      key: 'whitelist',
+      label: 'Software Whitelist',
+      icon: <FaClipboardCheck />,
+      onClick: () => {
+        router.push('/whitelist');
+      },
     },
     {
       key: 'location',
