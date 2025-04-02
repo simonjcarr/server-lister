@@ -1,5 +1,7 @@
 'use server';
 
+import { areVersionsEquivalent } from "@/lib/utils/versionComparison";
+
 import { db } from "@/db";
 import { sql } from "drizzle-orm";
 
@@ -77,8 +79,17 @@ export async function getServerSoftwareWithWhitelist(serverId: number, filterByW
       
       // Transform the SQL result into the expected format
       const result: WhitelistSoftwareInfo[] = queryResult.rows.map(row => {
-        // Convert the "up to date" value from numeric to boolean
-        const isUpToDate = row["up to date"] === 1;
+        // Check if versions are equivalent using our utility function
+        let isUpToDate = row["up to date"] === 1;
+        
+        // If there's a whitelist version to compare against and not already up to date based on exact match
+        if (row.latest_whitelist_version && !isUpToDate) {
+          // Use our version comparison function to check for equivalence
+          isUpToDate = areVersionsEquivalent(
+            row.installed_version as string, 
+            row.latest_whitelist_version as string
+          );
+        }
         
         return {
           name: row.software_name as string,
@@ -140,8 +151,17 @@ export async function getServerSoftwareWithWhitelist(serverId: number, filterByW
       
       // Transform the SQL result into the expected format
       const result: WhitelistSoftwareInfo[] = queryResult.rows.map(row => {
-        // Convert the "up to date" value from numeric to boolean
-        const isUpToDate = row["up to date"] === 1;
+        // Check if versions are equivalent using our utility function
+        let isUpToDate = row["up to date"] === 1;
+        
+        // If there's a whitelist version to compare against and not already up to date based on exact match
+        if (row.latest_whitelist_version && !isUpToDate) {
+          // Use our version comparison function to check for equivalence
+          isUpToDate = areVersionsEquivalent(
+            row.installed_version as string, 
+            row.latest_whitelist_version as string
+          );
+        }
         
         return {
           name: row.software_name as string,
