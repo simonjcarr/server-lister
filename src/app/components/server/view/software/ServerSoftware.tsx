@@ -21,9 +21,35 @@ const ServerSoftware = ({ serverId }: { serverId: number }) => {
   
   const { data, error, isLoading } = useQuery({
     queryKey: ["server", "software", serverId, filterByWhitelist],
-    queryFn: () => getServerSoftwareWithWhitelist(serverId, filterByWhitelist),
+    queryFn: async () => {
+      try {
+        if (filterByWhitelist) {
+          messageApi.open({
+            type: "loading",
+            content: "Loading whitelist software data...",
+            duration: 0,
+          });
+        } else {
+          messageApi.open({
+            type: "loading",
+            content: "Loading all software data...",
+            duration: 0,
+          });
+        }
+        
+        const result = await getServerSoftwareWithWhitelist(serverId, filterByWhitelist);
+        
+        messageApi.destroy();
+        messageApi.success(`Loaded ${result.length} software items`);
+        
+        return result;
+      } catch (error) {
+        messageApi.destroy();
+        messageApi.error(`Failed to load software data: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        throw error;
+      }
+    },
     enabled: !!serverId,
-    // Add refetch on filter state change
     refetchOnMount: true,
     refetchOnWindowFocus: false,
   })
@@ -116,7 +142,14 @@ const ServerSoftware = ({ serverId }: { serverId: number }) => {
             <Tooltip title="Toggle to show all software or only software in the whitelist">
               <Switch 
                 checked={filterByWhitelist} 
-                onChange={setFilterByWhitelist} 
+                onChange={(checked) => {
+                  setFilterByWhitelist(checked);
+                  messageApi.open({
+                    type: "info",
+                    content: `Showing ${checked ? 'whitelist only' : 'all'} software...`,
+                    duration: 2,
+                  });
+                }} 
                 checkedChildren="Whitelist Only" 
                 unCheckedChildren="All Software" 
               />
@@ -124,8 +157,16 @@ const ServerSoftware = ({ serverId }: { serverId: number }) => {
           </Form.Item>
         </Form>
       </div>
-      {isLoading && <Spin />}
-      {error && <div><Empty className="flex justify-center" image={Empty.PRESENTED_IMAGE_SIMPLE} /></div>}
+      {isLoading && <div className="py-8"><Spin size="large" tip="Loading software data..." /></div>}
+      {error && (
+        <Alert
+          message="Error Loading Software Data"
+          description={error instanceof Error ? error.message : 'Unknown error occurred'}
+          type="error"
+          showIcon
+          className="mb-4"
+        />
+      )}
       {data && Array.isArray(data) && data.length > 0 ? (
         <Table 
           columns={columns} 
@@ -134,9 +175,24 @@ const ServerSoftware = ({ serverId }: { serverId: number }) => {
           )} 
           rowKey="name" 
           size="small"
+          loading={isLoading}
+          pagination={{ 
+            defaultPageSize: 10, 
+            showSizeChanger: true, 
+            pageSizeOptions: ['10', '20', '50', '100'],
+            showTotal: (total, range) => `${range[0]}-${range[1]} of ${total} items`
+          }}
+          scroll={{ x: 'max-content' }}
         />
       ) : (
-        !isLoading && !error && <Alert message="Info" description="No software found" type="info" />
+        !isLoading && !error && <Alert 
+          message="No Software Found" 
+          description={filterByWhitelist ? 
+            "No whitelist software found for this server. Try toggling to show all software." : 
+            "No software found for this server."}
+          type="info"
+          showIcon
+        />
       )}
     </div>
   )
