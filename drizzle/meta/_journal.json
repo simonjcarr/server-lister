@@ -5,15 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1743602551899,
-      "tag": "0000_blushing_wallow",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1743602677814,
-      "tag": "0001_greedy_stryfe",
+      "when": 1743607096240,
+      "tag": "0000_pink_mephistopheles",
       "breakpoints": true
     }
   ]
