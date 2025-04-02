@@ -1,6 +1,4 @@
--- Current sql file was generated after introspecting the database
--- If you want to run this migration please uncomment this code before executing migrations
-/*
+
 CREATE TYPE "public"."serverTypeEnum" AS ENUM('Physical', 'Virtual');--> statement-breakpoint
 CREATE TYPE "public"."status" AS ENUM('Pending', 'Ordered', 'Ready');--> statement-breakpoint
 CREATE TABLE "server_groups" (
@@ -519,4 +517,3 @@ CREATE INDEX "software_version_whitelist_idx" ON "software_whitelist_versions" U
 CREATE UNIQUE INDEX "unique_software_version_idx" ON "software_whitelist_versions" USING btree ("software_whitelist_id" int4_ops,"version_pattern" int4_ops);--> statement-breakpoint
 CREATE INDEX "software_whitelist_osfamily_idx" ON "software_whitelist" USING btree ("os_family_id" int4_ops);--> statement-breakpoint
 CREATE UNIQUE INDEX "unique_software_name_osfamily_idx" ON "software_whitelist" USING btree ("name" int4_ops,"os_family_id" int4_ops);
-*/
