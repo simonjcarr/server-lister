@@ -12,6 +12,7 @@ export const softwareWhitelist = pgTable(
     name: text("name").notNull(),
     description: text("description"),
     osFamilyId: integer("os_family_id").notNull().references(() => osFamily.id, { onDelete: "cascade" }),
+    versionInfo: text("version_info"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
