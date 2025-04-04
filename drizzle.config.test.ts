@@ -1,5 +1,5 @@
 // The migrate command to run for test is as follows
-// NODE_ENV=test TEST_DATABASE_NAME=ims_test npx -y dotenv -e .env.test -- drizzle-kit migrate --config=drizzle.config.test.ts
+// NODE_ENV=test TEST_DATABASE_NAME=test_xxxxxxxx npx -y dotenv -e .env.test -- drizzle-kit migrate --config=drizzle.config.test.ts
 
 import type { Config } from "drizzle-kit";
 // import * as dotenv from 'dotenv';
