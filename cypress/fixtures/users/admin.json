@@ -1,0 +1,8 @@
+{
+  "id": "admin-user-id-1234",
+  "name": "Admin User",
+  "email": "admin@example.com",
+  "image": "https://via.placeholder.com/150",
+  "roles": ["admin", "cert-manager", "user-manager"],
+  "emailVerified": "2025-01-01T00:00:00.000Z"
+}
