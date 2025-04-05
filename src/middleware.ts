@@ -1,39 +1,36 @@
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from "next/server";
 
-export async function middleware(request: NextRequest) {
-  // Log the requested URL for debugging
-  console.log('Middleware request URL:', request.url);
-  
-  // Add trusted headers for Auth.js
-  if (request.nextUrl.pathname.startsWith('/api/auth')) {
-    const requestHeaders = new Headers(request.headers);
-    
-    // Get the hostname from NEXTAUTH_URL
-    const nextAuthUrl = process.env.NEXTAUTH_URL;
-    if (!nextAuthUrl) {
-      throw new Error('NEXTAUTH_URL is not defined');
-    }
-    const url = new URL(nextAuthUrl);
-    
-    // Add headers that help Auth.js identify the correct host
-    requestHeaders.set('x-forwarded-host', url.host);
-    requestHeaders.set('x-forwarded-proto', url.protocol.replace(':', ''));
-    requestHeaders.set('host', url.host);
-    
-    // Return response with modified headers
-    return NextResponse.next({
-      request: {
-        headers: requestHeaders,
-      },
-    });
+export default async function middleware(request: NextRequest) {
+  // Get the URL of the requested page
+  const { pathname } = request.nextUrl;
+
+  // Check if the pathname starts with any of these paths
+  if (
+    pathname.startsWith("/_next") || // Next.js static files
+    pathname.startsWith("/api/auth") || // Auth API routes
+    pathname === "/favicon.ico" // Favicon
+  ) {
+    return NextResponse.next();
   }
-  
-  // Process all other routes normally
+
+  // Check for various possible session cookie names used by Next Auth v5
+  const hasSessionCookie =
+    request.cookies.has("next-auth.session-token") ||
+    request.cookies.has("__Secure-next-auth.session-token") ||
+    request.cookies.has("__Host-next-auth.session-token");
+
+  // If there's no session cookie, redirect to the sign-in page
+  if (!hasSessionCookie) {
+    const signInUrl = new URL("/api/auth/signin", request.url);
+    signInUrl.searchParams.set("callbackUrl", pathname);
+    return NextResponse.redirect(signInUrl);
+  }
+
+  // User has a session cookie, allow them to access the page
   return NextResponse.next();
 }
 
-// Run middleware on auth routes
+// Configure which paths the middleware runs on
 export const config = {
-  matcher: ['/api/auth/:path*'],
+  matcher: ["/((?!api/auth|_next/static|_next/image|favicon.ico).*)"],
 };
