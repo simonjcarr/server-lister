@@ -12,7 +12,8 @@
     "db:migrate": "drizzle-kit migrate",
     "db:safe-migrate": "node scripts/safeMigrate.js",
     "db:push": "drizzle-kit push",
-    "cypress:open": "cypress open"
+    "cypress:open": "cypress open",
+    "cypress:test": "CYPRESS_TESTING=true cypress open"
   },
   "dependencies": {
     "@ant-design/cssinjs": "^1.23.0",
@@ -52,6 +53,7 @@
     "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4",
     "@types/better-sqlite3": "^7.6.12",
+    "@types/jsonwebtoken": "^9.0.9",
     "@types/node": "^20",
     "@types/pg": "^8.11.11",
     "@types/react": "^19",
@@ -64,6 +66,7 @@
     "eslint": "^9",
     "eslint-config-next": "15.2.1",
     "jose": "^6.0.10",
+    "jsonwebtoken": "^9.0.2",
     "tailwindcss": "^4",
     "tsx": "^4.19.3",
     "typescript": "^5"

@@ -1,4 +1,4 @@
-// cypress/support/commands.js
+// cypress/support/commands.ts
 
 /// <reference types="cypress" />
 
@@ -50,16 +50,19 @@ Cypress.Commands.add(
       );
     }
 
-    // Retrieve cookie name from Cypress environment variables
-    const cookieName: string | undefined = Cypress.env("NEXTAUTH_COOKIE_NAME");
-    if (!cookieName) {
+    // Retrieve cookie name from Cypress environment variables 
+    const sessionCookieName: string | undefined = Cypress.env("NEXTAUTH_COOKIE_NAME");
+    // The CSRF token cookie name is always next-auth.csrf-token
+    const csrfCookieName = "next-auth.csrf-token";
+    
+    if (!sessionCookieName) {
       throw new Error(
         "NEXTAUTH_COOKIE_NAME environment variable not set in cypress.config.js. Set it to your NextAuth session cookie name (e.g., 'next-auth.session-token' or '__Secure-next-auth.session-token')."
       );
     }
 
     cy.log(
-      `Logging in (JWT Strategy) as ${userFixture.email} using cookie: ${cookieName}`
+      `Logging in (JWT Strategy) as ${userFixture.email} using cookie: ${sessionCookieName}`
     );
 
     // Call the backend task to generate the signed JWT
@@ -82,11 +85,12 @@ Cypress.Commands.add(
 
       // If we reach here, 'result' is confirmed to be of type GenerateJwtResult
       cy.log(
-        `JWT generated via task for ${userFixture.email}. Setting cookie...`
+        `JWT generated via task for ${userFixture.email}. Setting cookies...`
       );
 
-      // Clear the cookie first to ensure a clean state
-      cy.clearCookie(cookieName, { log: true });
+      // Clear the cookies first to ensure a clean state
+      cy.clearCookie(sessionCookieName, { log: true });
+      cy.clearCookie(csrfCookieName, { log: true });
 
       // Calculate expiry for cy.setCookie (needs Unix timestamp in seconds)
       const expiryDate = new Date(result.expires);
@@ -96,16 +100,30 @@ Cypress.Commands.add(
         );
       }
       const expiryTimestamp = Math.floor(expiryDate.getTime() / 1000);
+      
+      // Cookie domain from baseUrl
+      const domain = new URL(Cypress.config("baseUrl") as string).hostname;
 
       // Set the session cookie in the browser with the SIGNED JWT as its value
-      cy.setCookie(cookieName, result.signedJwt, {
-        // <--- Use the signed JWT here
+      cy.setCookie(sessionCookieName, result.signedJwt, {
         log: true,
-        domain: new URL(Cypress.config("baseUrl") as string).hostname, // Get domain from Cypress config
+        domain: domain,
         path: "/",
-        secure: cookieName.startsWith("__Secure-"), // Determine secure flag based on standard prefix
-        httpOnly: true, // Essential for session cookies
-        expiry: expiryTimestamp, // Use expiry derived from JWT 'exp' claim
+        secure: sessionCookieName.startsWith("__Secure-"),
+        httpOnly: true,
+        expiry: expiryTimestamp,
+      });
+      
+      // Set a CSRF token cookie which is also required by Auth.js v5
+      // This is important for client-side sessions to work
+      const csrfToken = `${Math.random().toString(36).substring(2, 15)}${Math.random().toString(36).substring(2, 15)}`;
+      cy.setCookie(csrfCookieName, csrfToken, {
+        log: true,
+        domain: domain,
+        path: "/",
+        secure: false,
+        httpOnly: false,
+        expiry: expiryTimestamp,
       });
 
       // Log successful login for clarity in Cypress runner
@@ -115,7 +133,7 @@ Cypress.Commands.add(
         consoleProps: () => ({
           // Provides details when log is clicked in runner
           user: userFixture,
-          cookieName: cookieName,
+          cookieName: sessionCookieName,
           // Avoid logging the full JWT for security, maybe show partial or claims if needed
           jwtValue: `${result.signedJwt.substring(
             0,
@@ -124,6 +142,12 @@ Cypress.Commands.add(
           expires: result.expires,
         }),
       });
+      
+      // Force session reload before proceeding
+      cy.window().then((win) => {
+        // Update sessionStorage to simulate next-auth client-side session
+        win.sessionStorage.setItem('next-auth.session-token', result.signedJwt);
+      });
     });
 
     // Explicitly return Chainable<undefined> to match declared type and satisfy TS2355
@@ -131,8 +155,8 @@ Cypress.Commands.add(
   }
 );
 
-// Make sure this file is imported in your main support file (e.g., cypress/support/e2e.js)
-// Example line in cypress/support/e2e.js: import './commands'
+// Make sure this file is imported in your main support file (e.g., cypress/support/e2e.ts)
+// Example line in cypress/support/e2e.ts: import './commands'
 
 // Adding export {} helps ensure TS treats this file as a module.
 export {};

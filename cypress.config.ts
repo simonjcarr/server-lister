@@ -6,6 +6,7 @@ import { users } from "./src/db/schema";
 import { eq } from "drizzle-orm";
 // Import jose for JWT signing
 import * as jose from "jose";
+import crypto from "crypto"; // Import crypto for generating random UUID
 
 // Ensure NEXTAUTH_SECRET is loaded (using dotenv or similar if needed)
 // CRITICAL: Must be the *exact* same secret used by your Next.js app
@@ -66,6 +67,7 @@ export default defineConfig({
             const payload = {
               // Standard claims
               sub: user.id, // User ID goes in 'sub' claim
+              jti: crypto.randomUUID(), // Required by Auth.js v5
               iat: Math.floor(Date.now() / 1000), // Issued at timestamp (seconds)
               exp: Math.floor(Date.now() / 1000) + maxAge, // Expiration timestamp (seconds)
               // Custom claims (match what your jwt callback adds)
