@@ -1,65 +1,71 @@
+// src/auth.ts
 import NextAuth from "next-auth";
-import { db } from "./db";
-import { CustomDrizzleAdapter } from "./lib/auth-adapter";
-import { eq } from "drizzle-orm";
-import { users } from "./db/schema";
+import authConfig from "./auth.config"; // Import edge config
+import { db } from "./db"; // If needed for callbacks/adapter
+import { CustomDrizzleAdapter } from "./lib/auth-adapter"; // If using adapter
+import { eq } from "drizzle-orm"; // If needed for callbacks
+import { users } from "./db/schema"; // If needed for callbacks
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
-  trustHost: true,
+  // --- SPREAD THE BASE CONFIG FIRST ---
+  ...authConfig,
+
+  // --- ADD/OVERRIDE NODE.JS SPECIFIC OPTIONS BELOW ---
   adapter: CustomDrizzleAdapter(db),
-  providers: [
-    {
-      id: "dex", // signIn("my-provider") and will be part of the callback URL
-      name: "Login with Dex", // optional, used on the default login page as the button text.
-      type: "oidc", // or "oauth" for OAuth 2 providers
-      issuer: process.env.OIDC_ISSUER_URL, // to infer the .well-known/openid-configuration URL
-      clientId: process.env.AUTH_CLIENT_ID, // from the provider's dashboard
-      clientSecret: process.env.AUTH_CLIENT_SECRET, // from the provider's dashboard
-    },
-  ],
-  session: {
-    strategy: "jwt",
-    maxAge: 30 * 24 * 60 * 60, // 30 days
-  },
   callbacks: {
+    ...authConfig.callbacks, // Spread base callbacks (like 'authorized')
+
+    // Your JWT callback (Node.js specific - uses DB)
     async jwt({ token, user, trigger, session }) {
-      // Add roles to the token when it's first created
+      console.log("[JWT Callback] Trigger:", trigger, "User:", user); // Add Log
+      // Add roles to the token when it's first created (only if user exists)
       if (user?.id) {
-        const [dbUser] = await db
-          .select()
-          .from(users)
-          .where(eq(users.id, user.id));
-        
-        if (dbUser) {
-          token.roles = dbUser.roles as string[] || [];
+        try {
+          const [dbUser] = await db
+            .select({ roles: users.roles }) // Select only necessary field
+            .from(users)
+            .where(eq(users.id, user.id));
+          if (dbUser) {
+            token.roles = (dbUser.roles as string[]) || [];
+          }
+          console.log("[JWT Callback] Roles added from DB:", token.roles);
+        } catch (dbError) {
+          console.error("[JWT Callback] DB Error:", dbError);
+          // Decide how to handle DB error - maybe don't add roles?
+          token.roles = [];
         }
       }
-      
-      // For session updates
+
+      // For session updates (less relevant for API reads)
       if (trigger === "update" && session?.user) {
-        // Allow updating user roles via session update
         if (session.user.roles) {
           token.roles = session.user.roles;
         }
       }
-      
+      console.log("[JWT Callback] Returning Token:", token);
       return token;
     },
+
+    // Your Session callback (Node.js specific - uses token)
     async session({ session, token }) {
-      if (session.user) {
-        // Add the roles from the token to the session
-        session.user.roles = token.roles as string[] || [];
-        // Add the user ID from the token to the session
-        session.user.id = token.sub as string;
+      console.log("[Session Callback] Input Token:", token); // Add Log
+      console.log("[Session Callback] Input Session:", session);
+      // Ensure user object exists before assigning
+      session.user = session.user ?? {};
+      // Assign properties from token if it exists
+      if (token) {
+        if (token.sub) session.user.id = token.sub;
+        if (token.roles) session.user.roles = token.roles as string[];
+        if (token.name) session.user.name = token.name; // Ensure name is passed
+        if (token.email) session.user.email = token.email; // Ensure email is passed
       }
-      const customSession = {
-        ...session,
-        userHasAtLeastOneRole: (roles: string[]) => session.user?.roles?.some(role => roles.includes(role)) || false,
-        userHasAllRoles: (roles: string[]) => session.user?.roles?.every(role => roles.includes(role)) || false
-      }
-      
-      return customSession;
+      // Add your custom methods if you had them before
+      // const customSession = { /* ... */ };
+      // return { ...session, ...customSession };
+      console.log("[Session Callback] Output Session:", session);
+      return session; // Return the modified session
     },
   },
-  debug: true,
+  // No need to repeat: providers, pages, session strategy, debug, trustHost
+  // They are inherited from authConfig
 });
