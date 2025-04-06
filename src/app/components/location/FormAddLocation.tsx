@@ -50,7 +50,7 @@ export default function FormAddLocation({ children }: { children: React.ReactNod
   return (
     <>
       <span onClick={() => setOpen(true)}>{children}</span>
-      <Drawer title="Add Location" open={open} onClose={() => setOpen(false)} width={400} placement="right" destroyOnClose>
+      <Drawer data-testid="test-add-location-drawer" title="Add Location" open={open} onClose={() => setOpen(false)} width={400} placement="right" destroyOnClose>
         <Card
           className="dark:bg-gray-800 dark:border-gray-700"
           styles={{ body: { color: 'inherit' } }}
@@ -82,7 +82,7 @@ export default function FormAddLocation({ children }: { children: React.ReactNod
               ]}
               className="dark:text-white"
             >
-              <Input placeholder="Enter location name" className="dark:bg-gray-700 dark:text-white dark:border-gray-600" />
+              <Input data-testid="test-add-location-name" placeholder="Enter location name" className="dark:bg-gray-700 dark:text-white dark:border-gray-600" />
             </Form.Item>
 
             <div className="">
@@ -153,7 +153,7 @@ export default function FormAddLocation({ children }: { children: React.ReactNod
               />
             </Form.Item>
             <Form.Item style={{ textAlign: "right" }}>
-              <Button type="primary" htmlType="submit" loading={loading}>
+              <Button data-testid="test-form-add-location-submit-button" type="primary" htmlType="submit" loading={loading}>
                 Create Location
               </Button>
             </Form.Item>

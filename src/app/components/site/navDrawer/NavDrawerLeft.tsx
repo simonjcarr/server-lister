@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import type { DrawerProps, MenuProps } from 'antd';
+import React, { ReactNode, useState } from 'react';
+import type { DrawerProps } from 'antd';
 import { Button, Drawer, Space, Menu } from 'antd';
 import Link from 'next/link';
 import { FaCertificate, FaFileInvoiceDollar, FaMap, FaProjectDiagram, FaRegListAlt, FaRegObjectGroup, FaServer, FaTools, FaUsers, FaWindows, FaClipboardCheck } from 'react-icons/fa';
@@ -14,7 +14,16 @@ import FormAddProject from '../../project/FormAddProject';
 import FormAddBusiness from '../../business/FormAddBusiness';
 import FormAddOS from '../../os/FormAddOS';
 
-
+interface MyMenuItemConfig {
+  key: string;
+  className?: string;
+  label: ReactNode; // Use ReactNode if labels can be more than just strings
+  path?: string;     // Optional path for navigation links
+  icon?: ReactNode;  // Optional icon
+  "data-testid"?: string;   // Your required custom property for testing
+  children?: MyMenuItemConfig[]; // Optional array of the same type for submenus
+  onClick?: () => void; // Optional click handler
+}
 
 // Create a NavContext to share the onClose function
 export const NavContext = React.createContext<{ onClose: () => void }>({ onClose: () => { } });
@@ -33,8 +42,8 @@ export const NavLink: React.FC<{ href: string; children: React.ReactNode }> = ({
 const App: React.FC = () => {
   const { data: session } = useSession();
   const router = useRouter();
-  type MenuItem = Required<MenuProps>['items'][number];
-  const items: MenuItem[] = [
+  // type MenuItem = Required<MenuProps>['items'][number];
+  const items: MyMenuItemConfig[] = [
     {
       key: 'server',
       label: 'Server',
@@ -104,10 +113,12 @@ const App: React.FC = () => {
     {
       key: 'location',
       label: 'Location',
+      "data-testid": 'test-left-menu-location',
       icon: <FaMap />,
       children: [
         {
           key: 'location-add',
+          "data-testid": 'test-left-menu-location-add',
           label: <FormAddLocation><div>Add Location</div></FormAddLocation>,
           icon: <MdAddBox />,
 
@@ -284,7 +295,7 @@ const App: React.FC = () => {
     <>
       <Space>
         <Button type="primary" size='small' onClick={showDrawer}>
-          <AiOutlineMenuUnfold />
+          <AiOutlineMenuUnfold data-testid="nav-drawer-button" />
         </Button>
       </Space>
       <Drawer

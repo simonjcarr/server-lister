@@ -11,7 +11,8 @@ describe("Home Page Access After Login", () => {
       cy.log(`Current URL: ${url}`);
     });
     
-    // We should see the Dashboard since we're authenticated via the intercepted session
     cy.contains("Dashboard").should("exist");
+
+    
   });
 });
