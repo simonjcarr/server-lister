@@ -9,7 +9,7 @@ export async function POST(req: NextRequest) {
   if (!db_name.startsWith("test_")) {
     throw new Error("Database name must start with 'test_'");
   }
-  
+  process.env.DATABASE_NAME = db_name;
   // Connect to the default database
   console.log(`Connecting to default database postgres`);
   console.log(`Database user: ${process.env.DATABASE_USER}`)
