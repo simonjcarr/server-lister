@@ -13,7 +13,8 @@
     "db:safe-migrate": "node scripts/safeMigrate.js",
     "db:push": "drizzle-kit push",
     "cypress:open": "cypress open",
-    "cypress:test": "CYPRESS_TESTING=true cypress open"
+    "cypress:test": "CYPRESS_TESTING=true cypress open --e2e",
+    "cypress:test:run": "CYPRESS_TESTING=true cypress run"
   },
   "dependencies": {
     "@ant-design/cssinjs": "^1.23.0",
