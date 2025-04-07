@@ -27,24 +27,19 @@ export async function POST(req: NextRequest) {
   // Also set environment variables for fallback
   process.env.DYNAMIC_TEST_DB = db_name;
   process.env.TEST_DATABASE_NAME = db_name;
-  console.log(`Set test database environment variables to ${db_name}`);
   
   // Refresh the database connection using our exported function in db/index.ts
-  console.log('Refreshing database connection...');
   db.refreshDbConnection();
   
   // Only run migrations when in test mode
   if (process.env.NODE_ENV === 'test' || process.env.CYPRESS_TESTING === 'true') {
     try {
-      console.log(`Running migrations for test database ${db_name}`);
-      
       const projectRoot = process.cwd();
       
       // Run the migration command with proper environment variables
       const migrationCmd = `cd ${projectRoot} && NODE_ENV=test TEST_DATABASE_NAME=${db_name} npx drizzle-kit migrate --config=drizzle.config.test.ts`;
-      console.log(`Running migration command: ${migrationCmd}`);
       
-      const { stdout, stderr } = await execAsync(
+      const { stderr } = await execAsync(
         migrationCmd,
         { 
           env: { 
@@ -61,7 +56,6 @@ export async function POST(req: NextRequest) {
         }
       );
       
-      console.log('Migration output:', stdout);
       if (stderr) console.error('Migration errors:', stderr);
       
       return NextResponse.json({ 
@@ -69,7 +63,6 @@ export async function POST(req: NextRequest) {
         success: true 
       });
     } catch (error: unknown) {
-      console.error('Error running migrations:', error);
       const errorMessage = error instanceof Error ? error.message : String(error);
       
       return NextResponse.json(

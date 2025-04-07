@@ -10,7 +10,6 @@ const isTestEnvironment = process.env.NODE_ENV === 'test' || process.env.CYPRESS
 // Determine which dotenv file to use
 if (isTestEnvironment) {
   dotenv.config({ path: '.env.test' })
-  console.log('Worker using test environment configuration')
   
   // Check if we have a test database name from our file-based storage
   const testDbName = getTestDatabaseName()
@@ -18,11 +17,9 @@ if (isTestEnvironment) {
     process.env.DATABASE_NAME = testDbName
     process.env.TEST_DATABASE_NAME = testDbName
     process.env.DYNAMIC_TEST_DB = testDbName
-    console.log(`Worker using test database: ${testDbName}`)
   }
 } else {
   dotenv.config()
-  console.log('Worker using production environment configuration')
   
   // Clear any old test database names from the environment
   if (process.env.DATABASE_URL !== 'test') {
@@ -105,7 +102,6 @@ const worker = new Worker(
           await postNotification(job.data.title, job.data.message, job.data.roleNames, job.data.userIds);
           break;
         case 'serverScan':
-          console.log('Processing serverScan job with data:', job.data);
           await insertScan(job.data);
           break;
         case 'email':

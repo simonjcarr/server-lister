@@ -83,27 +83,22 @@ export async function getOSFamilyById(id: number) {
 
 export async function getOSFamilyWithOSCount() {
   try {
-    console.log("Starting getOSFamilyWithOSCount");
     
     // First, get all the OS families
     const families = await db.select().from(osFamily).orderBy(osFamily.name);
-    console.log("OS Families:", families);
     
     // If there are no families, return an empty array
     if (!families || families.length === 0) {
-      console.log("No OS families found.");
       return [];
     }
     
     // Then get all the OS records
     const allOS = await db.select().from(os);
-    console.log("All OS records:", allOS);
     
     // Manual count for each OS family
     const result = families.map(family => {
       // Count OS records that have this family ID
       const count = allOS.filter(o => o.osFamilyId === family.id).length;
-      console.log(`Family ${family.id} (${family.name}) has ${count} OS records`);
       
       return {
         ...family,
@@ -111,7 +106,6 @@ export async function getOSFamilyWithOSCount() {
       };
     });
     
-    console.log("Final result:", result);
     return result;
   } catch (error) {
     console.error("Error getting OS Families with counts:", error);

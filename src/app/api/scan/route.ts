@@ -10,7 +10,6 @@ export async function POST(request: Request) {
   }
   //Get JSON body
   const jsonRequest = await request.json();
-  console.log(jsonRequest);
   
   //Add job to the queue
   await jobQueue.add('serverScan', jsonRequest);

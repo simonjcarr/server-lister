@@ -37,7 +37,6 @@ beforeEach(() => {
     failOnStatusCode: true
   }).then(response => {
     expect(response.status).to.eq(200);
-    console.log(`Database ${randomDatabaseName} created successfully`);
   });
   
   // Refresh the connection and run migrations - as a separate command
@@ -48,7 +47,6 @@ beforeEach(() => {
     failOnStatusCode: true
   }).then(response => {
     expect(response.status).to.eq(200);
-    console.log(`Database connection refreshed and migrations applied for ${randomDatabaseName}`);
   });
 });
 
@@ -61,7 +59,6 @@ afterEach(() => {
     failOnStatusCode: true
   }).then(response => {
     expect(response.status).to.eq(200);
-    console.log(`Database ${randomDatabaseName} dropped successfully`);
   });
   
   // Clear the database name from localStorage

@@ -15,7 +15,6 @@ if (fs.existsSync(TEST_DB_PATH)) {
     const fileDbName = fs.readFileSync(TEST_DB_PATH, 'utf-8').trim();
     if (fileDbName) {
       databaseName = fileDbName;
-      console.log(`Using test database name from file: ${databaseName}`);
     }
   } catch (error) {
     console.error('Error reading test database name from file:', error);
@@ -25,7 +24,6 @@ if (fs.existsSync(TEST_DB_PATH)) {
 // Fall back to environment variables if file method failed
 if (!databaseName) {
   databaseName = process.env.TEST_DATABASE_NAME || process.env.DATABASE_NAME;
-  console.log(`Using test database name from environment: ${databaseName}`);
 }
 
 if (!process.env.DATABASE_URL) {
@@ -37,7 +35,7 @@ if (!databaseName) {
 }
 
 const databaseURL = `postgres://${process.env.DATABASE_USER}:${process.env.DATABASE_PASSWORD}@${process.env.DATABASE_HOST}:${process.env.DATABASE_PORT}/${databaseName}`
-console.log(`Database connection for migrations: ${databaseURL.replace(/:[^:]*@/, ':****@')}`);
+
 
 export default {
   schema: "./src/db/schema/index.ts", // Path to schema definitions

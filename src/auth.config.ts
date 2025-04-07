@@ -37,7 +37,7 @@ const authConfig: NextAuthConfig = {
     },
   },
   // Remove custom pages configuration to use default Auth.js pages
-  debug: true,
+  debug: false,
 };
 
 export default authConfig;

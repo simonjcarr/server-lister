@@ -43,10 +43,6 @@ const FormEditOS = ({ children, id }: { children: React.ReactNode, id: number })
         duration: 3,
       });
       
-      
-      // Force refetch all related queries
-      console.log('Mutation successful - refetching queries');
-      
       // Then refetch OS queries
       queryClient.refetchQueries({ queryKey: ['oss'] });
       queryClient.refetchQueries({ queryKey: ['os', id] });
@@ -71,7 +67,6 @@ const FormEditOS = ({ children, id }: { children: React.ReactNode, id: number })
   const onFinish = async (values: UpdateOS) => {
     try {
       setLoading(true);
-      console.log("Submitted form values:", values);
       
       // Handle osFamilyId - make sure null is properly passed if nothing is selected
       const formattedValues = {
@@ -80,8 +75,6 @@ const FormEditOS = ({ children, id }: { children: React.ReactNode, id: number })
         osFamilyId: values.osFamilyId !== undefined ? values.osFamilyId : null,
         EOLDate: values.EOLDate ? new Date(values.EOLDate) : undefined,
       };
-      
-      console.log("Formatted values for update:", formattedValues);
       
       updateOSMutation(formattedValues);
     } catch (error) {

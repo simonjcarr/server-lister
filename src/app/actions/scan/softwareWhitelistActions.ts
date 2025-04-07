@@ -18,8 +18,6 @@ interface WhitelistSoftwareInfo {
 
 export async function getServerSoftwareWithWhitelist(serverId: number, filterByWhitelist: boolean = true) {
   try {
-    console.log(`Starting getServerSoftwareWithWhitelist for server ID: ${serverId}, filterByWhitelist: ${filterByWhitelist}`);
-    
     if (!filterByWhitelist) {
       // All software with whitelist data where available
       const queryResult = await db.execute(sql`
@@ -75,8 +73,6 @@ export async function getServerSoftwareWithWhitelist(serverId: number, filterByW
         ) swv_latest ON true
       `);
 
-      console.log(`All software query result: ${queryResult.rows.length} rows`);
-      
       // Transform the SQL result into the expected format
       const result: WhitelistSoftwareInfo[] = queryResult.rows.map(row => {
         // Check if versions are equivalent using our utility function
@@ -147,8 +143,6 @@ export async function getServerSoftwareWithWhitelist(serverId: number, filterByW
             AND srv.id = ${serverId};
       `);
 
-      console.log(`Whitelist only query result: ${queryResult.rows.length} rows`);      
-      
       // Transform the SQL result into the expected format
       const result: WhitelistSoftwareInfo[] = queryResult.rows.map(row => {
         // Check if versions are equivalent using our utility function

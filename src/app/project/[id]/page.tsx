@@ -9,19 +9,9 @@ import { App } from 'antd';
 
 const ProjectPage = () => {
   const { id } = useParams()
-  // const pathname = usePathname()
-  // const [graphKey, setGraphKey] = useState(0)
-  
-  // Reset graph when the route changes
-  // useEffect(() => {
-  //   console.log('Project page mounted or path changed:', pathname)
-  //   // Force remount of NetworkGraph when route changes
-  //   setGraphKey(prevKey => prevKey + 1)
-  // }, [pathname])
   
   return (
     <div className="project-page">
-      {/* <DrawIOEmbed onSave={() => {}} onLoad={() => {}} initialDiagramXml="" /> */}
       <App>
         <ViewProject projectId={Number(id)} />
       </App>

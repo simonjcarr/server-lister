@@ -50,7 +50,6 @@ export default function TestSSEPage() {
 
       newEventSource.addEventListener('notification', (event) => {
         setMessages(prev => [...prev, `Received notification: ${event.data}`]);
-        console.log('Received notification event:', event.data);
       });
 
       newEventSource.onerror = (err) => {

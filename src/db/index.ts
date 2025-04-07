@@ -13,7 +13,6 @@ export function setTestDatabaseName(dbName: string) {
   if (!dbName) return;
   try {
     fs.writeFileSync(TEST_DB_PATH, dbName);
-    console.log(`Saved test database name to file: ${dbName}`);
   } catch (error) {
     console.error('Error saving test database name:', error);
   }
@@ -24,7 +23,6 @@ export function getTestDatabaseName(): string | null {
   try {
     if (fs.existsSync(TEST_DB_PATH)) {
       const dbName = fs.readFileSync(TEST_DB_PATH, 'utf-8').trim();
-      console.log(`Retrieved test database name from file: ${dbName}`);
       return dbName;
     }
   } catch (error) {
@@ -51,8 +49,6 @@ export function getDatabaseUrl() {
   if (typeof window !== 'undefined' && window.Cypress) {
     // Get the database name from localStorage (set by Cypress)
     const testDbName = window.localStorage.getItem('testDatabaseName');
-    console.log(`Using Cypress test database from browser localStorage: ${testDbName}`);
-    
     if (testDbName) {
       return `postgres://${process.env.DATABASE_USER}:${process.env.DATABASE_PASSWORD}@${process.env.DATABASE_HOST}:${process.env.DATABASE_PORT}/${testDbName}`;
     }
@@ -62,19 +58,16 @@ export function getDatabaseUrl() {
   if (isTestEnvironment()) {
     const testDbNameFromFile = getTestDatabaseName();
     if (testDbNameFromFile) {
-      console.log(`Using test database from file: ${testDbNameFromFile}`);
       return `postgres://${process.env.DATABASE_USER}:${process.env.DATABASE_PASSWORD}@${process.env.DATABASE_HOST}:${process.env.DATABASE_PORT}/${testDbNameFromFile}`;
     }
     
     // For test mode on server-side, check if there's a dynamic database name being used
     if (process.env.DATABASE_URL === 'test' && process.env.DYNAMIC_TEST_DB) {
-      console.log(`Using dynamic test database from env: ${process.env.DYNAMIC_TEST_DB}`);
       return `postgres://${process.env.DATABASE_USER}:${process.env.DATABASE_PASSWORD}@${process.env.DATABASE_HOST}:${process.env.DATABASE_PORT}/${process.env.DYNAMIC_TEST_DB}`;
     }
     
     // Default test database connection
     if (process.env.DATABASE_URL === 'test') {
-      console.log(`Using default test database from env: ${process.env.DATABASE_NAME}`);
       return `postgres://${process.env.DATABASE_USER}:${process.env.DATABASE_PASSWORD}@${process.env.DATABASE_HOST}:${process.env.DATABASE_PORT}/${process.env.DATABASE_NAME}`;
     }
   }
@@ -82,10 +75,6 @@ export function getDatabaseUrl() {
   // Production/development database connection
   return process.env.DATABASE_URL || '';
 }
-
-// Log database connection details
-console.log(`Database URL: ${process.env.DATABASE_URL}`);
-console.log(`Database name: ${process.env.DATABASE_NAME}`);
 
 if(!process.env.DATABASE_URL) {
   throw new Error("DATABASE_URL is not set");
@@ -97,7 +86,7 @@ export function getDbPool() {
   if (!connectionString) {
     throw new Error("Unable to determine database connection string");
   }
-  console.log(`Creating connection pool with: ${connectionString.replace(/:[^:]*@/, ':****@')}`);
+
   return new Pool({
     connectionString,
     ssl: false,

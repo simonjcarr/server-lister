@@ -18,12 +18,6 @@ export async function POST(req: NextRequest) {
   
   // Also save to our file-based storage for server components
   db.setTestDatabaseName(db_name);
-  
-  // Connect to the default database
-  console.log(`Connecting to default database postgres`);
-  console.log(`Database host: ${process.env.DATABASE_HOST}, port: ${process.env.DATABASE_PORT}`);
-  console.log(`Database user: ${process.env.DATABASE_USER}`);
-  
   const client = new pg.Client({
     user: process.env.DATABASE_USER,
     host: process.env.DATABASE_HOST,
@@ -36,11 +30,9 @@ export async function POST(req: NextRequest) {
     await client.connect();
     
     // Check if database already exists and drop it if it does
-    console.log(`Checking if database ${db_name} already exists`);
     const checkResult = await client.query(`SELECT 1 FROM pg_database WHERE datname = '${db_name}'`);
     
     if (checkResult && checkResult.rowCount && checkResult.rowCount > 0) {
-      console.log(`Database ${db_name} already exists, dropping it first`);
       // We need to disconnect everyone first
       await client.query(`
         SELECT pg_terminate_backend(pg_stat_activity.pid)
@@ -51,11 +43,8 @@ export async function POST(req: NextRequest) {
       await client.query(`DROP DATABASE ${db_name}`);
     }
     
-    // Create the new database
-    console.log(`Creating test database ${db_name}`);
     await client.query(`CREATE DATABASE ${db_name}`);
     
-    // Store in localStorage for browser if available
     if (typeof globalThis.localStorage !== 'undefined') {
       globalThis.localStorage.setItem('testDatabaseName', db_name);
     }

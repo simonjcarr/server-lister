@@ -1,9 +1,9 @@
 // middleware.cypress.ts - Only used during Cypress testing
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
 // This middleware is ONLY used when CYPRESS_TESTING=true
 // It bypasses auth checks to allow Cypress to test authenticated routes
-export default function middleware(request: NextRequest) {
+export default function middleware() {
   // Always allow access during Cypress testing
   return NextResponse.next();
 }

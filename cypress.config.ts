@@ -45,7 +45,6 @@ export default defineConfig({
 
           try {
             // 1. Find user in DB to get ID and roles (similar to your jwt callback)
-            console.log(`[Task:generateJwt] Finding user: ${userEmail}`);
             const foundUsers = await db
               .select({
                 id: users.id,
@@ -62,9 +61,6 @@ export default defineConfig({
             if (!user) {
               throw new Error(`Test user with email ${userEmail} not found.`);
             }
-            console.log(
-              `[Task:generateJwt] Found user ID: ${user.id}, Roles: ${user.roles}`
-            );
 
             // 2. Construct the JWT payload (mimic your jwt callback structure)
             const payload = {
@@ -79,7 +75,6 @@ export default defineConfig({
               roles: user.roles || [], // Add roles from DB
               // Add any other fields your jwt callback or session needs
             };
-            console.log("[Task:generateJwt] JWT Payload:", payload);
 
             // 3. Sign the JWT
             const jwt = await new jose.SignJWT(payload)
@@ -88,13 +83,6 @@ export default defineConfig({
               .setExpirationTime(payload.exp)
               .setSubject(payload.sub)
               .sign(encodedSecret); // Sign with the encoded secret
-
-            console.log(
-              `[Task:generateJwt] Generated JWT (first 15 chars): ${jwt.substring(
-                0,
-                15
-              )}...`
-            );
 
             // 4. Return the signed JWT string and expiry for the cookie
             return {

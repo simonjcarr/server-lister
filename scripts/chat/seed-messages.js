@@ -1,7 +1,6 @@
 // This script seeds sample chat messages into the database
 import { db } from '../../src/db';
 import { chatMessages, chatCategories, users } from '../../src/db/schema';
-import { eq } from 'drizzle-orm';
 
 export async function seedSampleMessages() {
   console.log("Seeding sample chat messages...");

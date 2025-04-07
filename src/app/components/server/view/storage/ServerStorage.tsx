@@ -17,7 +17,6 @@ const SpaceAvailable = ({ record }: { record: Storage }) => {
   };
   const available = record.totalGB - record.usedGB
   const percentage = 100 -(available / record.totalGB) * 100
-  console.log(record.diskMountPath,percentage)
   return (
     <Row>
       <Col span={16}>{available.toFixed(2)}</Col>

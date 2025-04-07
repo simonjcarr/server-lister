@@ -8,7 +8,6 @@ const DrawIOExample: React.FC = () => {
 
   // This function will be called when the diagram is saved
   const handleSave = (xml: string) => {
-    console.log('Diagram saved!');
     setDiagramXml(xml);
 
     // In a real application, you would save this XML to your database
@@ -18,7 +17,6 @@ const DrawIOExample: React.FC = () => {
 
   // This function will be called when DrawIO is loaded
   const handleLoad = () => {
-    console.log('DrawIO loaded!');
     setIsLoaded(true);
     return diagramXml || ''; // Return the current diagram XML or empty string
   };

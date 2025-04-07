@@ -47,9 +47,6 @@ const SimpleFavouritesPage = () => {
           ...server,
           checked: favoriteIds.includes(server.id)
         })));
-        
-        console.log('Loaded servers:', allServers.length);
-        console.log('Loaded favorites:', favoriteIds);
       } catch (error) {
         console.error('Error loading data:', error);
         message.error('Failed to load servers');
@@ -85,7 +82,6 @@ const SimpleFavouritesPage = () => {
     
     try {
       setLoading(true);
-      console.log('Saving selected server IDs:', selectedServerIds);
       
       const result = await updateUserFavoriteServers(selectedServerIds);
       

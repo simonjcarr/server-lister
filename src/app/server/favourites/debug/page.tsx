@@ -4,7 +4,6 @@ import React from 'react';
 import { Card, Transfer, Button, App } from 'antd';
 import type { TransferDirection } from 'antd/es/transfer';
 import type { Key } from 'react';
-import { debugDumpUserServers } from '@/app/actions/server/userServerActions';
 import { FaServer } from 'react-icons/fa';
 
 // This page creates a simple Transfer component with hardcoded data to test the component in isolation
@@ -42,14 +41,10 @@ const DebugTransfer = () => {
   // Event handlers for the Transfer component
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleChange = (nextTargetKeys: Key[], _direction: TransferDirection, _moveKeys: Key[]) => {
-    console.log('Target Keys changed:', nextTargetKeys);
     setTargetKeys(nextTargetKeys);
   };
 
-  const handleDumpDatabase = async () => {
-    const result = await debugDumpUserServers();
-    console.log('Database dump result:', result);
-  };
+  const handleDumpDatabase = async () => {};
 
   const filterOption = (inputValue: string, item: { title: string, description: string }) => {
     return item.title.indexOf(inputValue) !== -1 || item.description.indexOf(inputValue) !== -1;

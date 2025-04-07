@@ -29,7 +29,6 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
 
   // If we're in a Cypress test, always render the children
   if (isCypressTest) {
-    console.log('Cypress test detected - bypassing authentication checks');
     return <>{children}</>;
   }
 

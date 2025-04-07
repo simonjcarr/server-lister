@@ -10,7 +10,6 @@ import ServerActivityChart from './ServerActivityChart';
 import { DashboardStats } from '@/app/types/dashboard';
 import { TabsProps } from 'antd';
 import { useState } from 'react';
-import { useSession } from 'next-auth/react';
 
 // Interface for the component props
 interface DashboardProps {
@@ -20,8 +19,6 @@ interface DashboardProps {
 const Dashboard: React.FC<DashboardProps> = ({ onTabChange }) => {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<string>('servers');
-  const { data: session } = useSession();
-  console.log(session);
   const { data: dashboardStats, isLoading } = useQuery<DashboardStats>({
     queryKey: ['dashboardStats'],
     queryFn: getDashboardStats,
