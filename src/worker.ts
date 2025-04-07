@@ -2,8 +2,35 @@ import { Worker } from "bullmq"
 import IORedis from "ioredis"
 import dotenv from "dotenv"
 import { insertScan } from "@/app/actions/scan/crudActions"
+import { getTestDatabaseName } from "@/db"
 
-dotenv.config()
+// Check if we're running in a test environment
+const isTestEnvironment = process.env.NODE_ENV === 'test' || process.env.CYPRESS_TESTING === 'true';
+
+// Determine which dotenv file to use
+if (isTestEnvironment) {
+  dotenv.config({ path: '.env.test' })
+  console.log('Worker using test environment configuration')
+  
+  // Check if we have a test database name from our file-based storage
+  const testDbName = getTestDatabaseName()
+  if (testDbName) {
+    process.env.DATABASE_NAME = testDbName
+    process.env.TEST_DATABASE_NAME = testDbName
+    process.env.DYNAMIC_TEST_DB = testDbName
+    console.log(`Worker using test database: ${testDbName}`)
+  }
+} else {
+  dotenv.config()
+  console.log('Worker using production environment configuration')
+  
+  // Clear any old test database names from the environment
+  if (process.env.DATABASE_URL !== 'test') {
+    // If we're in production mode, make sure we're not using any test database names
+    delete process.env.DYNAMIC_TEST_DB;
+    delete process.env.TEST_DATABASE_NAME;
+  }
+}
 
 if (!process.env.REDIS_USER || !process.env.REDIS_PASSWORD) {
   throw new Error('REDIS_USER or REDIS_PASSWORD is not defined in .env')
@@ -78,6 +105,7 @@ const worker = new Worker(
           await postNotification(job.data.title, job.data.message, job.data.roleNames, job.data.userIds);
           break;
         case 'serverScan':
+          console.log('Processing serverScan job with data:', job.data);
           await insertScan(job.data);
           break;
         case 'email':

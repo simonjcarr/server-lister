@@ -20,40 +20,54 @@ let randomDatabaseName = ""
 setupAuthInterception();
 
 // Add global hooks like beforeEach or afterEach if needed across all tests
-beforeEach(async () => {
+beforeEach(() => {
   // Create random string with the following format test_xxxxxxxx where xxxxxxxx is 8 random numbers
   randomDatabaseName = `test_${Math.floor(Math.random() * 100000000)}`;
   
-  // insert random string into database
-  console.log(`Creating database ${randomDatabaseName}`);
-  const createDatabaseResponse = await fetch(`/api/cypress/create-database`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ db_name: randomDatabaseName }),
+  // Store the database name in localStorage for the db connection to use
+  cy.window().then((win) => {
+    win.localStorage.setItem('testDatabaseName', randomDatabaseName);
   });
-  if (!createDatabaseResponse.ok) {
-    throw new Error(`Failed to create database ${randomDatabaseName}`);
-  } else {
+  
+  // Create the test database - proper Cypress command chaining
+  cy.request({
+    method: 'POST',
+    url: '/api/cypress/create-database',
+    body: { db_name: randomDatabaseName },
+    failOnStatusCode: true
+  }).then(response => {
+    expect(response.status).to.eq(200);
     console.log(`Database ${randomDatabaseName} created successfully`);
-  }
-});
-afterEach(async () => {
-  // Example: cy.log('Finished a test...');
-  console.log(`Dropping database ${randomDatabaseName}`);
-  const dropDatabaseResponse = await fetch(`/api/cypress/drop-database`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ db_name: randomDatabaseName }),
   });
-  if (!dropDatabaseResponse.ok) {
-    throw new Error(`Failed to drop database ${randomDatabaseName}`);
-  } else {
+  
+  // Refresh the connection and run migrations - as a separate command
+  cy.request({
+    method: 'POST',
+    url: '/api/cypress/refresh-db-connection',
+    body: { db_name: randomDatabaseName },
+    failOnStatusCode: true
+  }).then(response => {
+    expect(response.status).to.eq(200);
+    console.log(`Database connection refreshed and migrations applied for ${randomDatabaseName}`);
+  });
+});
+
+afterEach(() => {
+  // Drop the database after the test has completed
+  cy.request({
+    method: 'POST',
+    url: '/api/cypress/drop-database',
+    body: { db_name: randomDatabaseName },
+    failOnStatusCode: true
+  }).then(response => {
+    expect(response.status).to.eq(200);
     console.log(`Database ${randomDatabaseName} dropped successfully`);
-  }
+  });
+  
+  // Clear the database name from localStorage
+  cy.window().then((win) => {
+    win.localStorage.removeItem('testDatabaseName');
+  });
 });
 
 // Add other global hooks and configurations here

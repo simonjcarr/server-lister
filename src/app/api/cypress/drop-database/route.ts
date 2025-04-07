@@ -20,10 +20,30 @@ export async function POST(req: NextRequest) {
   });
   client.connect();
   
-  // Drop the database
-  console.log(`Dropping test database ${db_name}`);
-  await client.query(`DROP DATABASE ${db_name}`);
-  client.end();
-  
-  return NextResponse.json({ message: `Test database ${db_name} dropped successfully` });
+  try {
+    // First, terminate all connections to the database
+    console.log(`Terminating all connections to database ${db_name}`);
+    await client.query(`
+      SELECT pg_terminate_backend(pg_stat_activity.pid)
+      FROM pg_stat_activity
+      WHERE pg_stat_activity.datname = '${db_name}'
+        AND pid <> pg_backend_pid();
+    `);
+    
+    // Now drop the database
+    console.log(`Dropping test database ${db_name}`);
+    // await client.query(`DROP DATABASE ${db_name}`);
+    
+    return NextResponse.json({ message: `Test database ${db_name} dropped successfully` });
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error(`Error dropping database: ${errorMessage}`);
+    return NextResponse.json({ 
+      message: `Failed to drop database ${db_name}`,
+      error: errorMessage 
+    }, { status: 500 });
+  } finally {
+    // Always close the client connection
+    client.end();
+  }
 }

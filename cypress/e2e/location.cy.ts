@@ -19,7 +19,7 @@ describe("Managing locations", () => {
     cy.wait(500);
     // find input with testid test-add-location-name
     cy.get('[data-testid="test-add-location-name"]').should("exist");
-    cy.get('[data-testid="test-add-location-name"]').type("New Location2");
+    cy.get('[data-testid="test-add-location-name"]').type("New Location20");
 
     cy.get('[data-testid="test-form-add-location-submit-button"]').should("exist");
     cy.get('[data-testid="test-form-add-location-submit-button"]').click();
