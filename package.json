@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "concurrently \"next dev --turbopack\" \"tsx src/worker\"",
+    "dev:3008": "concurrently \"next dev --turbopack -p 3008 -H 0.0.0.0\" \"tsx src/worker\"",
     "build": "next build",
     "start": "concurrently \"next start -p 3000 -H 0.0.0.0\" \"tsx src/worker\"",
     "lint": "next lint",
@@ -12,9 +13,9 @@
     "db:migrate": "drizzle-kit migrate",
     "db:safe-migrate": "node scripts/safeMigrate.js",
     "db:push": "drizzle-kit push",
-    "cypress:open": "cypress open",
-    "cypress:test": "CYPRESS_TESTING=true cypress open --e2e",
-    "cypress:test:run": "CYPRESS_TESTING=true cypress run"
+    "cypress:open": "DATABASE_URL=test_test_test NODE_ENV=test cypress open",
+    "cypress:run": "DATABASE_URL=test_test_test NODE_ENV=testCYPRESS_TESTING=true cypress run",
+    "test:e2e": "DATABASE_URL=test_test_test NODE_ENV=test CYPRESS_TESTING=true start-server-and-test dev:3008 http://localhost:3008 cypress:open"
   },
   "dependencies": {
     "@ant-design/cssinjs": "^1.23.0",
@@ -68,6 +69,7 @@
     "eslint-config-next": "15.2.1",
     "jose": "^6.0.10",
     "jsonwebtoken": "^9.0.2",
+    "start-server-and-test": "^2.0.11",
     "tailwindcss": "^4",
     "tsx": "^4.19.3",
     "typescript": "^5"

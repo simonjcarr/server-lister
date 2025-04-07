@@ -7,6 +7,10 @@ import { eq } from "drizzle-orm";
 // Import jose for JWT signing
 import * as jose from "jose";
 import crypto from "crypto"; // Import crypto for generating random UUID
+import * as dotenv from "dotenv";
+import { resolve } from "path";
+
+dotenv.config({ path: resolve(__dirname, ".env.test") });
 
 // Ensure NEXTAUTH_SECRET is loaded (using dotenv or similar if needed)
 // CRITICAL: Must be the *exact* same secret used by your Next.js app
@@ -19,13 +23,12 @@ if (!secret) {
   );
 }
 
-console.log("CYPRESS_SECRET:", secret);
 // Encode the secret once (required by jose)
 const encodedSecret = new TextEncoder().encode(secret);
 
 export default defineConfig({
   e2e: {
-    baseUrl: "http://localhost:3000",
+    baseUrl: "http://localhost:3008",
     setupNodeEvents(on, config) {
       on("task", {
         // --- NEW TASK ---
