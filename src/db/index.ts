@@ -8,6 +8,9 @@ import path from 'path';
 // Create a temp file to store the test database name
 const TEST_DB_PATH = path.join(process.cwd(), '.test-db-name');
 
+// Define type for the database instance
+type DrizzleDB = ReturnType<typeof drizzle<typeof schema>>;
+
 // Global function to set test database name that will be accessible across all server components
 export function setTestDatabaseName(dbName: string) {
   if (!dbName) return;
@@ -18,7 +21,7 @@ export function setTestDatabaseName(dbName: string) {
   }
 }
 
-// Function to get the test database name
+// Function to get the test database name - always read directly from file
 export function getTestDatabaseName(): string | null {
   try {
     if (fs.existsSync(TEST_DB_PATH)) {
@@ -32,73 +35,86 @@ export function getTestDatabaseName(): string | null {
 }
 
 // Check if we're running in a test environment
-function isTestEnvironment() {
+export function isTestEnvironment() {
   return process.env.NODE_ENV === 'test' || 
          process.env.CYPRESS_TESTING === 'true' || 
          (typeof window !== 'undefined' && window.Cypress);
 }
 
-// Create a function to get the current database connection string
+// Get database connection string based on environment
 export function getDatabaseUrl() {
-  // In development/production (non-test) environments, always use the standard DATABASE_URL
+  // For non-test environments use the standard connection string
   if (!isTestEnvironment()) {
     return process.env.DATABASE_URL || '';
   }
   
-  // For Cypress tests in the browser
-  if (typeof window !== 'undefined' && window.Cypress) {
-    // Get the database name from localStorage (set by Cypress)
-    const testDbName = window.localStorage.getItem('testDatabaseName');
-    if (testDbName) {
-      return `postgres://${process.env.DATABASE_USER}:${process.env.DATABASE_PASSWORD}@${process.env.DATABASE_HOST}:${process.env.DATABASE_PORT}/${testDbName}`;
-    }
+  // In test environments, always read test DB name from file first
+  const testDbName = getTestDatabaseName();
+  if (testDbName) {
+    return `postgres://${process.env.DATABASE_USER}:${process.env.DATABASE_PASSWORD}@${process.env.DATABASE_HOST}:${process.env.DATABASE_PORT}/${testDbName}`;
   }
   
-  // For server-side in test mode, try to get the test database name from our file
-  if (isTestEnvironment()) {
-    const testDbNameFromFile = getTestDatabaseName();
-    if (testDbNameFromFile) {
-      return `postgres://${process.env.DATABASE_USER}:${process.env.DATABASE_PASSWORD}@${process.env.DATABASE_HOST}:${process.env.DATABASE_PORT}/${testDbNameFromFile}`;
-    }
-    
-    // For test mode on server-side, check if there's a dynamic database name being used
-    if (process.env.DATABASE_URL === 'test' && process.env.DYNAMIC_TEST_DB) {
-      return `postgres://${process.env.DATABASE_USER}:${process.env.DATABASE_PASSWORD}@${process.env.DATABASE_HOST}:${process.env.DATABASE_PORT}/${process.env.DYNAMIC_TEST_DB}`;
-    }
-    
-    // Default test database connection
-    if (process.env.DATABASE_URL === 'test') {
-      return `postgres://${process.env.DATABASE_USER}:${process.env.DATABASE_PASSWORD}@${process.env.DATABASE_HOST}:${process.env.DATABASE_PORT}/${process.env.DATABASE_NAME}`;
-    }
+  // Fall back to environment variables if file doesn't exist
+  if (process.env.DYNAMIC_TEST_DB) {
+    return `postgres://${process.env.DATABASE_USER}:${process.env.DATABASE_PASSWORD}@${process.env.DATABASE_HOST}:${process.env.DATABASE_PORT}/${process.env.DYNAMIC_TEST_DB}`;
   }
   
-  // Production/development database connection
-  return process.env.DATABASE_URL || '';
+  if (process.env.TEST_DATABASE_NAME) {
+    return `postgres://${process.env.DATABASE_USER}:${process.env.DATABASE_PASSWORD}@${process.env.DATABASE_HOST}:${process.env.DATABASE_PORT}/${process.env.TEST_DATABASE_NAME}`;
+  }
+  
+  // Last resort - use DATABASE_URL if set to 'test'
+  if (process.env.DATABASE_URL === 'test' && process.env.DATABASE_NAME) {
+    return `postgres://${process.env.DATABASE_USER}:${process.env.DATABASE_PASSWORD}@${process.env.DATABASE_HOST}:${process.env.DATABASE_PORT}/${process.env.DATABASE_NAME}`;
+  }
+  
+    return process.env.DATABASE_URL || '';
+}
+
+// For production environments, maintain a singleton connection
+let prodPool: Pool | null = null;
+
+function getProdPool() {
+  if (!prodPool) {
+    prodPool = new Pool({
+      connectionString: process.env.DATABASE_URL,
+      ssl: false,
+    });
+  }
+  return prodPool;
+}
+
+// Production database instance - only used in non-test environments
+const prodDb = drizzle(getProdPool(), { schema });
+
+// Main database export - this is what most code will import
+// In production, this is a singleton
+// In tests, this will work but won't auto-update when test DB changes
+export const db = prodDb;
+
+// For test environments, always create a fresh connection
+// This ensures we're always connecting to the correct test database
+export function getTestDb(): DrizzleDB {
+  if (!isTestEnvironment()) {
+    return db; // In production, just use the singleton
+  }
+  
+  // For tests, create a new connection every time
+  const testDbUrl = getDatabaseUrl();
+  
+  const pool = new Pool({
+    connectionString: testDbUrl,
+    ssl: false,
+  });
+  
+  return drizzle(pool, { schema });
+}
+
+// For backwards compatibility
+export function refreshDbConnection(): DrizzleDB {
+  return getTestDb();
 }
 
 if(!process.env.DATABASE_URL) {
   throw new Error("DATABASE_URL is not set");
-}
-
-// Create a function to get a database connection pool
-export function getDbPool() {
-  const connectionString = getDatabaseUrl();
-  if (!connectionString) {
-    throw new Error("Unable to determine database connection string");
-  }
-
-  return new Pool({
-    connectionString,
-    ssl: false,
-  });
-}
-
-// Create a drizzle instance with the current connection settings
-const pool = getDbPool();
-export const db = drizzle(pool, { schema });
-
-// For testing purposes, export a function to refresh the connection with a new database
-export function refreshDbConnection() {
-  const newPool = getDbPool();
-  return drizzle(newPool, { schema });
 }

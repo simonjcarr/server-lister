@@ -1,6 +1,6 @@
 "use server";
 
-import { db } from "@/db";
+import { db, getTestDb, isTestEnvironment } from "@/db";
 import { locations } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import type {
@@ -9,9 +9,24 @@ import type {
   UpdateLocation,
 } from "@/db/schema";
 
+// Get the appropriate database instance based on environment
+function getDbForOperation() {
+  // In test environments, always get a fresh connection
+  if (isTestEnvironment()) {
+    return getTestDb();
+  }
+  
+  // In non-test environments, use the singleton connection
+  return db;
+}
+
 export async function getLocations() {
   try {
-    const locationResult: SelectLocation[] = await db.select().from(locations);
+    // Get fresh connection for test environments
+    const currentDb = getDbForOperation();
+    
+    // Execute query with current database
+    const locationResult = await currentDb.select().from(locations) as SelectLocation[];
     return locationResult;
   } catch (error) {
     console.error("Error getting locations:", error);
@@ -21,7 +36,11 @@ export async function getLocations() {
 
 export async function getLocationById(id: number) {
   try {
-    const locationResult: SelectLocation[] = await db.select().from(locations).where(eq(locations.id, id)).limit(1);
+    // Get fresh connection for test environments
+    const currentDb = getDbForOperation();
+    
+    // Execute query with current database
+    const locationResult = await currentDb.select().from(locations).where(eq(locations.id, id)).limit(1) as SelectLocation[];
     return locationResult[0];
   } catch (error) {
     console.error("Error getting location by ID:", error);
@@ -31,7 +50,11 @@ export async function getLocationById(id: number) {
 
 export async function addLocation(data: InsertLocation) {
   try {
-    await db.insert(locations).values({
+    // Get fresh connection for test environments
+    const currentDb = getDbForOperation();
+    
+    // Execute query with current database
+    await currentDb.insert(locations).values({
       ...data,
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -45,7 +68,11 @@ export async function addLocation(data: InsertLocation) {
 
 export async function updateLocation(id: number, data: UpdateLocation) {
   try {
-    await db
+    // Get fresh connection for test environments
+    const currentDb = getDbForOperation();
+    
+    // Execute query with current database
+    await currentDb
       .update(locations)
       .set({
         ...data,
