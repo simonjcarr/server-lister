@@ -18,6 +18,38 @@ const authConfig: NextAuthConfig = {
     strategy: "jwt",
   },
   callbacks: {
+    // Add JWT callback to ensure roles from OIDC provider or profile are preserved in the token
+    jwt({ token, user, profile }) {
+      if (profile) {
+        // Check for roles information in the OIDC profile or ID token claims
+        if (profile.roles) token.roles = profile.roles;
+        if (profile.groups) token.roles = profile.groups; // Some providers use "groups" instead
+      }
+      
+      // If user object has roles (from adapter/DB), include them in token
+      if (user && user.roles) {
+        token.roles = user.roles;
+      }
+      
+      return token;
+    },
+    
+    // Add session callback to copy roles from token to user object
+    session({ session, token }) {
+      if (token && session.user) {
+        // Ensure user object exists
+        session.user = session.user || {};
+        
+        // Copy roles from token to session.user
+        if (token.roles) {
+          session.user.roles = Array.isArray(token.roles) ? token.roles : [token.roles];
+        } else {
+          session.user.roles = []; // Default empty array if no roles
+        }
+      }
+      return session;
+    },
+    
     authorized({ auth, request: { nextUrl } }) {
       const isLoggedIn = !!auth?.user;
 
@@ -25,8 +57,7 @@ const authConfig: NextAuthConfig = {
       const isAdminRoute = nextUrl.pathname.startsWith('/admin');
 
       if (isAdminRoute) {
-        if (!isLoggedIn) return false;
-
+        if (!isLoggedIn) return false;  
         // Check if user has admin role
         const roles = auth.user.roles as string[] || [];
         return roles.includes('admin');
