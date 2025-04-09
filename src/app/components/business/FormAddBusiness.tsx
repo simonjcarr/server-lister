@@ -17,6 +17,7 @@ function FormAddBusiness({ children }: { children?: React.ReactNode }) {
     onSuccess: () => {
       messageApi.success('Business created successfully!');
       form.resetFields();
+      setOpen(false);
     },
     onError: (error: unknown) => {
       console.error('Error creating business:', error);
@@ -27,7 +28,7 @@ function FormAddBusiness({ children }: { children?: React.ReactNode }) {
     mutation.mutate({
       name: values.name,
       createdAt: new Date(),
-      updatedAt: new Date()
+      updatedAt: new Date(),
     });
   };
 
@@ -56,11 +57,11 @@ function FormAddBusiness({ children }: { children?: React.ReactNode }) {
               rules={[{ required: true, message: 'Please enter the business name' }]}
               className="dark:text-white"
             >
-              <Input placeholder="Enter business name" className="dark:bg-gray-700 dark:text-white dark:border-gray-600" />
+              <Input data-testid="test-form-add-business-name" placeholder="Enter business name" className="dark:bg-gray-700 dark:text-white dark:border-gray-600" />
             </Form.Item>
 
             <Form.Item>
-              <Button type="primary" htmlType="submit" loading={mutation.isPending}>
+              <Button data-testid="test-form-add-business-submit-button" type="primary" htmlType="submit" loading={mutation.isPending}>
                 Create Business
               </Button>
             </Form.Item>

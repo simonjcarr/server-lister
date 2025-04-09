@@ -16,6 +16,7 @@
     "cypress:open": "DATABASE_URL=test NODE_ENV=test cypress open",
     "cypress:run": "DATABASE_URL=test NODE_ENV=testCYPRESS_TESTING=true cypress run",
     "test:e2e": "DATABASE_URL=test NODE_ENV=test CYPRESS_TESTING=true start-server-and-test dev:3008 http://localhost:3008 cypress:open"
+
   },
   "dependencies": {
     "@ant-design/cssinjs": "^1.23.0",

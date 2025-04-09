@@ -47,15 +47,18 @@ const App: React.FC = () => {
     {
       key: 'server',
       label: 'Server',
+      "data-testid": 'test-left-menu-server',
       icon: <FaServer />,
       children: [
         {
           key: 'server-add',
+          "data-testid": 'test-left-menu-server-add',
           label: <FormAddServer><div>Add Server</div></FormAddServer>,
           icon: <MdAddBox />,
         },
         {
           key: 'server-list',
+          "data-testid": 'test-left-menu-server-list',
           label: 'Server List',
           icon: <FaRegListAlt />,
           onClick: () => {
@@ -64,17 +67,20 @@ const App: React.FC = () => {
         },
         {
           key: 'os',
+          "data-testid": 'test-left-menu-os',
           label: 'Operating Systems',
           icon: <FaWindows />,
           children: [
             {
               key: 'os-add',
+              "data-testid": 'test-left-menu-os-add',
               label: <FormAddOS><div>Add OS</div></FormAddOS>,
               icon: <MdAddBox />,
 
             },
             {
               key: 'os-list',
+              "data-testid": 'test-left-menu-os-list',
               label: 'OS List',
               icon: <FaRegListAlt />,
               onClick: () => {
@@ -85,6 +91,7 @@ const App: React.FC = () => {
         },
         {
           key: 'server-collections',
+          "data-testid": 'test-left-menu-server-collections',
           label: 'Server Collections',
           icon: <FaRegObjectGroup />,
           onClick: () => {
@@ -93,6 +100,7 @@ const App: React.FC = () => {
         },
         {
           key: 'server-favorites',
+          "data-testid": 'test-left-menu-server-favorites',
           label: 'Favourite Servers',
           icon: <FaRegListAlt />,
           onClick: () => {
@@ -104,6 +112,7 @@ const App: React.FC = () => {
     },
     {
       key: 'whitelist',
+      "data-testid": 'test-left-menu-whitelist',
       label: 'Software Whitelist',
       icon: <FaClipboardCheck />,
       onClick: () => {
@@ -125,6 +134,7 @@ const App: React.FC = () => {
         },
         {
           key: 'location-list',
+          "data-testid": 'test-left-menu-location-list',
           label: 'Location List',
           icon: <FaRegListAlt />,
           onClick: () => {
@@ -137,14 +147,17 @@ const App: React.FC = () => {
       key: 'project',
       label: 'Project',
       icon: <FaProjectDiagram />,
+      "data-testid": 'test-left-menu-project',
       children: [
         {
           key: 'project-add',
+          "data-testid": 'test-left-menu-project-add',
           label: <FormAddProject><div>Add Project</div></FormAddProject>,
           icon: <MdAddBox />,
         },
         {
           key: 'project-list',
+          "data-testid": 'test-left-menu-project-list',
           label: 'Project List',
           icon: <FaRegListAlt />,
           onClick: () => {
@@ -153,6 +166,7 @@ const App: React.FC = () => {
         },
         {
           key: 'booking-codes',
+          "data-testid": 'test-left-menu-project-booking-codes',
           label: 'Booking Codes',
           icon: <FaRegListAlt />,
           onClick: () => {
@@ -165,9 +179,11 @@ const App: React.FC = () => {
       key: 'business',
       label: 'Business',
       icon: <IoIosBusiness />,
+      "data-testid": 'test-left-menu-business',
       children: [
         {
           key: 'business-add',
+          "data-testid": 'test-left-menu-business-add',
           label: <FormAddBusiness><div>Add Business</div></FormAddBusiness>,
           icon: <MdAddBox />,
           onClick: () => {
@@ -176,6 +192,7 @@ const App: React.FC = () => {
         },
         {
           key: 'business-list',
+          "data-testid": 'test-left-menu-business-list',
           label: 'Business List',
           icon: <FaRegListAlt />,
           onClick: () => {
@@ -201,11 +218,13 @@ const App: React.FC = () => {
     },
     {
       key: 'certs',
+      "data-testid": 'test-left-menu-certs',
       label: 'Certificates',
       icon: <FaCertificate />,
       children: [
         {
           key: 'certs-list',
+          "data-testid": 'test-left-menu-certs-list',
           label: 'Manage Certificates',
           icon: <FaRegListAlt />,
           onClick: () => {
@@ -216,6 +235,7 @@ const App: React.FC = () => {
     },
     {
       key: 'reports',
+      "data-testid": 'test-left-menu-reports',
       label: 'Reports',
       icon: <FaFileInvoiceDollar />,
       onClick: () => {
@@ -224,6 +244,7 @@ const App: React.FC = () => {
     },
     {
       key: 'dashboard',
+      "data-testid": 'test-left-menu-dashboard',
       label: 'Dashboard',
       icon: <FaRegListAlt />,
       onClick: () => {
@@ -234,11 +255,13 @@ const App: React.FC = () => {
   if (session?.user?.roles?.includes('admin')) {
     items.unshift({
       key: 'admin',
+      "data-testid": 'test-left-menu-admin',
       label: 'Admin',
       icon: <MdAdminPanelSettings />,
       children: [
         {
           key: 'admin-projects',
+          "data-testid": 'test-left-menu-admin-projects',
           label: 'Projects',
           icon: <FaProjectDiagram />,
           onClick: () => {
@@ -247,6 +270,7 @@ const App: React.FC = () => {
         },
         {
           key: 'admin-business',
+          "data-testid": 'test-left-menu-admin-business',
           label: 'Business',
           icon: <IoIosBusiness />,
           onClick: () => {
@@ -255,6 +279,7 @@ const App: React.FC = () => {
         },
         {
           key: 'admin-locations',
+          "data-testid": 'test-left-menu-admin-locations',
           label: 'Locations',
           icon: <FaMap />,
           onClick: () => {
@@ -263,6 +288,7 @@ const App: React.FC = () => {
         },
         {
           key: 'admin-servers',
+          "data-testid": 'test-left-menu-admin-servers',
           label: 'Servers',
           icon: <FaServer />,
           onClick: () => {
@@ -271,6 +297,7 @@ const App: React.FC = () => {
         },
         {
           key: 'admin-users',
+          "data-testid": 'test-left-menu-admin-users',
           label: 'Users',
           icon: <FaUsers />,
           onClick: () => {
@@ -279,6 +306,7 @@ const App: React.FC = () => {
         },
         {
           key: 'admin-chat',
+          "data-testid": 'test-left-menu-admin-chat',
           label: 'Chat',
           icon: <FaComments />,
           onClick: () => {

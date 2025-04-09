@@ -55,7 +55,7 @@ export async function createBusiness(formData: BusinessFormData) {
     return result[0];
   } catch (error: unknown) {
     console.error('Error creating business:', error as Error);
-    throw new Error('Failed to create business');
+    throw new Error('Failed to create business', error as Error);
   }
 }
 
