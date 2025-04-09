@@ -1,6 +1,6 @@
 "use server";
 
-import { db } from '@/db';
+import { db, getTestDb, isTestEnvironment } from '@/db';
 import { business as businessTable } from '@/db/schema';
 import { revalidatePath } from 'next/cache';
 import { eq } from 'drizzle-orm';
@@ -9,12 +9,18 @@ export interface BusinessFormData {
   name: string;
 }
 
+function getTestDbForOperation() {
+  if(isTestEnvironment()) return getTestDb();
+  return db;
+}
+
 /**
  * Retrieves all businesses
  */
 export async function getBusinesses() {
+  const currentDb = getTestDbForOperation();
   try {
-    const allBusinesses = await db.select().from(businessTable).orderBy(businessTable.name);
+    const allBusinesses = await currentDb.select().from(businessTable).orderBy(businessTable.name);
     return allBusinesses
   } catch (error: unknown) {
     console.error('Error fetching businesses:', error as Error);
@@ -26,8 +32,9 @@ export async function getBusinesses() {
  * Retrieves a business by ID
  */
 export async function getBusinessById(id: number) {
+  const currentDb = getTestDbForOperation();
   try {
-    const businessData = await db.select().from(businessTable).where(eq(businessTable.id, id)).limit(1);
+    const businessData = await currentDb.select().from(businessTable).where(eq(businessTable.id, id)).limit(1);
     if (businessData.length === 0) {
       throw new Error('Business not found');
     }
@@ -42,10 +49,11 @@ export async function getBusinessById(id: number) {
  * Creates a new business with the provided data
  */
 export async function createBusiness(formData: BusinessFormData) {
+  const currentDb = getTestDbForOperation();
   try {
     const now = new Date();
     
-    const result = await db.insert(businessTable).values({
+    const result = await currentDb.insert(businessTable).values({
       name: formData.name,
       createdAt: now,
       updatedAt: now,
@@ -63,10 +71,11 @@ export async function createBusiness(formData: BusinessFormData) {
  * Updates a business by ID
  */
 export async function updateBusiness(id: number, formData: Partial<BusinessFormData>) {
+  const currentDb = getTestDbForOperation();
   try {
     const now = new Date();
     
-    const result = await db.update(businessTable)
+    const result = await currentDb.update(businessTable)
       .set({
         ...formData,
         updatedAt: now,
@@ -93,8 +102,9 @@ export async function updateBusiness(id: number, formData: Partial<BusinessFormD
  * Deletes a business by ID
  */
 export async function deleteBusiness(id: number) {
+  const currentDb = getTestDbForOperation();
   try {
-    const result = await db.delete(businessTable)
+    const result = await currentDb.delete(businessTable)
       .where(eq(businessTable.id, id))
       .returning();
     

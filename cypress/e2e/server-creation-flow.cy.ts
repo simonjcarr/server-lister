@@ -52,8 +52,10 @@ describe("Server Creation E2E Flow", () => {
     
     // Step 3: Create a Project
     cy.get('[data-testid="nav-drawer-button"]').click();
-    cy.contains("Projects").click();
-    cy.contains("Add Project").click();
+    cy.get('[data-testid="test-left-menu-project"]').should("exist");
+    cy.get('[data-testid="test-left-menu-project"]').click();
+    cy.get('[data-testid="test-left-menu-project-add"]').should("exist");
+    cy.get('[data-testid="test-left-menu-project-add"]').click();
     
     // Fill out the project form
     cy.get(".ant-drawer-content").should("be.visible");
