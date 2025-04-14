@@ -1,6 +1,6 @@
 "use server";
 
-import { db } from '@/db';
+import db from '@/db/getdb';
 import { projects, business, primaryProjectEngineers, users, drawings, projectDrawings } from '@/db/schema';
 import { revalidatePath } from 'next/cache';
 import { eq } from 'drizzle-orm';
