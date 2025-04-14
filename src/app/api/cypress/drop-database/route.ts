@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
         AND pid <> pg_backend_pid();
     `);
     
-    await client.query(`DROP DATABASE ${db_name}`);
+    // await client.query(`DROP DATABASE ${db_name}`);
     
     return NextResponse.json({ message: `Test database ${db_name} dropped successfully` });
   } catch (error: unknown) {

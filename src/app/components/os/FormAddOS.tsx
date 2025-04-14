@@ -3,7 +3,7 @@ import { addOS } from '@/app/actions/os/crudActions';
 import { getOSFamilies } from '@/app/actions/os/osFamilyActions';
 import { InsertOS, InsertOSFamily } from '@/db/schema';
 import { Card, Form, Input, Button, notification, Drawer, Select, Tabs } from 'antd'
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { addOSFamily } from '@/app/actions/os/osFamilyActions';
 const { TextArea } = Input;
@@ -19,7 +19,12 @@ function FormAddOS({children, initialTab = 'os'}: {children: React.ReactNode, in
   const [loading, setLoading] = useState(false);
   const [messageApi, contextHolder] = notification.useNotification();
   const queryClient = useQueryClient();
-
+  const addOSFamilyMutation = useMutation({
+    mutationFn: addOSFamily,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['osFamilies'] });
+    }
+  });
   // Fetch OS Families for the dropdown
   const { data: osFamilies = [], isLoading: isFamiliesLoading } = useQuery({
     queryKey: ['osFamilies'],
@@ -72,7 +77,7 @@ function FormAddOS({children, initialTab = 'os'}: {children: React.ReactNode, in
     try {
       setLoading(true);
       // Submit to server action
-      const result = await addOSFamily(values);
+      const result = await addOSFamilyMutation.mutateAsync(values);
 
       if (result.success) {
         messageApi.success({
@@ -242,7 +247,7 @@ function FormAddOS({children, initialTab = 'os'}: {children: React.ReactNode, in
               ]}
               className="dark:text-white"
             >
-              <Input className="dark:bg-gray-700 dark:text-white dark:border-gray-600" />
+              <Input data-testid="add-os-form-family-name" className="dark:bg-gray-700 dark:text-white dark:border-gray-600" />
             </Form.Item>
 
             <Form.Item
@@ -260,7 +265,7 @@ function FormAddOS({children, initialTab = 'os'}: {children: React.ReactNode, in
             </Form.Item>
 
             <Form.Item>
-              <Button type="primary" htmlType="submit" loading={loading}>Add OS Family</Button>
+              <Button data-testid="add-os-family-button" type="primary" htmlType="submit" loading={loading}>Add OS Family</Button>
             </Form.Item>
           </Form>
         </TabPane>

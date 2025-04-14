@@ -1,5 +1,6 @@
 'use client'
 import { addOSFamily } from '@/app/actions/os/osFamilyActions';
+import { useMutation } from '@tanstack/react-query';
 import { InsertOSFamily } from '@/db/schema';
 import { Card, Form, Input, Button, notification, Typography, Drawer } from 'antd'
 import { useState } from 'react';
@@ -11,15 +12,11 @@ function FormAddOSFamily({children}: {children: React.ReactNode}) {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const [messageApi, contextHolder] = notification.useNotification();
-
   // Handle form submission
-  async function onFinish(values: InsertOSFamily) {
-    try {
-      setLoading(true);
-      // Submit to server action
-      const result = await addOSFamily(values);
-
-      if (result.success) {
+  const mutation = useMutation({
+    mutationFn: (values: InsertOSFamily) => addOSFamily(values),
+    onSuccess: (data) => {
+      if (data.success) {
         messageApi.success({
           message: "Created",
           description: "OS Family has been created successfully",
@@ -34,16 +31,53 @@ function FormAddOSFamily({children}: {children: React.ReactNode}) {
           duration: 3,
         });
       }
-    } catch (error) {
+    },
+    onError: (error) => {
       console.error("Error creating OS Family:", error);
       messageApi.error({
         message: "Failed",
-        description: "An unexpected error occurred while creating the OS Family",
+        description: "An unexpected error occurred while creating the OS Family test message" + error,
         duration: 3,
       });
-    } finally {
+    },
+    onSettled: () => {
       setLoading(false);
-    }
+    },
+  });
+ 
+  async function onFinish(values: InsertOSFamily) {
+    console.log("********************************* About to call mutation *********************************");
+    mutation.mutate(values);
+    // try {
+    //   setLoading(true);
+    //   // Submit to server action
+    //   const result = await addOSFamily(values);
+      
+    //   if (result.success) {
+    //     messageApi.success({
+    //       message: "Created",
+    //       description: "OS Family has been created successfully",
+    //       duration: 3,
+    //     });
+    //     form.resetFields();
+    //     setOpen(false);
+    //   } else {
+    //     messageApi.error({
+    //       message: "Failed",
+    //       description: "Failed to create OS Family",
+    //       duration: 3,
+    //     });
+    //   }
+    // } catch (error) {
+    //   console.error("Error creating OS Family:", error);
+    //   messageApi.error({
+    //     message: "Failed",
+    //     description: "An unexpected error occurred while creating the OS Family" + error,
+    //     duration: 3,
+    //   });
+    // } finally {
+    //   setLoading(false);
+    // }
   }
 
   return (

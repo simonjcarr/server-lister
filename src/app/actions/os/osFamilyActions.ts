@@ -1,13 +1,19 @@
 "use server";
 
-import { db } from "@/db";
+// import { db, getTestDb, isTestEnvironment } from "@/db";
+import getDb from "@/db/getdb";
 import { osFamily, os } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import type { InsertOSFamily, UpdateOSFamily } from "@/db/schema";
 
+// function getTestDbForOperation() {
+//   if (isTestEnvironment()) return getTestDb();
+//   return db;
+// }
+
 export async function getOSFamilies() {
   try {
-    const families = await db.select().from(osFamily).orderBy(osFamily.name);
+    const families = await getDb.select().from(osFamily).orderBy(osFamily.name);
     return families;
   } catch (error) {
     console.error("Error getting OS Families:", error);
@@ -17,7 +23,7 @@ export async function getOSFamilies() {
 
 export async function addOSFamily(data: InsertOSFamily) {
   try {
-    await db.insert(osFamily).values({
+    await getDb.insert(osFamily).values({
       ...data,
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -25,13 +31,13 @@ export async function addOSFamily(data: InsertOSFamily) {
     return { success: true };
   } catch (error) {
     console.error("Error adding OS Family:", error);
-    throw new Error("Failed to create OS Family");
+    throw new Error(`Failed to create OS Family: ${error}`);
   }
 }
 
 export async function updateOSFamily(id: number, data: UpdateOSFamily) {
   try {
-    await db
+    await getDb
       .update(osFamily)
       .set({
         ...data,
@@ -48,7 +54,7 @@ export async function updateOSFamily(id: number, data: UpdateOSFamily) {
 export async function deleteOSFamily(id: number) {
   try {
     // First check if any OS is using this family
-    const osRecords = await db
+    const osRecords = await getDb
       .select()
       .from(os)
       .where(eq(os.osFamilyId, id));
@@ -60,7 +66,7 @@ export async function deleteOSFamily(id: number) {
       };
     }
     
-    await db.delete(osFamily).where(eq(osFamily.id, id));
+    await getDb.delete(osFamily).where(eq(osFamily.id, id));
     return { success: true };
   } catch (error) {
     console.error("Error deleting OS Family:", error);
@@ -70,7 +76,7 @@ export async function deleteOSFamily(id: number) {
 
 export async function getOSFamilyById(id: number) {
   try {
-    const family = await db.select().from(osFamily).where(eq(osFamily.id, id)).limit(1);
+    const family = await getDb.select().from(osFamily).where(eq(osFamily.id, id)).limit(1);
     if (family.length === 0) {
       throw new Error("OS Family not found");
     }
@@ -85,7 +91,7 @@ export async function getOSFamilyWithOSCount() {
   try {
     
     // First, get all the OS families
-    const families = await db.select().from(osFamily).orderBy(osFamily.name);
+    const families = await getDb.select().from(osFamily).orderBy(osFamily.name);
     
     // If there are no families, return an empty array
     if (!families || families.length === 0) {
@@ -93,7 +99,7 @@ export async function getOSFamilyWithOSCount() {
     }
     
     // Then get all the OS records
-    const allOS = await db.select().from(os);
+    const allOS = await getDb.select().from(os);
     
     // Manual count for each OS family
     const result = families.map(family => {
@@ -112,3 +118,5 @@ export async function getOSFamilyWithOSCount() {
     throw new Error("Failed to get OS Families with counts");
   }
 }
+
+

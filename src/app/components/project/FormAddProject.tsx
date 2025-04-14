@@ -70,7 +70,7 @@ function FormAddProject({ children }: { children: React.ReactNode }) {
               rules={[{ required: true, message: 'Please enter the project name' }]}
               className="dark:text-white"
             >
-              <Input placeholder="Enter project name" className="dark:bg-gray-700 dark:text-white dark:border-gray-600" />
+              <Input data-testid="test-form-add-project-name" placeholder="Enter project name" className="dark:bg-gray-700 dark:text-white dark:border-gray-600" />
             </Form.Item>
 
             <Form.Item
@@ -91,6 +91,7 @@ function FormAddProject({ children }: { children: React.ReactNode }) {
               className="dark:text-white"
             >
               <Select
+                data-testid="test-form-add-project-business"
                 placeholder="Select a business"
                 loading={isLoadingBusinesses}
                 allowClear
@@ -114,7 +115,7 @@ function FormAddProject({ children }: { children: React.ReactNode }) {
             </Form.Item>
 
             <Form.Item>
-              <Button type="primary" htmlType="submit" loading={mutation.isPending}>
+              <Button data-testid="test-form-add-project-submit-button" type="primary" htmlType="submit" loading={mutation.isPending}>
                 Create Project
               </Button>
             </Form.Item>

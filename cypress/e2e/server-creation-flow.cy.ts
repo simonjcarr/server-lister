@@ -54,15 +54,19 @@ describe("Server Creation E2E Flow", () => {
     cy.get('[data-testid="nav-drawer-button"]').click();
     cy.get('[data-testid="test-left-menu-project"]').should("exist");
     cy.get('[data-testid="test-left-menu-project"]').click();
+    cy.wait(500);
     cy.get('[data-testid="test-left-menu-project-add"]').should("exist");
     cy.get('[data-testid="test-left-menu-project-add"]').click();
     
     // Fill out the project form
+    cy.wait(500)
     cy.get(".ant-drawer-content").should("be.visible");
-    cy.get('input[placeholder="Enter project name"]').type(testProject);
+    cy.get('[data-testid="test-form-add-project-name"]').type(testProject);
     
     // Select the business we just created
-    cy.get('select[placeholder="Select a business"], .ant-select').eq(2).click(); 
+    cy.get('[data-testid="test-form-add-project-business"]').should("exist");
+    cy.get('[data-testid="test-form-add-project-business"]').click();
+    cy.wait(500)
     cy.contains(testBusiness).click();
     
     cy.contains("Create Project").click();
@@ -70,25 +74,41 @@ describe("Server Creation E2E Flow", () => {
     
     // Verify project was created
     cy.contains("Project created successfully").should("exist");
+    cy.get(".ant-notification-notice-close").click();
+    cy.wait(500);
+    cy.get('.ant-drawer-open .ant-drawer-close').click();
     
     // Step 4: Create an OS Family
     cy.get('[data-testid="nav-drawer-button"]').click();
-    cy.contains("Operating System").click();
-    cy.contains("Add New Operating System").click();
+
+    // Open the server menu
+    cy.get('[data-testid="test-left-menu-server"]').should("exist");
+    cy.get('[data-testid="test-left-menu-server"]').click();
+    cy.wait(500);
+    cy.get('[data-testid="test-left-menu-os"]').should("exist");
+    cy.get('[data-testid="test-left-menu-os"]').click();
+    cy.wait(500);
+    cy.get('[data-testid="test-left-menu-os-add"]').should("exist");
+    cy.get('[data-testid="test-left-menu-os-add"]').click();
+    cy.wait(500);
+    
     
     // Switch to OS Family tab
-    cy.contains("OS Family").click();
+    cy.get(".ant-tabs-tab-btn").contains("OS Family").click();
+    cy.wait(500);
     
     // Fill out the OS Family form
-    cy.get('input[name="name"]').eq(1).type(testOSFamily);
-    cy.get('button[type="submit"]').eq(1).click();
-    cy.wait(500);
+    cy.get('[data-testid="add-os-form-family-name"]').type(testOSFamily);
+    cy.get('[data-testid="add-os-family-button"]').click();
+    cy.wait(1000);
     
     // Verify OS Family was created
     cy.contains("OS Family has been created successfully").should("exist");
+    cy.get(".ant-notification-notice-close").click();
     
     // Step 5: Create an OS
-    cy.contains("Operating System").click();
+    cy.get(".ant-tabs-tab-btn").contains("Operating System").click();
+    cy.wait(500);
     
     // Fill out the OS form
     cy.get('input[name="name"]').eq(0).clear().type(testOS);
