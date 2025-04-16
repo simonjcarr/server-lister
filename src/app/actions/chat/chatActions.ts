@@ -1,6 +1,6 @@
 'use server'
 
-import { db } from "@/db";
+import db from "@/db/getdb";
 import { asc, count, desc, eq, and } from "drizzle-orm";
 import { chatCategories, chatMessages, users } from "@/db/schema";
 import { auth } from "@/auth";

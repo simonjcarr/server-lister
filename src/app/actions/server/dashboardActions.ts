@@ -1,6 +1,6 @@
 'use server';
 
-import { db } from "@/db";
+import db from "@/db/getdb";
 import { servers, os, locations, business, bookingCodeGroups, bookingCodes } from "@/db/schema";
 import { count, eq } from "drizzle-orm";
 

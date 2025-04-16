@@ -1,6 +1,6 @@
 'use server';
 
-import { db } from "@/db";
+import db from "@/db/getdb";
 import { servers } from "@/db/schema/servers";
 import { projectBookingCodes, bookingCodeGroups, bookingCodes } from "@/db/schema/bookingCodes";
 import { and, eq, gte, lt, desc } from "drizzle-orm";

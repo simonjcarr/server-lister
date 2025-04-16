@@ -2,7 +2,7 @@
 
 import { areVersionsEquivalent } from "@/lib/utils/versionComparison";
 
-import { db } from "@/db";
+import db from "@/db/getdb";
 import { sql } from "drizzle-orm";
 
 interface WhitelistSoftwareInfo {

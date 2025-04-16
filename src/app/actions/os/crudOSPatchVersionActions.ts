@@ -1,5 +1,5 @@
 'use server'
-import { db } from "@/db";
+import db from "@/db/getdb";
 import { osPatchVersions, InsertOSPatchVersion } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
 

@@ -1,6 +1,6 @@
 'use server';
 
-import { db } from '@/db';
+import db from '@/db/getdb';
 import { softwareWhitelist, softwareWhitelistVersions, osFamily } from '@/db/schema';
 import { InsertSoftwareWhitelist, UpdateSoftwareWhitelist } from '@/db/schema/softwareWhitelist';
 import { InsertSoftwareWhitelistVersion, UpdateSoftwareWhitelistVersion } from '@/db/schema/softwareWhitelist';

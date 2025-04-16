@@ -1,5 +1,5 @@
 'use server'
-import { db } from "@/db"
+import db from "@/db/getdb";
 import { certs, CertRequest, servers, users, UpdateCert } from "@/db/schema"
 import { auth } from "@/auth"
 import { eq } from "drizzle-orm"

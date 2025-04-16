@@ -1,5 +1,5 @@
 'use server'
-import { db } from "@/db";
+import db from "@/db/getdb";
 import type { ScanResults } from "@/db/schema";
 import { servers, serverScans } from "@/db/schema";
 import { eq } from "drizzle-orm";

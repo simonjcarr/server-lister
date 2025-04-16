@@ -1,5 +1,5 @@
 'use server'
-import { db } from "@/db"; // Your database instance
+import db from "@/db/getdb"; // Your database instance
 import { sql } from "drizzle-orm";
 import { PatchStatus } from "@/app/types/reports";
 

@@ -149,7 +149,7 @@ function FormAddOS({children, initialTab = 'os'}: {children: React.ReactNode, in
               ]}
               className="dark:text-white"
             >
-              <Input className="dark:bg-gray-700 dark:text-white dark:border-gray-600" />
+              <Input data-testid="add-os-form-name" className="dark:bg-gray-700 dark:text-white dark:border-gray-600" />
             </Form.Item>
             <Form.Item
               name="version"
@@ -162,7 +162,7 @@ function FormAddOS({children, initialTab = 'os'}: {children: React.ReactNode, in
               ]}
               className="dark:text-white"
             >
-              <Input className="dark:bg-gray-700 dark:text-white dark:border-gray-600" />
+              <Input data-testid="add-os-form-version" className="dark:bg-gray-700 dark:text-white dark:border-gray-600" />
             </Form.Item>
 
             <Form.Item
@@ -171,6 +171,7 @@ function FormAddOS({children, initialTab = 'os'}: {children: React.ReactNode, in
               className="dark:text-white"
             >
               <Select
+                data-testid="add-os-form-os-family"
                 className="dark:bg-gray-700 dark:text-white dark:border-gray-600"
                 placeholder="Select OS Family"
                 loading={isFamiliesLoading}
@@ -193,7 +194,7 @@ function FormAddOS({children, initialTab = 'os'}: {children: React.ReactNode, in
               ]}
               className="dark:text-white"
             >
-              <Input type="date" className="dark:bg-gray-700 dark:text-white dark:border-gray-600" />
+              <Input data-testid="add-os-form-eol-date" type="date" className="dark:bg-gray-700 dark:text-white dark:border-gray-600" />
             </Form.Item>
 
 
@@ -212,7 +213,7 @@ function FormAddOS({children, initialTab = 'os'}: {children: React.ReactNode, in
             </Form.Item>
 
             <Form.Item>
-              <Button type="primary" htmlType="submit" loading={loading}>Add OS</Button>
+              <Button data-testid="add-os-button" type="primary" htmlType="submit" loading={loading}>Add OS</Button>
             </Form.Item>
           </Form>
         </TabPane>

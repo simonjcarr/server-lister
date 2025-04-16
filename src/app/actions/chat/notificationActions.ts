@@ -1,6 +1,6 @@
 'use server'
 
-import { db } from "@/db";
+import db from "@/db/getdb";
 import { eq, inArray } from "drizzle-orm";
 import { 
   users_servers, 

@@ -6,6 +6,8 @@ describe("Server Creation E2E Flow", () => {
   const testProject = `Test Project ${testId}`;
   const testOSFamily = `Test OS Family ${testId}`;
   const testOS = `Test OS ${testId}`;
+  const testOSVersion = `1.0`;
+  const testOSEOLDate = "2030-12-22";
   const testServer = `testserver${testId}`;
   
   it("should create all resources and verify the server exists", () => {
@@ -111,24 +113,20 @@ describe("Server Creation E2E Flow", () => {
     cy.wait(500);
     
     // Fill out the OS form
-    cy.get('input[name="name"]').eq(0).clear().type(testOS);
-    cy.get('input[name="version"]').type("1.0");
-    
-    // Select the OS Family we just created
-    cy.get('.ant-select').eq(0).click();
+    cy.get('[data-testid="add-os-form-name"]').eq(0).clear().type(testOS);
+    cy.get('[data-testid="add-os-form-version"]').type(testOSVersion);
+    //Select os family
+    cy.get('[data-testid="add-os-form-os-family"]').click();
     cy.contains(testOSFamily).click();
     
-    // Set EOL date (1 year from today)
-    const eolDate = new Date();
-    eolDate.setFullYear(eolDate.getFullYear() + 1);
-    const formattedDate = eolDate.toISOString().split('T')[0];
-    cy.get('input[type="date"]').type(formattedDate);
-    
-    cy.get('button[type="submit"]').eq(0).click();
-    cy.wait(500);
-    
-    // Verify OS was created
+    cy.get('[data-testid="add-os-form-eol-date"]').type(testOSEOLDate);
+
+    cy.get('[data-testid="add-os-button"]').click();
+    cy.wait(1000);
+
     cy.contains("OS has been created successfully").should("exist");
+    cy.get(".ant-notification-notice-close").click();
+    
     
     // Step 6: Create a new server
     cy.get('[data-testid="nav-drawer-button"]').click();

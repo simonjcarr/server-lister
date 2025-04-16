@@ -1,5 +1,5 @@
 'use server'
-import { db } from "@/db"
+import db from "@/db/getdb"
 import { notifications } from "@/db/schema"
 import { eq, and, desc, inArray, count } from "drizzle-orm"
 import { auth } from '@/auth'

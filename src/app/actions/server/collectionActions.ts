@@ -1,5 +1,5 @@
 "use server";
-import { db } from "@/db";
+import db from "@/db/getdb";
 import {
   InsertCollection,
   SelectCollection,

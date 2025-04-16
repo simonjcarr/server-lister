@@ -1,5 +1,5 @@
 'use server'
-import { db } from "@/db";
+import db from "@/db/getdb";
 import { notes, serverNotes, users } from "@/db/schema";
 import { eq, desc, and } from "drizzle-orm";
 import { auth } from "@/auth";

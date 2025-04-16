@@ -1,6 +1,6 @@
 "use server";
 
-import { db } from "@/db";
+import db from "@/db/getdb";
 import { os, osPatchVersions, osFamily } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
 import type { InsertOS, UpdateOS, SelectOS } from "@/db/schema";
