@@ -3,18 +3,19 @@
 import React, { useState } from 'react';
 import { Button, Form, Input, message, Card, Drawer } from 'antd';
 import { createBusiness } from '@/app/actions/business/crudActions';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type { InsertBusiness } from '@/db/schema'
 
 function FormAddBusiness({ children }: { children?: React.ReactNode }) {
   const [form] = Form.useForm();
   const [open, setOpen] = useState(false);
   const [messageApi, contextHolder] = message.useMessage();
-
+  const queryClient = useQueryClient();
 
   const mutation = useMutation({
     mutationFn: (data: InsertBusiness) => createBusiness(data),
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['businesses'] });
       messageApi.success('Business created successfully!');
       form.resetFields();
       setOpen(false);

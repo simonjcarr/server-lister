@@ -27,12 +27,14 @@ describe("Server Creation E2E Flow", () => {
     cy.get('[data-testid="test-add-location-name"]').should("exist");
     cy.get('[data-testid="test-add-location-name"]').type(testLocation);
     cy.get('[data-testid="test-form-add-location-submit-button"]').click();
-    cy.wait(3000);
+    cy.wait(1000);
     
     // Verify location was created
     cy.contains("Location has been created successfully").should("exist");
-    cy.get('button[aria-label="Close"]').click();
-    cy.wait(2000);
+    cy.get(".ant-notification-notice-close").click();
+    cy.wait(500);
+    cy.get(".ant-drawer-open .ant-drawer-close").click();
+    cy.wait(500);
     // Step 2: Create a Business
     cy.get('[data-testid="nav-drawer-button"]').click();
     cy.get('[data-testid="test-left-menu-business"]').should("exist");
@@ -126,44 +128,48 @@ describe("Server Creation E2E Flow", () => {
 
     cy.contains("OS has been created successfully").should("exist");
     cy.get(".ant-notification-notice-close").click();
-    
+    cy.wait(500);
+    cy.get(".ant-drawer-open .ant-drawer-close").click();
     
     // Step 6: Create a new server
     cy.get('[data-testid="nav-drawer-button"]').click();
-    cy.contains("Servers").click();
+    cy.contains("Server").click();
     cy.contains("Add Server").click();
-    
+    cy.wait(500)
     // Fill out the server form
-    cy.get('input[name="hostname"]').type(testServer);
-    cy.get('input[name="ipv4"]').type("192.168.1.1");
+    cy.get('[data-testid="form-add-server-hostname"]').type(testServer);
+    cy.get('[data-testid="form-add-server-ipv4"]').type("192.168.1.1");
     
     // Select the OS we created
-    cy.get('.ant-select').eq(0).click();
+    cy.get('[data-testid="form-add-server-os"]').click();
     cy.contains(testOS).click();
     
     // Select the Location we created
-    cy.get('.ant-select').eq(1).click();
+    cy.get('[data-testid="form-add-server-location"]').click();
     cy.contains(testLocation).click();
     
     // Select the Business we created
-    cy.get('.ant-select').eq(2).click();
-    cy.contains(testBusiness).click();
+    // cy.get('[data-testid="form-add-server-business"]').click();
+    cy.get('[data-testid="form-add-server-business"]').click();
+    cy.get('.business-item').contains(testBusiness).click();
     
     // Select the Project we created
-    cy.get('.ant-select').eq(3).click();
-    cy.contains(testProject).click();
+    cy.get('[data-testid="form-add-server-project"]').click();
+    cy.get('.project-item').contains(testProject).click();
     
     // Submit the form
-    cy.contains("Add Server").click();
+    cy.get('[data-testid="form-add-server-submit"]').click();
     cy.wait(500);
     
     // Verify server was created
     cy.contains("Server Created").should("exist");
-    
+    cy.wait(500);
+    cy.get(".ant-drawer-open .ant-drawer-close").click();
     // Step 7: Visit the Server list page and verify our server exists
     cy.get('[data-testid="nav-drawer-button"]').click();
-    cy.contains("Servers").click();
-    cy.contains("Server List").should("exist");
+    cy.contains("Server").click();
+    cy.contains("Server List").click();
+    cy.wait(500);
     
     // Verify our server appears in the list
     cy.contains(testServer).should("exist");

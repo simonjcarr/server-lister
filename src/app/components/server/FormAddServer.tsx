@@ -68,14 +68,10 @@ function FormAddServer({ children }: { children: React.ReactNode }) {
   // Server creation mutation
   const serverMutation = useMutation({
     mutationFn: (values: InsertServer) => addServer(values),
-    onSuccess: (result) => {
-      if (result.success) {
+    onSuccess: () => {
         messageApi.success("Server Created");
         queryClient.invalidateQueries({ queryKey: ["servers"] });
         form.resetFields();
-      } else {
-        messageApi.error("Failed to create server");
-      }
     },
     onError: (error: unknown) => {
       console.error("Error creating server:", error);
@@ -160,6 +156,7 @@ function FormAddServer({ children }: { children: React.ReactNode }) {
               className="dark:text-white"
             >
               <Input
+                data-testid="form-add-server-hostname"
                 onChange={(e) => handleHostnameChange(e.target.value)}
                 className="dark:bg-gray-700 dark:text-white dark:border-gray-600"
                 suffix={<span style={{ visibility: ipMutation.isPending ? 'visible' : 'hidden' }}>Loading...</span>}
@@ -178,7 +175,7 @@ function FormAddServer({ children }: { children: React.ReactNode }) {
                   ]}
                   className="dark:text-white"
                 >
-                  <Input className="dark:bg-gray-700 dark:text-white dark:border-gray-600" />
+                  <Input data-testid="form-add-server-ipv4" className="dark:bg-gray-700 dark:text-white dark:border-gray-600" />
                 </Form.Item>
               </Col>
 
@@ -194,7 +191,7 @@ function FormAddServer({ children }: { children: React.ReactNode }) {
                   ]}
                   className="dark:text-white"
                 >
-                  <Input className="dark:bg-gray-700 dark:text-white dark:border-gray-600" />
+                  <Input data-testid="form-add-server-ipv6" className="dark:bg-gray-700 dark:text-white dark:border-gray-600" />
                 </Form.Item>
               </Col>
             </Row>
@@ -214,6 +211,7 @@ function FormAddServer({ children }: { children: React.ReactNode }) {
                 >
 
                   <Select
+                    data-testid="form-add-server-os"
                     placeholder="Select an OS"
                     style={{ width: "100%" }}
                     className="dark:bg-gray-700 dark:text-white dark:border-gray-600"
@@ -241,6 +239,7 @@ function FormAddServer({ children }: { children: React.ReactNode }) {
                   className="dark:text-white"
                 >
                   <Select
+                    data-testid="form-add-server-location"
                     placeholder="Select a location"
                     style={{ width: "100%" }}
                     className="dark:bg-gray-700 dark:text-white dark:border-gray-600"
@@ -270,6 +269,7 @@ function FormAddServer({ children }: { children: React.ReactNode }) {
                   className="dark:text-white"
                 >
                   <Select
+                    data-testid="form-add-server-business"
                     placeholder="Select a business"
                     style={{ width: "100%" }}
                     className="dark:bg-gray-700 dark:text-white dark:border-gray-600"
@@ -277,7 +277,7 @@ function FormAddServer({ children }: { children: React.ReactNode }) {
                     allowClear
                   >
                     {businessList.map(business => (
-                      <Select.Option key={business.id} value={business.id}>
+                      <Select.Option className="business-item" key={business.id} value={business.id}>
                         {business.name}
                       </Select.Option>
                     ))}
@@ -297,13 +297,14 @@ function FormAddServer({ children }: { children: React.ReactNode }) {
                   className="dark:text-white"
                 >
                   <Select
+                    data-testid="form-add-server-project"
                     placeholder="Select a project"
                     style={{ width: "100%" }}
                     className="dark:bg-gray-700 dark:text-white dark:border-gray-600"
                     dropdownStyle={{ backgroundColor: 'var(--bg-dropdown)', color: 'var(--text-dropdown)' }}
                   >
                     {projectList.map(project => (
-                      <Select.Option key={project.id} value={project.id}>
+                      <Select.Option className="project-item" key={project.id} value={project.id}>
                         {project.name}
                       </Select.Option>
                     ))}
@@ -322,7 +323,7 @@ function FormAddServer({ children }: { children: React.ReactNode }) {
               ]}
               className="dark:text-white"
             >
-              <Input className="dark:bg-gray-700 dark:text-white dark:border-gray-600" />
+              <Input data-testid="form-add-server-doc-link" className="dark:bg-gray-700 dark:text-white dark:border-gray-600" />
             </Form.Item>
             <Form.Item
               name="description"
@@ -335,7 +336,7 @@ function FormAddServer({ children }: { children: React.ReactNode }) {
               ]}
               className="dark:text-white"
             >
-              <TextArea className="dark:bg-gray-700 dark:text-white dark:border-gray-600" />
+              <TextArea data-testid="form-add-server-description" className="dark:bg-gray-700 dark:text-white dark:border-gray-600" />
             </Form.Item>
 
             <Row gutter={[16, 16]}>
@@ -351,7 +352,7 @@ function FormAddServer({ children }: { children: React.ReactNode }) {
                   ]}
                   className="dark:text-white"
                 >
-                  <Switch />
+                  <Switch data-testid="form-add-server-itar"/>
                 </Form.Item>
               </Col>
               <Col>
@@ -366,12 +367,12 @@ function FormAddServer({ children }: { children: React.ReactNode }) {
                   ]}
                   className="dark:text-white"
                 >
-                  <Switch />
+                  <Switch data-testid="form-add-server-secure-server" />
                 </Form.Item>
               </Col>
             </Row>
             <Form.Item>
-              <Button type="primary" htmlType="submit" loading={serverMutation.isPending}>Add Server</Button>
+              <Button data-testid="form-add-server-submit" type="primary" htmlType="submit" loading={serverMutation.isPending}>Add Server</Button>
             </Form.Item>
           </Form>
         </Card>

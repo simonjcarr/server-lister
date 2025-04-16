@@ -19,12 +19,40 @@ function FormAddOS({children, initialTab = 'os'}: {children: React.ReactNode, in
   const [loading, setLoading] = useState(false);
   const [messageApi, contextHolder] = notification.useNotification();
   const queryClient = useQueryClient();
+  
   const addOSFamilyMutation = useMutation({
     mutationFn: addOSFamily,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['osFamilies'] });
     }
   });
+
+  const addOSMutation = useMutation({
+    mutationFn: (values: InsertOS) => addOS(values),
+    onSuccess: () => {
+      messageApi.success({
+        message: "Created",
+        description: "OS has been created successfully",
+        duration: 3,
+      });
+      osForm.resetFields();
+      queryClient.invalidateQueries({ queryKey: ['os'] });
+      queryClient.invalidateQueries({ queryKey: ['osFamilyWithCount'] });
+      queryClient.invalidateQueries({ queryKey: ['osFamilies'] });
+    },
+    onError: (error: unknown) => {
+      console.error("Error creating OS:", error);
+      messageApi.error({
+        message: "Failed",
+        description: "An unexpected error occurred while creating the OS",
+        duration: 3,
+      });
+    },
+    onSettled: () => {
+      setLoading(false);
+    }
+  });
+  
   // Fetch OS Families for the dropdown
   const { data: osFamilies = [], isLoading: isFamiliesLoading } = useQuery({
     queryKey: ['osFamilies'],
@@ -33,43 +61,8 @@ function FormAddOS({children, initialTab = 'os'}: {children: React.ReactNode, in
 
   // Handle OS form submission
   async function onFinishOS(values: InsertOS) {
-    try {
-      setLoading(true);
-      
-      // Submit to server action
-      const result = await addOS(values);
-
-      if (result.success) {
-        messageApi.success({
-          message: "Created",
-          description: "OS has been created successfully",
-          duration: 3,
-        });
-        osForm.resetFields();
-        
-        // Invalidate OS queries to refresh OS lists
-        queryClient.invalidateQueries({ queryKey: ['oss'] });
-        
-        // Also invalidate OS Family queries to update counts
-        queryClient.invalidateQueries({ queryKey: ['osFamilyWithCount'] });
-        queryClient.invalidateQueries({ queryKey: ['osFamilies'] });
-      } else {
-        messageApi.error({
-          message: "Failed",
-          description: "Failed to create OS",
-          duration: 3,
-        });
-      }
-    } catch (error) {
-      console.error("Error creating OS:", error);
-      messageApi.error({
-        message: "Failed",
-        description: "An unexpected error occurred while creating the OS",
-        duration: 3,
-      });
-    } finally {
-      setLoading(false);
-    }
+    setLoading(true);
+    addOSMutation.mutate(values);
   }
 
   // Handle OS Family form submission
