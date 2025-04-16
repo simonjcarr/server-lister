@@ -138,6 +138,7 @@ describe("Server Creation E2E Flow", () => {
     cy.wait(500)
     // Fill out the server form
     cy.get('[data-testid="form-add-server-hostname"]').type(testServer);
+    cy.wait(2000)
     cy.get('[data-testid="form-add-server-ipv4"]').type("192.168.1.1");
     
     // Select the OS we created

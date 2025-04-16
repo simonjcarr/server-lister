@@ -134,7 +134,7 @@ function FormAddServer({ children }: { children: React.ReactNode }) {
               ipv6: "",
               locationId: null,
               osId: null,
-              businessId: null,
+              business: null,
               projectId: null,
               description: "",
               itar: false,
@@ -258,7 +258,7 @@ function FormAddServer({ children }: { children: React.ReactNode }) {
             <Row gutter={[16, 16]}>
               <Col span={12}>
                 {isLoadingBusinesses ? <div>Loading...</div> : <Form.Item
-                  name="businessId"
+                  name="business"
                   label="Business"
                   rules={[
                     {
