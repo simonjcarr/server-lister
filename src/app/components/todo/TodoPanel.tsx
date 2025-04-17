@@ -342,11 +342,11 @@ function TaskComments({ taskId, completed = false }: { taskId: number, completed
           loading={loadingComments}
           renderItem={(item) => (
             <List.Item style={{ display: 'block', padding: '8px 0', border: 'none' }}>
-              <div style={{ fontWeight: 600, fontSize: 13 }}>{item.userName}</div>
-              <div style={{ fontSize: 12, color: '#888', marginBottom: 2 }}>
+              <div style={{ fontWeight: 600, fontSize: 13, color: completed ? '#222' : undefined }}>{item.userName}</div>
+              <div style={{ fontSize: 12, color: completed ? '#444' : '#888', marginBottom: 2 }}>
                 <DistanceToNow date={new Date(item.createdAt)} />
               </div>
-              <div style={{ fontSize: 14, margin: '2px 0 2px 0', whiteSpace: 'pre-line' }}>{item.comment}</div>
+              <div style={{ fontSize: 14, margin: '2px 0 2px 0', whiteSpace: 'pre-line', color: completed ? '#222' : undefined }}>{item.comment}</div>
             </List.Item>
           )}
           locale={{ emptyText: "No comments yet" }}
