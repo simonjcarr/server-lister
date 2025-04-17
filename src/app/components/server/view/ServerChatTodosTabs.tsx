@@ -1,3 +1,4 @@
+// This file is now deprecated and can be safely removed.
 import { Tabs } from "antd";
 import { ChatPanel } from "../../chat/ChatPanel";
 import TodoPanel from "../../todo/TodoPanel";

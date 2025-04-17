@@ -75,6 +75,12 @@ export async function addTaskComment(taskId: number, comment: string) {
   if (!session?.user) throw new Error('Unauthorized');
   const userId = session.user.id!;
   const now = new Date();
+  // Insert the comment
   const [row] = await db.insert(taskComments).values({ taskId, userId, comment, createdAt: now, updatedAt: now }).returning();
-  return row;
+  // Fetch the user name immediately after insert
+  const user = await db.query.users.findFirst({ where: (u, { eq }) => eq(u.id, userId) });
+  return {
+    ...row,
+    userName: user?.name || '',
+  };
 }
