@@ -2,7 +2,7 @@
 
 import { Splitter } from 'antd'
 import ViewServerTabs from './ViewServerTabs'
-import { ChatPanel } from '../../chat/ChatPanel'
+import ServerChatTodosTabs from './ServerChatTodosTabs'
 
 function ViewServerDetails({ serverId }: { serverId: number }) {
   return (
@@ -14,7 +14,7 @@ function ViewServerDetails({ serverId }: { serverId: number }) {
       </Splitter.Panel>
       <Splitter.Panel className='h-full' size="30%">
         <div className='px-4 h-full overflow-hidden'>
-          <ChatPanel serverId={serverId} />
+          <ServerChatTodosTabs serverId={serverId} />
         </div>
       </Splitter.Panel>
     </Splitter>
