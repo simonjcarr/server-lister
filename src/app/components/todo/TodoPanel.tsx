@@ -4,6 +4,13 @@ import { Collapse, Checkbox, Button, Input, Spin, Empty, Form, List, Typography,
 import { CheckCircleFilled } from "@ant-design/icons";
 import DistanceToNow from "../utils/DistanceToNow";
 import { getAllUsers } from "@/app/actions/users/userActions";
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import assignTaskAction from '@/app/actions/todos/assignTaskAction';
+import listTasksAction from '@/app/actions/todos/listTasksAction';
+import listTodosAction from '@/app/actions/todos/listTodosAction';
+import createTodoAction from '@/app/actions/todos/createTodoAction';
+import listTaskCommentsAction from '@/app/actions/todos/listTaskCommentsAction';
+import addTaskCommentAction from '@/app/actions/todos/addTaskCommentAction';
 
 interface Todo {
   id: number;
@@ -27,33 +34,36 @@ interface Comment {
 }
 
 export default function TodoPanel({ serverId }: { serverId: number }) {
-  const [todos, setTodos] = useState<Todo[]>([]);
-  const [loading, setLoading] = useState(true);
   const [newTodoTitle, setNewTodoTitle] = useState("");
   const [newTodoPublic, setNewTodoPublic] = useState(false);
   const [expanded, setExpanded] = useState<string | string[]>([]);
+  const queryClient = useQueryClient();
 
-  useEffect(() => {
-    fetch(`/api/todos?serverId=${serverId}`)
-      .then((r) => r.json())
-      .then((data) => setTodos(data))
-      .finally(() => setLoading(false));
-  }, [serverId]);
+  // Fetch todos using TanStack Query
+  const { data: todos = [], isLoading: loadingTodos } = useQuery<Todo[]>({
+    queryKey: ['todos', serverId],
+    queryFn: async () => {
+      const raw = await listTodosAction(serverId);
+      return raw.map((t: any) => ({
+        ...t,
+        createdAt: typeof t.createdAt === 'string' ? t.createdAt : t.createdAt?.toString() ?? '',
+        updatedAt: typeof t.updatedAt === 'string' ? t.updatedAt : t.updatedAt?.toString() ?? '',
+      })) as Todo[];
+    },
+  });
+  const createTodoMutation = useMutation({
+    mutationFn: async (payload: { title: string; isPublic: boolean }) =>
+      await createTodoAction(serverId, payload.title, payload.isPublic),
+    onSuccess: (todo) => {
+      queryClient.invalidateQueries({ queryKey: ['todos', serverId] });
+    },
+  });
 
   const handleCreateTodo = async () => {
     if (!newTodoTitle.trim()) return;
-    setLoading(true);
-    const res = await fetch("/api/todos", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ serverId, title: newTodoTitle, isPublic: newTodoPublic }),
-    });
-    if (res.ok) {
-      setNewTodoTitle("");
-      setNewTodoPublic(false);
-      setTodos(await res.json().then((todo) => [todo, ...todos]));
-    }
-    setLoading(false);
+    createTodoMutation.mutate({ title: newTodoTitle, isPublic: newTodoPublic });
+    setNewTodoTitle("");
+    setNewTodoPublic(false);
   };
 
   return (
@@ -74,12 +84,12 @@ export default function TodoPanel({ serverId }: { serverId: number }) {
           </Checkbox>
         </Form.Item>
         <Form.Item style={{ marginBottom: 0 }}>
-          <Button type="primary" htmlType="submit" loading={loading} size="small">
+          <Button type="primary" htmlType="submit" loading={createTodoMutation.isLoading} size="small">
             Add Todo
           </Button>
         </Form.Item>
       </Form>
-      {loading ? (
+      {loadingTodos ? (
         <Spin />
       ) : todos.length === 0 ? (
         <Empty description="No todos yet" />
@@ -108,73 +118,82 @@ export default function TodoPanel({ serverId }: { serverId: number }) {
 }
 
 function TodoTasks({ todoId }: { todoId: number }) {
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [newTaskTitle, setNewTaskTitle] = useState("");
-  const [users, setUsers] = useState<{ id: string; name: string }[]>([]);
   const [selectedAssignees, setSelectedAssignees] = useState<{ [taskId: number]: string | undefined }>({});
   const [assignLoading, setAssignLoading] = useState<{ [taskId: number]: boolean }>({});
+  const queryClient = useQueryClient();
 
-  useEffect(() => {
-    fetch(`/api/todos/tasks?todoId=${todoId}`)
-      .then((r) => r.json())
-      .then(setTasks)
-      .finally(() => setLoading(false));
-    fetch("/api/users")
-      .then((r) => r.json())
-      .then(setUsers);
-  }, [todoId]);
+  // Fetch tasks using tanstack query
+  const { data: tasks = [], isLoading: loading } = useQuery<Task[]>({
+    queryKey: ['tasks', todoId],
+    queryFn: async () => {
+      const raw = await listTasksAction(todoId);
+      return raw.map((t: any) => ({
+        ...t,
+        assignedTo: t.assignedTo ?? undefined,
+        assignedToName: t.assignedToName ?? undefined,
+        createdAt: t.createdAt ? t.createdAt.toString() : '',
+        updatedAt: t.updatedAt ? t.updatedAt.toString() : '',
+      })) as Task[];
+    },
+  });
+
+  // Fetch users using tanstack query
+  const { data: users = [] } = useQuery<{ id: string; name: string }[]>({
+    queryKey: ['users'],
+    queryFn: async () => {
+      const res = await fetch('/api/users');
+      return res.json();
+    },
+  });
+
+  // Assign mutation using server action
+  const assignMutation = useMutation({
+    mutationFn: async ({ taskId, userId }: { taskId: number, userId: string }) => {
+      return await assignTaskAction(taskId, userId);
+    },
+    onSuccess: (_, { taskId, userId }) => {
+      queryClient.invalidateQueries(['tasks', todoId]);
+      setSelectedAssignees((prev) => ({ ...prev, [taskId]: undefined }));
+      message.success('Task assigned!');
+    },
+    onSettled: (_, __, { taskId }) => {
+      setAssignLoading((prev) => ({ ...prev, [taskId]: false }));
+    },
+  });
+
+  const handleAssignChange = (taskId: number, userId: string | undefined) => {
+    setSelectedAssignees((prev) => ({ ...prev, [taskId]: userId }));
+  };
+
+  const handleAssignTask = (taskId: number) => {
+    const userId = selectedAssignees[taskId];
+    if (!userId) return;
+    setAssignLoading((prev) => ({ ...prev, [taskId]: true }));
+    assignMutation.mutate({ taskId, userId });
+  };
 
   const handleAddTask = async () => {
-    if (!newTaskTitle.trim()) return;
-    setLoading(true);
+    const newTaskTitle = prompt("Enter new task title");
+    if (!newTaskTitle) return;
     const res = await fetch("/api/todos/tasks", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ todoId, title: newTaskTitle }),
     });
     if (res.ok) {
-      setTasks([...tasks, await res.json()]);
-      setNewTaskTitle("");
+      queryClient.invalidateQueries(['tasks', todoId]);
     }
-    setLoading(false);
   };
 
   const handleToggleTask = async (task: Task) => {
-    setLoading(true);
     const res = await fetch("/api/todos/tasks", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ taskId: task.id, isComplete: !task.isComplete }),
     });
     if (res.ok) {
-      setTasks(tasks.map((t) => (t.id === task.id ? { ...t, isComplete: !t.isComplete } : t)));
+      queryClient.invalidateQueries(['tasks', todoId]);
     }
-    setLoading(false);
-  };
-
-  const handleAssignChange = (taskId: number, userId: string | undefined) => {
-    setSelectedAssignees((prev) => ({ ...prev, [taskId]: userId }));
-  };
-
-  const handleAssignTask = async (taskId: number) => {
-    const userId = selectedAssignees[taskId];
-    if (!userId) return;
-    setAssignLoading((prev) => ({ ...prev, [taskId]: true }));
-    const res = await fetch("/api/todos/tasks/assign", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ taskId, userId }),
-    });
-    if (res.ok) {
-      const updated = await res.json();
-      setTasks((prev) =>
-        prev.map((t) => (t.id === taskId ? { ...t, assignedTo: userId, assignedToName: users.find((u) => u.id === userId)?.name } : t))
-      );
-      setSelectedAssignees((prev) => ({ ...prev, [taskId]: undefined }));
-      message.success("Task assigned!");
-    }
-    setAssignLoading((prev) => ({ ...prev, [taskId]: false }));
   };
 
   return (
@@ -183,8 +202,6 @@ function TodoTasks({ todoId }: { todoId: number }) {
         <Form.Item style={{ flex: 1, marginBottom: 0 }}>
           <Input
             placeholder="New task"
-            value={newTaskTitle}
-            onChange={(e) => setNewTaskTitle(e.target.value)}
             style={{ minWidth: 140 }}
             size="small"
           />
@@ -197,7 +214,7 @@ function TodoTasks({ todoId }: { todoId: number }) {
       </Form>
       <List
         dataSource={tasks}
-        renderItem={(task, idx) => (
+        renderItem={(task) => (
           <>
             <List.Item
               style={{
@@ -259,7 +276,7 @@ function TodoTasks({ todoId }: { todoId: number }) {
                 <TaskComments taskId={task.id} completed={task.isComplete} />
               </div>
             </List.Item>
-            {idx < tasks.length - 1 && (
+            {tasks.indexOf(task) < tasks.length - 1 && (
               <div style={{ borderBottom: '1.5px dotted #444', margin: '8px 0' }} />
             )}
           </>
@@ -271,43 +288,45 @@ function TodoTasks({ todoId }: { todoId: number }) {
 }
 
 function TaskComments({ taskId, completed = false }: { taskId: number, completed?: boolean }) {
-  const [comments, setComments] = useState<Comment[]>([]);
-  const [loading, setLoading] = useState(true);
   const [newComment, setNewComment] = useState("");
   const [open, setOpen] = useState(false);
+  const queryClient = useQueryClient();
 
-  useEffect(() => {
-    fetch(`/api/todos/comments?taskId=${taskId}`)
-      .then((r) => r.json())
-      .then(setComments)
-      .finally(() => setLoading(false));
-  }, [taskId]);
+  // Fetch comments using server action, mapping nulls and Dates to correct types
+  const { data: comments = [], isLoading: loadingComments } = useQuery<Comment[]>({
+    queryKey: ['comments', taskId],
+    queryFn: async () => {
+      const raw = await listTaskCommentsAction(taskId);
+      return raw.map((c: any) => ({
+        ...c,
+        userName: c.userName ?? '',
+        createdAt: typeof c.createdAt === 'string' ? c.createdAt : c.createdAt?.toString() ?? '',
+      })) as Comment[];
+    }
+  });
+
+  // Add comment mutation using server action
+  const addCommentMutation = useMutation({
+    mutationFn: async (payload: { taskId: number, comment: string }) =>
+      await addTaskCommentAction(payload.taskId, payload.comment),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['comments', taskId] });
+      setNewComment("");
+      setOpen(true);
+    },
+  });
 
   const handleAddComment = async () => {
     if (!newComment.trim()) return;
-    setLoading(true);
-    const res = await fetch("/api/todos/comments", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ taskId, comment: newComment }),
-    });
-    if (res.ok) {
-      setComments([...comments, await res.json()]);
-      setNewComment("");
-      setOpen(true);
-    }
-    setLoading(false);
+    addCommentMutation.mutate({ taskId, comment: newComment });
   };
 
   const commentButtonStyle = completed
-    ? { color: '#15803d', background: 'rgba(34,197,94,0.08)', border: '1px solid #bbf7d0', borderRadius: 4 }
+    ? { backgroundColor: '#e0e0e0', color: '#888', border: 'none' }
     : {};
 
-  const commentTextStyle = completed ? { color: '#222', fontWeight: 500 } : {};
-  const commentMetaStyle = completed ? { color: '#444' } : {};
-
   return (
-    <div style={{ marginTop: 8, width: '100%' }}>
+    <div>
       <Button
         type="link"
         onClick={() => setOpen((v) => !v)}
@@ -320,33 +339,42 @@ function TaskComments({ taskId, completed = false }: { taskId: number, completed
         <List
           size="small"
           dataSource={comments}
-          renderItem={(c) => (
-            <List.Item style={{ padding: '8px 0', border: 'none', flexDirection: 'column', alignItems: 'flex-start' }}>
-              <Typography.Text strong style={{ fontSize: 13, ...commentMetaStyle }}>{c.userName}</Typography.Text>
-              <Typography.Text type="secondary" style={{ fontSize: 12, ...commentMetaStyle }}>{<DistanceToNow date={new Date(c.createdAt)} />}</Typography.Text>
-              <span style={{ fontSize: 14, marginTop: 2, ...commentTextStyle }}>{c.comment}</span>
+          loading={loadingComments}
+          renderItem={(item) => (
+            <List.Item style={{ display: 'block', padding: '8px 0', border: 'none' }}>
+              <div style={{ fontWeight: 600, fontSize: 13 }}>{item.userName}</div>
+              <div style={{ fontSize: 12, color: '#888', marginBottom: 2 }}>
+                <DistanceToNow date={new Date(item.createdAt)} />
+              </div>
+              <div style={{ fontSize: 14, margin: '2px 0 2px 0', whiteSpace: 'pre-line' }}>{item.comment}</div>
             </List.Item>
           )}
-          locale={{ emptyText: loading ? <Spin size="small" /> : <span style={{ color: '#777' }}>No comments</span> }}
-          style={{ marginBottom: 6, width: '100%' }}
+          locale={{ emptyText: "No comments yet" }}
         />
       )}
-      <Form layout="inline" onFinish={handleAddComment} style={{ marginTop: 2, gap: 8, width: '100%' }}>
-        <Form.Item style={{ flex: 1, marginBottom: 0 }}>
-          <Input
-            placeholder="Add comment"
-            value={newComment}
-            onChange={(e) => setNewComment(e.target.value)}
-            style={{ minWidth: 120 }}
-            size="small"
-          />
-        </Form.Item>
-        <Form.Item style={{ marginBottom: 0 }}>
-          <Button type="primary" htmlType="submit" loading={loading} size="small" style={commentButtonStyle}>
-            Comment
-          </Button>
-        </Form.Item>
-      </Form>
+      {!completed && open && (
+        <Form layout="inline" onFinish={handleAddComment} style={{ marginTop: 8, gap: 8 }}>
+          <Form.Item style={{ flex: 1, marginBottom: 0 }}>
+            <Input
+              placeholder="Add a comment"
+              value={newComment}
+              onChange={(e) => setNewComment(e.target.value)}
+              size="small"
+            />
+          </Form.Item>
+          <Form.Item style={{ marginBottom: 0 }}>
+            <Button
+              type="primary"
+              htmlType="submit"
+              loading={addCommentMutation.isLoading}
+              size="small"
+              style={commentButtonStyle}
+            >
+              Comment
+            </Button>
+          </Form.Item>
+        </Form>
+      )}
     </div>
   );
 }
