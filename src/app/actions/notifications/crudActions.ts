@@ -125,3 +125,9 @@ export async function getUnreadNotificationCount(userId: string) {
     const queryResult = await db.select({count: count()}).from(notifications).where(and(eq(notifications.userId, userId), eq(notifications.read, false)));
     return queryResult[0].count;
 }
+
+export async function createNotification({ userId, title, message }: { userId: string, title: string, message: string }) {
+  const now = new Date();
+  const [row] = await db.insert(notifications).values({ userId, title, message, createdAt: now, updatedAt: now }).returning();
+  return row;
+}

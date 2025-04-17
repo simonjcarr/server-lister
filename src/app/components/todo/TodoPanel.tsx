@@ -1,8 +1,9 @@
 "use client";
 import { useEffect, useState } from "react";
-import { Collapse, Checkbox, Button, Input, Spin, Empty, Form, List, Typography, Space } from "antd";
+import { Collapse, Checkbox, Button, Input, Spin, Empty, Form, List, Typography, Space, Select, message } from "antd";
 import { CheckCircleFilled } from "@ant-design/icons";
 import DistanceToNow from "../utils/DistanceToNow";
+import { getAllUsers } from "@/app/actions/users/userActions";
 
 interface Todo {
   id: number;
@@ -14,6 +15,8 @@ interface Task {
   id: number;
   title: string;
   isComplete: boolean;
+  assignedTo?: string;
+  assignedToName?: string;
 }
 interface Comment {
   id: number;
@@ -108,12 +111,18 @@ function TodoTasks({ todoId }: { todoId: number }) {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [newTaskTitle, setNewTaskTitle] = useState("");
+  const [users, setUsers] = useState<{ id: string; name: string }[]>([]);
+  const [selectedAssignees, setSelectedAssignees] = useState<{ [taskId: number]: string | undefined }>({});
+  const [assignLoading, setAssignLoading] = useState<{ [taskId: number]: boolean }>({});
 
   useEffect(() => {
     fetch(`/api/todos/tasks?todoId=${todoId}`)
       .then((r) => r.json())
       .then(setTasks)
       .finally(() => setLoading(false));
+    fetch("/api/users")
+      .then((r) => r.json())
+      .then(setUsers);
   }, [todoId]);
 
   const handleAddTask = async () => {
@@ -142,6 +151,30 @@ function TodoTasks({ todoId }: { todoId: number }) {
       setTasks(tasks.map((t) => (t.id === task.id ? { ...t, isComplete: !t.isComplete } : t)));
     }
     setLoading(false);
+  };
+
+  const handleAssignChange = (taskId: number, userId: string | undefined) => {
+    setSelectedAssignees((prev) => ({ ...prev, [taskId]: userId }));
+  };
+
+  const handleAssignTask = async (taskId: number) => {
+    const userId = selectedAssignees[taskId];
+    if (!userId) return;
+    setAssignLoading((prev) => ({ ...prev, [taskId]: true }));
+    const res = await fetch("/api/todos/tasks/assign", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ taskId, userId }),
+    });
+    if (res.ok) {
+      const updated = await res.json();
+      setTasks((prev) =>
+        prev.map((t) => (t.id === taskId ? { ...t, assignedTo: userId, assignedToName: users.find((u) => u.id === userId)?.name } : t))
+      );
+      setSelectedAssignees((prev) => ({ ...prev, [taskId]: undefined }));
+      message.success("Task assigned!");
+    }
+    setAssignLoading((prev) => ({ ...prev, [taskId]: false }));
   };
 
   return (
@@ -202,6 +235,26 @@ function TodoTasks({ todoId }: { todoId: number }) {
                   >
                     {task.title}
                   </Typography.Text>
+                </div>
+                <div style={{ marginLeft: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <Select
+                    size="small"
+                    style={{ minWidth: 120 }}
+                    placeholder={task.assignedToName ? `Assigned: ${task.assignedToName}` : 'Assign user'}
+                    value={selectedAssignees[task.id] ?? task.assignedTo ?? undefined}
+                    onChange={(userId) => handleAssignChange(task.id, userId)}
+                    options={users.map((u) => ({ value: u.id, label: u.name || u.id }))}
+                    allowClear
+                  />
+                  <Button
+                    size="small"
+                    type="primary"
+                    loading={assignLoading[task.id]}
+                    disabled={!selectedAssignees[task.id] || selectedAssignees[task.id] === task.assignedTo}
+                    onClick={() => handleAssignTask(task.id)}
+                  >
+                    Assign
+                  </Button>
                 </div>
                 <TaskComments taskId={task.id} completed={task.isComplete} />
               </div>

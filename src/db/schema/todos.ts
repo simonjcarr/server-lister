@@ -26,6 +26,7 @@ export const tasks = pgTable(
     todoId: integer("todoId").notNull().references(() => todos.id, { onDelete: "cascade" }),
     title: text("title").notNull(),
     isComplete: boolean("isComplete").notNull().default(false),
+    assignedTo: text("assignedTo").references(() => users.id, { onDelete: "set null" }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
   }

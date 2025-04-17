@@ -41,7 +41,21 @@ export async function createTodo(serverId: number, title: string, isPublic: bool
 }
 
 export async function listTasks(todoId: number) {
-  return db.select().from(tasks).where(eq(tasks.todoId, todoId)).orderBy(asc(tasks.createdAt));
+  const rows = await db.select({
+    id: tasks.id,
+    todoId: tasks.todoId,
+    title: tasks.title,
+    isComplete: tasks.isComplete,
+    assignedTo: tasks.assignedTo,
+    createdAt: tasks.createdAt,
+    updatedAt: tasks.updatedAt,
+    assignedToName: users.name,
+  })
+    .from(tasks)
+    .leftJoin(users, eq(tasks.assignedTo, users.id))
+    .where(eq(tasks.todoId, todoId))
+    .orderBy(asc(tasks.createdAt));
+  return rows;
 }
 
 export async function createTask(todoId: number, title: string) {
@@ -53,6 +67,31 @@ export async function createTask(todoId: number, title: string) {
 export async function toggleTaskComplete(taskId: number, isComplete: boolean) {
   const [task] = await db.update(tasks).set({ isComplete, updatedAt: new Date() }).where(eq(tasks.id, taskId)).returning();
   return task;
+}
+
+export async function assignTask(taskId: number, userId: string) {
+  // Update the assignedTo field
+  const [updatedTask] = await db.update(tasks)
+    .set({ assignedTo: userId, updatedAt: new Date() })
+    .where(eq(tasks.id, taskId))
+    .returning();
+
+  // Fetch the assigned user's name
+  const user = await db.query.users.findFirst({ where: (u) => eq(u.id, userId) });
+
+  // Create notification
+  if (user) {
+    const title = 'Task Assigned';
+    const message = `You have been assigned a new task: "${updatedTask.title}"`;
+    // Import createNotification dynamically to avoid circular deps
+    const { createNotification } = await import("@/app/actions/notifications/crudActions");
+    await createNotification(userId, title, message);
+  }
+
+  return {
+    ...updatedTask,
+    assignedToName: user?.name || user?.email || userId,
+  };
 }
 
 export async function listTaskComments(taskId: number) {
@@ -78,7 +117,7 @@ export async function addTaskComment(taskId: number, comment: string) {
   // Insert the comment
   const [row] = await db.insert(taskComments).values({ taskId, userId, comment, createdAt: now, updatedAt: now }).returning();
   // Fetch the user name immediately after insert
-  const user = await db.query.users.findFirst({ where: (u, { eq }) => eq(u.id, userId) });
+  const user = await db.query.users.findFirst({ where: (u) => eq(u.id, userId) });
   return {
     ...row,
     userName: user?.name || '',
