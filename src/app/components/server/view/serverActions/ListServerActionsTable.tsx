@@ -2,6 +2,7 @@
 import { getServerActions } from "@/app/actions/serverActions/crudActions"
 import { useQuery } from "@tanstack/react-query"
 import { Table } from "antd"
+import CreateNewServerActionForm from "./CreateNewServerActionForm"
 
 // Define the type for a server action row
 export type ServerAction = {
@@ -35,6 +36,7 @@ const ListServerActionsTable = ({ serverId }: { serverId: number }) => {
   if (error) return <p>Error: {error instanceof Error ? error.message : 'An error occurred fetching actions'}</p>
   return (
     <div>
+      <CreateNewServerActionForm />
       {data && data.length > 0 ? (
         <Table
           columns={columns}
