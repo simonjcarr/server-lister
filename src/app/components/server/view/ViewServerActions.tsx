@@ -1,8 +1,8 @@
-import React from 'react'
+import ListServerActionsTable from "./serverActions/ListServerActionsTable"
 
 const ViewServerActions = ({ serverId }: { serverId: number }) => {
   return (
-    <div>ViewServerActions {serverId}</div>
+    <ListServerActionsTable serverId={serverId} />
   )
 }
 
