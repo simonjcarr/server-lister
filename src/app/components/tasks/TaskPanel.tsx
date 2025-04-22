@@ -25,15 +25,15 @@ interface RawTodo {
   updatedAt?: string | Date;
 }
 
-export default function TodoPanel({ serverId }: { serverId: number }) {
-  const [newTodoTitle, setNewTodoTitle] = useState("");
-  const [newTodoPublic, setNewTodoPublic] = useState(false);
+export default function TaskPanel({ serverId }: { serverId: number }) {
+  const [newTaskTitle, setNewTaskTitle] = useState("");
+  const [newTaskPublic, setNewTaskPublic] = useState(false);
   const [expanded, setExpanded] = useState<string | string[]>([]);
   const queryClient = useQueryClient();
 
   // Fetch todos using TanStack Query
-  const { data: todos = [], isLoading: loadingTodos } = useQuery<Todo[]>({
-    queryKey: ['todos', serverId],
+  const { data: tasks = [], isLoading: loadingTasks } = useQuery<Todo[]>({
+    queryKey: ['tasks', serverId],
     queryFn: async () => {
       const raw = await listTodosAction(serverId);
       return raw.map((t: RawTodo) => ({
@@ -52,10 +52,10 @@ export default function TodoPanel({ serverId }: { serverId: number }) {
   });
 
   const handleCreateTodo = async () => {
-    if (!newTodoTitle.trim()) return;
-    createTodoMutation.mutate({ title: newTodoTitle, isPublic: newTodoPublic });
-    setNewTodoTitle("");
-    setNewTodoPublic(false);
+    if (!newTaskTitle.trim()) return;
+    createTodoMutation.mutate({ title: newTaskTitle, isPublic: newTaskPublic });
+    setNewTaskTitle("");
+    setNewTaskPublic(false);
   };
 
   return (
@@ -63,35 +63,35 @@ export default function TodoPanel({ serverId }: { serverId: number }) {
       <Form layout="inline" onFinish={handleCreateTodo} style={{ marginBottom: 20, gap: 8 }}>
         <Form.Item style={{ flex: 1, marginBottom: 0 }}>
           <Input
-            placeholder="New todo title"
-            value={newTodoTitle}
-            onChange={(e) => setNewTodoTitle(e.target.value)}
+            placeholder="New task title"
+            value={newTaskTitle}
+            onChange={(e) => setNewTaskTitle(e.target.value)}
             style={{ minWidth: 180 }}
             size="small"
           />
         </Form.Item>
         <Form.Item style={{ marginBottom: 0 }}>
-          <Checkbox checked={newTodoPublic} onChange={(e) => setNewTodoPublic(e.target.checked)}>
+          <Checkbox checked={newTaskPublic} onChange={(e) => setNewTaskPublic(e.target.checked)}>
             Public
           </Checkbox>
         </Form.Item>
         <Form.Item style={{ marginBottom: 0 }}>
           <Button type="primary" htmlType="submit" loading={createTodoMutation.isPending} size="small">
-            Add Todo
+            Add Task
           </Button>
         </Form.Item>
       </Form>
-      {loadingTodos ? (
+      {loadingTasks ? (
         <Spin />
-      ) : todos.length === 0 ? (
-        <Empty description="No todos yet" />
+      ) : tasks.length === 0 ? (
+        <Empty description="No tasks yet" />
       ) : (
         <Collapse
           accordion
           activeKey={expanded}
           onChange={setExpanded}
           style={{ background: 'none' }}
-          items={todos.map((todo) => ({
+          items={tasks.map((todo) => ({
             key: todo.id.toString(),
             label: (
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>

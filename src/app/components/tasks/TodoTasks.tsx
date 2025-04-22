@@ -114,6 +114,19 @@ export function TodoTasks({ todoId }: { todoId: number }) {
     setSelectedAssignees({});
   }, [tasks]);
 
+  useEffect(() => {
+    if (!tasks) return;
+    setSelectedAssignees((prev) => {
+      const updated = { ...prev };
+      tasks.forEach(task => {
+        if (prev[task.id] !== undefined && prev[task.id] === task.assignedTo) {
+          delete updated[task.id];
+        }
+      });
+      return updated;
+    });
+  }, [tasks]);
+
   return (
     <div style={{ padding: 8, background: '#232326', borderRadius: 6 }}>
       {contextHolder}
@@ -182,11 +195,19 @@ export function TodoTasks({ todoId }: { todoId: number }) {
                     options={users.map((u) => ({ value: u.id, label: u.name || u.id }))}
                     allowClear
                   />
+                  {(() => {
+                    const assignValue = selectedAssignees[task.id] ?? task.assignedTo;
+                    console.log('Task ID:', task.id, 'selectedAssignees:', selectedAssignees[task.id], 'assignedTo:', task.assignedTo, 'assignValue:', assignValue);
+                    return null;
+                  })()}
                   <Button
                     size="small"
                     type="primary"
                     loading={assignLoading[task.id]}
-                    disabled={!selectedAssignees[task.id] || selectedAssignees[task.id] === task.assignedTo}
+                    disabled={
+                      !((selectedAssignees[task.id] ?? task.assignedTo)) ||
+                      (selectedAssignees[task.id] ?? task.assignedTo) === task.assignedTo
+                    }
                     onClick={() => handleAssignTask(task.id)}
                   >
                     Assign
