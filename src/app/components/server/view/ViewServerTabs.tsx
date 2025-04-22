@@ -13,7 +13,7 @@ import ServerOS from "./os/ServerOS"
 import ServerDrawings from "./drawings/ServerDrawings"
 import ServerOnboardingStatus from "./ServerOnboardingStatus"
 import ProjectTabData from "./project/ProjectTabData"
-import TodoPanel from '../../tasks/TaskPanel';
+
 
 const ViewServerTabs = ({ serverId }: { serverId: number }) => {
   const { data, error, isLoading } = useQuery({
@@ -35,7 +35,6 @@ const ViewServerTabs = ({ serverId }: { serverId: number }) => {
     { key: 'software', label: 'Software', children: <ServerSoftware serverId={serverId} /> },
     { key: 'drawings', label: 'Drawings', children: <ServerDrawings serverId={serverId} /> },
     { key: 'notes', label: 'Notes', children: <ViewServerNotes serverId={serverId} /> },
-    { key: 'tasks', label: 'Tasks', children: <TodoPanel serverId={serverId} /> },
   ]
   return (
     <App>

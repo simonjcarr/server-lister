@@ -5,8 +5,8 @@ import { servers } from "./servers";
 import { users } from "./users";
 
 // Todos: group of tasks for a server
-export const todos = pgTable(
-  "todos",
+export const actions = pgTable(
+  "actions",
   {
     id: serial("id").primaryKey(),
     serverId: integer("serverId").notNull().references(() => servers.id, { onDelete: "cascade" }),
@@ -23,7 +23,7 @@ export const tasks = pgTable(
   "tasks",
   {
     id: serial("id").primaryKey(),
-    todoId: integer("todoId").notNull().references(() => todos.id, { onDelete: "cascade" }),
+    actionId: integer("actionId").notNull().references(() => actions.id, { onDelete: "cascade" }),
     title: text("title").notNull(),
     isComplete: boolean("isComplete").notNull().default(false),
     assignedTo: text("assignedTo").references(() => users.id, { onDelete: "set null" }),
@@ -46,12 +46,12 @@ export const taskComments = pgTable(
 );
 
 // Zod schemas and TypeScript types
-export const insertTodoSchema = createInsertSchema(todos);
-export const selectTodoSchema = createSelectSchema(todos);
-export const updateTodoSchema = createUpdateSchema(todos);
-export type InsertTodo = z.infer<typeof insertTodoSchema>;
-export type SelectTodo = z.infer<typeof selectTodoSchema>;
-export type UpdateTodo = z.infer<typeof updateTodoSchema>;
+export const insertActionSchema = createInsertSchema(actions);
+export const selectActionSchema = createSelectSchema(actions);
+export const updateActionSchema = createUpdateSchema(actions);
+export type InsertAction = z.infer<typeof insertActionSchema>;
+export type SelectAction = z.infer<typeof selectActionSchema>;
+export type UpdateAction = z.infer<typeof updateActionSchema>;
 
 export const insertTaskSchema = createInsertSchema(tasks);
 export const selectTaskSchema = createSelectSchema(tasks);
