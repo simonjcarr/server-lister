@@ -3,7 +3,6 @@ import { db } from "@/db"
 import { actions, users } from "@/db/schema"
 import { and, eq, or } from "drizzle-orm"
 import { auth } from "@/auth"
-import { QueryClient } from "@tanstack/react-query"
 
 export const getServerActions = async (serverId: number) => {
   const session = await auth();
@@ -30,7 +29,6 @@ export const getServerActions = async (serverId: number) => {
 export const createServerAction = async (serverId: number, title: string, description: string, isPublic: boolean = true) => {
   const session = await auth();
   const userId = session?.user?.id;
-  const queryClient = new QueryClient()
   if (!userId) throw new Error("User is not authenticated");
   const now = new Date();
   return await db.insert(actions).values({
@@ -41,16 +39,12 @@ export const createServerAction = async (serverId: number, title: string, descri
     isPublic,
     createdAt: now,
     updatedAt: now,
-  });
-  queryClient.invalidateQueries({
-    queryKey: ["serverActions", serverId],
-  });
+  }).returning();
 }
 
 export const updateServerAction = async (id: number, title: string, description: string, isPublic: boolean = true) => {
   const session = await auth()
   const userId = session?.user?.id
-  const queryClient = new QueryClient()
   if (!userId) throw new Error("User is not authenticated")
   const now = new Date()
 
@@ -69,15 +63,11 @@ export const updateServerAction = async (id: number, title: string, description:
     isPublic,
     updatedAt: now,
   }).where(and(...conditions));
-  queryClient.invalidateQueries({
-    queryKey: ["serverActions", action[0].serverId],
-  });
 }
 
 export const deleteServerAction = async (id: number) => {
   const session = await auth()
   const userId = session?.user?.id
-  const queryClient = new QueryClient()
   if (!userId) throw new Error("User is not authenticated")
   
   // Check if the action is private and if it is create a rule to ensure only the owner can delete the action
@@ -90,8 +80,5 @@ export const deleteServerAction = async (id: number) => {
   const conditions = [eq(actions.id, id), ...filter]
 
   const result = await db.delete(actions).where(and(...conditions));
-  queryClient.invalidateQueries({
-    queryKey: ["serverActions", action[0].serverId],
-  });
   return result;
 }

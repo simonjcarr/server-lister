@@ -1,10 +1,22 @@
+'use client'
 import { Button, Drawer, Form, Input } from "antd"
 import { useState } from "react"
+import { createServerAction } from "@/app/actions/serverActions/crudActions"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
 
-const CreateNewServerActionForm = () => {
+const CreateNewServerActionForm = ({ serverId }: { serverId: number }) => {
   const [open, setOpen] = useState(false)
+  const queryClient = useQueryClient()
+  const mutation = useMutation({
+    mutationFn: ({ title, description }: { title: string; description: string }) => createServerAction(serverId, title, description),
+    onSuccess: () => {
+      console.log("Action created successfully")
+      setOpen(false)
+      queryClient.invalidateQueries({ queryKey: ['serverActions', serverId] })
+    }
+  })
   const onFinish = (values: { title: string; description: string }) => {
-    console.log('Received values of form:', values)
+    mutation.mutate(values)
   }
   return (
     <div>

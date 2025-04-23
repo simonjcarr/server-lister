@@ -37,7 +37,7 @@ const ListServerActionsTable = ({ serverId }: { serverId: number }) => {
   return (
     <div>
       <div className="text-2xl font-bold mb-4">Server Actions</div>
-      <CreateNewServerActionForm />
+      <CreateNewServerActionForm serverId={serverId} />
       {data && data.length > 0 ? (
         <Table
           columns={columns}
