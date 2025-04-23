@@ -6,14 +6,21 @@ import ServerActionDetail from './ServerActionDetail'
 
 const ViewServerAction = ({ action, onClose }: { action: ServerAction, onClose: () => void }) => {
   return (
-    <Card className='w-full' title={
-      <div className='flex gap-4'>
-        <Button className='' size='small' ghost onClick={onClose}><IoMdArrowRoundBack /> Back</Button>
-        <div className='font-semibold'>{action.title}</div>
+    <div>
+      <Card className='w-full' title={
+        <div className='flex gap-4'>
+          <Button className='' size='small' ghost onClick={onClose}><IoMdArrowRoundBack /> Back</Button>
+          <div className='font-semibold'>{action.title}</div>
+        </div>
+      }>
+        <ServerActionDetail action={action} />
+      </Card>
+      <div className='mt-4'>
+        <Card title="Action Tasks">
+          
+        </Card>
       </div>
-    }>
-      <ServerActionDetail action={action} />
-    </Card>
+    </div>
   )
 }
 

@@ -13,7 +13,7 @@ const ServerActionDetail = ({ action }: { action: ServerAction }) => {
           <div style={{ whiteSpace: 'pre-line' }} className="max-h-25 overflow-y-scroll p-2 bg-gray-800 rounded">{action.description}</div>
         </>
       )
-      : (<div>No Description</div>)
+      : (<div className='text-gray-400 mt-2'>No Description</div>)
       }
     </>
   )
