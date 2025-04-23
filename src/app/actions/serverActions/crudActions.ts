@@ -15,6 +15,7 @@ export const getServerActions = async (serverId: number) => {
     .select({
       id: actions.id,
       title: actions.title,
+      description: actions.description,
       userId: users.id,
       userName: users.name,
       userEmail: users.email,

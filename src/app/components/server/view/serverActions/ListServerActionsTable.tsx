@@ -4,20 +4,8 @@ import { useQuery } from "@tanstack/react-query"
 import { Table } from "antd"
 import CreateNewServerActionForm from "./CreateNewServerActionForm"
 import { useState } from "react"
-
-// Define the type for a server action row
-export type ServerAction = {
-  id: number;
-  title: string;
-  assignedTo: string;
-  userId: string;
-  userName: string | null;
-  userEmail: string | null;
-  createdAt: Date;
-  updatedAt: Date;
-  key: number;
-  // Add other fields as needed
-};
+import ViewServerAction from "./ViewServerAction"
+import type { ServerAction } from "@/types"
 
 const columns = [
   {
@@ -35,36 +23,54 @@ const columns = [
 
 const ListServerActionsTable = ({ serverId }: { serverId: number }) => {
   const [selectedRow, setSelectedRow] = useState<ServerAction | null>(null)
+  const [actionOpen, setActionOpen] = useState(false)
   const { data, error, isLoading } = useQuery({
     queryKey: ["serverActions", serverId],
     queryFn: () => getServerActions(serverId).then(data => data.map(item => ({ key: item.id, ...item, assignedTo: item.userId }))),
   })
+
+  const handleRowClick = (record: ServerAction) => {
+    setSelectedRow(record)
+    setActionOpen(true)
+  }
+
+  const handleViewActionClose = () => {
+    setActionOpen(false)
+    setSelectedRow(null)
+  }
 
   if (isLoading) return <p>Loading actions...</p>
   if (error) return <p>Error: {error instanceof Error ? error.message : 'An error occurred fetching actions'}</p>
   return (
     <div>
       <div className="text-2xl font-bold mb-4">Server Actions</div>
-      <CreateNewServerActionForm serverId={serverId} />
-      {data && data.length > 0 ? (
-        <Table
-          columns={columns}
-          dataSource={data}
-          rowKey="id"
-          size="small"
-          bordered
-          loading={isLoading}
-          pagination={false}
-          rowHoverable={true}
-          rowClassName={"cursor-pointer"}
-          onRow={(record) => ({
-            onClick: () => setSelectedRow(record),
-          })}
-        />
+      
+      {!actionOpen && data && data.length > 0 ? (
+        <>
+          <CreateNewServerActionForm serverId={serverId} />
+          <Table
+            columns={columns}
+            dataSource={data}
+            rowKey="id"
+            size="small"
+            bordered
+            loading={isLoading}
+            pagination={false}
+            rowHoverable={true}
+            rowClassName={"cursor-pointer"}
+            onRow={(record) => ({
+              onClick: () => handleRowClick(record),
+            })}
+          />
+        </>
       ) : (
-        <p>No actions found for this server</p>
+        <>
+          {!actionOpen && <p>No actions found for this server</p>}
+        </>
       )}
-      {selectedRow && selectedRow.title}
+      {actionOpen && selectedRow && (
+        <ViewServerAction action={selectedRow} onClose={handleViewActionClose} />
+      )}
     </div>
   )
 }

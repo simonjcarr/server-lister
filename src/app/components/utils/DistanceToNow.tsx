@@ -25,7 +25,7 @@ const DistanceToNow = ({ date }: { date: Date }) => {
         content={date.toLocaleDateString() + " " + date.toLocaleTimeString()}
         overlayClassName={isDarkMode ? 'dark-theme-dropdown' : ''}
       >
-        <span className="text-xs text-gray-500 dark:text-gray-400">{time}</span>
+        <span className="">{time}</span>
       </Popover>
     </div>
   )
