@@ -3,7 +3,9 @@ import { useState } from "react"
 
 const CreateNewServerActionForm = () => {
   const [open, setOpen] = useState(false)
-  const [form] = Form.useForm()
+  const onFinish = (values: { title: string; description: string }) => {
+    console.log('Received values of form:', values)
+  }
   return (
     <div>
       <div className="mb-4 flex justify-end">
@@ -19,8 +21,7 @@ const CreateNewServerActionForm = () => {
       <div>
         <Form
           layout="vertical"
-          form={form}
-          onFinish={form.submit}
+          onFinish={onFinish}
         >
           <Form.Item
             name="title"
@@ -28,6 +29,17 @@ const CreateNewServerActionForm = () => {
             rules={[{ required: true }]}
           >
             <Input />
+          </Form.Item>
+
+          <Form.Item
+            name="description"
+            label="Description"
+          >
+            <Input.TextArea />
+          </Form.Item>
+
+          <Form.Item className="flex justify-end">
+            <Button type="primary" htmlType="submit">Create</Button>
           </Form.Item>
         </Form>
       </div>

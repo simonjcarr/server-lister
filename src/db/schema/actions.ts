@@ -12,6 +12,7 @@ export const actions = pgTable(
     serverId: integer("serverId").notNull().references(() => servers.id, { onDelete: "cascade" }),
     userId: text("userId").notNull().references(() => users.id, { onDelete: "cascade" }),
     title: text("title").notNull(),
+    description: text("description"),
     isPublic: boolean("isPublic").notNull().default(false),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),

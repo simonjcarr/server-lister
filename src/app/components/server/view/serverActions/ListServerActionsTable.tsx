@@ -36,6 +36,7 @@ const ListServerActionsTable = ({ serverId }: { serverId: number }) => {
   if (error) return <p>Error: {error instanceof Error ? error.message : 'An error occurred fetching actions'}</p>
   return (
     <div>
+      <div className="text-2xl font-bold mb-4">Server Actions</div>
       <CreateNewServerActionForm />
       {data && data.length > 0 ? (
         <Table
