@@ -22,10 +22,10 @@ const columns = [
     key: 'userName',
   },
   {
-    title: 'Tasks',
-    dataIndex: 'taskCount',
-    key: 'taskCount',
-    render: (text: number) => <span className="flex items-center gap-2"><BsListTask />{text}</span>,
+    title: 'Sub Tasks',
+    dataIndex: 'subTaskCount',
+    key: 'subTaskCount',
+    render: (text: number) => <span className="flex items-center gap-2"><BsListTask />{text || 0}</span>,
   },
   {
     title: 'Complete',
