@@ -5,8 +5,8 @@ import { servers } from "./servers";
 import { users } from "./users";
 
 // Todos: group of tasks for a server
-export const actions = pgTable(
-  "actions",
+export const tasks = pgTable(
+  "tasks",
   {
     id: serial("id").primaryKey(),
     serverId: integer("serverId").notNull().references(() => servers.id, { onDelete: "cascade" }),
@@ -20,11 +20,11 @@ export const actions = pgTable(
 );
 
 // Individual task under a todo
-export const tasks = pgTable(
-  "tasks",
+export const subTasks = pgTable(
+  "sub_tasks",
   {
     id: serial("id").primaryKey(),
-    actionId: integer("actionId").notNull().references(() => actions.id, { onDelete: "cascade" }),
+    taskId: integer("taskId").notNull().references(() => tasks.id, { onDelete: "cascade" }),
     title: text("title").notNull(),
     isComplete: boolean("isComplete").notNull().default(false),
     assignedTo: text("assignedTo").references(() => users.id, { onDelete: "set null" }),
@@ -34,8 +34,8 @@ export const tasks = pgTable(
 );
 
 // Comments on tasks
-export const taskComments = pgTable(
-  "task_comments",
+export const subTaskComments = pgTable(
+  "sub_task_comments",
   {
     id: serial("id").primaryKey(),
     taskId: integer("taskId").notNull().references(() => tasks.id, { onDelete: "cascade" }),
@@ -47,13 +47,6 @@ export const taskComments = pgTable(
 );
 
 // Zod schemas and TypeScript types
-export const insertActionSchema = createInsertSchema(actions);
-export const selectActionSchema = createSelectSchema(actions);
-export const updateActionSchema = createUpdateSchema(actions);
-export type InsertAction = z.infer<typeof insertActionSchema>;
-export type SelectAction = z.infer<typeof selectActionSchema>;
-export type UpdateAction = z.infer<typeof updateActionSchema>;
-
 export const insertTaskSchema = createInsertSchema(tasks);
 export const selectTaskSchema = createSelectSchema(tasks);
 export const updateTaskSchema = createUpdateSchema(tasks);
@@ -61,9 +54,16 @@ export type InsertTask = z.infer<typeof insertTaskSchema>;
 export type SelectTask = z.infer<typeof selectTaskSchema>;
 export type UpdateTask = z.infer<typeof updateTaskSchema>;
 
-export const insertTaskCommentSchema = createInsertSchema(taskComments);
-export const selectTaskCommentSchema = createSelectSchema(taskComments);
-export const updateTaskCommentSchema = createUpdateSchema(taskComments);
-export type InsertTaskComment = z.infer<typeof insertTaskCommentSchema>;
-export type SelectTaskComment = z.infer<typeof selectTaskCommentSchema>;
-export type UpdateTaskComment = z.infer<typeof updateTaskCommentSchema>;
+export const insertSubTaskSchema = createInsertSchema(subTasks);
+export const selectSubTaskSchema = createSelectSchema(subTasks);
+export const updateSubTaskSchema = createUpdateSchema(subTasks);
+export type InsertSubTask = z.infer<typeof insertSubTaskSchema>;
+export type SelectSubTask = z.infer<typeof selectSubTaskSchema>;
+export type UpdateSubTask = z.infer<typeof updateSubTaskSchema>;
+
+export const insertSubTaskCommentSchema = createInsertSchema(subTaskComments);
+export const selectSubTaskCommentSchema = createSelectSchema(subTaskComments);
+export const updateSubTaskCommentSchema = createUpdateSchema(subTaskComments);
+export type InsertSubTaskComment = z.infer<typeof insertSubTaskCommentSchema>;
+export type SelectSubTaskComment = z.infer<typeof selectSubTaskCommentSchema>;
+export type UpdateSubTaskComment = z.infer<typeof updateSubTaskCommentSchema>;

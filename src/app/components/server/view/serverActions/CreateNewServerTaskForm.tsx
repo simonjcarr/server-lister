@@ -4,15 +4,14 @@ import { useState } from "react"
 import { createServerAction } from "@/app/actions/serverActions/crudActions"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 
-const CreateNewServerActionForm = ({ serverId }: { serverId: number }) => {
+const CreateNewServerTaskForm = ({ serverId }: { serverId: number }) => {
   const [open, setOpen] = useState(false)
   const queryClient = useQueryClient()
   const mutation = useMutation({
     mutationFn: ({ title, description }: { title: string; description: string }) => createServerAction(serverId, title, description),
     onSuccess: () => {
-      console.log("Action created successfully")
       setOpen(false)
-      queryClient.invalidateQueries({ queryKey: ['serverActions', serverId] })
+      queryClient.invalidateQueries({ queryKey: ['serverTasks', serverId] })
     }
   })
   const onFinish = (values: { title: string; description: string }) => {
@@ -21,10 +20,10 @@ const CreateNewServerActionForm = ({ serverId }: { serverId: number }) => {
   return (
     <div>
       <div className="mb-4 flex justify-end">
-        <Button ghost onClick={() => setOpen(true)}>New Action</Button>
+        <Button ghost onClick={() => setOpen(true)}>New Task</Button>
       </div>
       <Drawer
-        title="Create new server action"
+        title="Create new server task"
         placement="right"
         width={400}
         onClose={() => setOpen(false)}
@@ -37,7 +36,7 @@ const CreateNewServerActionForm = ({ serverId }: { serverId: number }) => {
         >
           <Form.Item
             name="title"
-            label="Action Name"
+            label="Task Name"
             rules={[{ required: true }]}
           >
             <Input />
@@ -60,4 +59,4 @@ const CreateNewServerActionForm = ({ serverId }: { serverId: number }) => {
   )
 }
 
-export default CreateNewServerActionForm
+export default CreateNewServerTaskForm

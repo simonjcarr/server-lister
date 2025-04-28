@@ -4,7 +4,7 @@ import { IoMdArrowRoundBack } from 'react-icons/io'
 import type { ServerAction } from "@/types"
 import ServerActionDetail from './ServerActionDetail'
 
-const ViewServerAction = ({ action, onClose }: { action: ServerAction, onClose: () => void }) => {
+const ViewServerTasks = ({ action, onClose }: { action: ServerAction, onClose: () => void }) => {
   return (
     <div>
       <Card className='w-full' title={
@@ -16,7 +16,7 @@ const ViewServerAction = ({ action, onClose }: { action: ServerAction, onClose: 
         <ServerActionDetail action={action} />
       </Card>
       <div className='mt-4'>
-        <Card title="Action Tasks">
+        <Card title="Sub Tasks">
           
         </Card>
       </div>
@@ -24,4 +24,4 @@ const ViewServerAction = ({ action, onClose }: { action: ServerAction, onClose: 
   )
 }
 
-export default ViewServerAction
+export default ViewServerTasks
