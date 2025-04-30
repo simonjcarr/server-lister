@@ -1,7 +1,7 @@
 'use client'
 import { Button, Drawer, Form, Input } from "antd"
 import { useState } from "react"
-import { createServerAction } from "@/app/actions/serverActions/crudActions"
+import { createServerAction } from "@/app/actions/serverTasks/crudTasks"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 
 const CreateNewServerTaskForm = ({ serverId }: { serverId: number }) => {
@@ -28,33 +28,33 @@ const CreateNewServerTaskForm = ({ serverId }: { serverId: number }) => {
         width={400}
         onClose={() => setOpen(false)}
         open={open}
-    >
-      <div>
-        <Form
-          layout="vertical"
-          onFinish={onFinish}
-        >
-          <Form.Item
-            name="title"
-            label="Task Name"
-            rules={[{ required: true }]}
+      >
+        <div>
+          <Form
+            layout="vertical"
+            onFinish={onFinish}
           >
-            <Input />
-          </Form.Item>
+            <Form.Item
+              name="title"
+              label="Task Name"
+              rules={[{ required: true }]}
+            >
+              <Input />
+            </Form.Item>
 
-          <Form.Item
-            name="description"
-            label="Description"
-          >
-            <Input.TextArea />
-          </Form.Item>
+            <Form.Item
+              name="description"
+              label="Description"
+            >
+              <Input.TextArea />
+            </Form.Item>
 
-          <Form.Item className="flex justify-end">
-            <Button type="primary" htmlType="submit">Create</Button>
-          </Form.Item>
-        </Form>
-      </div>
-    </Drawer>
+            <Form.Item className="flex justify-end">
+              <Button type="primary" htmlType="submit">Create</Button>
+            </Form.Item>
+          </Form>
+        </div>
+      </Drawer>
     </div>
   )
 }

@@ -1,11 +1,11 @@
 'use client'
-import { getServerTasks } from "@/app/actions/serverActions/crudActions"
+import { getServerTasks } from "@/app/actions/serverTasks/crudTasks"
 import { useQuery } from "@tanstack/react-query"
 import { Table } from "antd"
 import CreateNewServerTaskForm from "./CreateNewServerTaskForm"
 import { useState } from "react"
-import ViewServerTask from "./ViewServerTasks"
-import type { ServerAction } from "@/types"
+import ViewServerTask from "./ViewServerTask"
+import type { ServerTask } from "@/types"
 import { BsListTask } from "react-icons/bs";
 import { FaRegCircleCheck } from "react-icons/fa6";
 
@@ -14,7 +14,7 @@ const columns = [
     title: 'Action Name',
     dataIndex: 'title',
     key: 'title',
-    sorter: (a: ServerAction, b: ServerAction) => a.title.localeCompare(b.title),
+    sorter: (a: ServerTask, b: ServerTask) => a.title.localeCompare(b.title),
   },
   {
     title: 'Created by',
@@ -42,7 +42,7 @@ const columns = [
 ]
 
 const ListServerTasksTable = ({ serverId }: { serverId: number }) => {
-  const [selectedRow, setSelectedRow] = useState<ServerAction | null>(null)
+  const [selectedRow, setSelectedRow] = useState<ServerTask | null>(null)
   const [taskOpen, setTaskOpen] = useState(false)
   const { data, error, isLoading } = useQuery({
     queryKey: ["serverTasks", serverId],
@@ -57,7 +57,7 @@ const ListServerTasksTable = ({ serverId }: { serverId: number }) => {
     }))),
   })
 
-  const handleRowClick = (record: ServerAction) => {
+  const handleRowClick = (record: ServerTask) => {
     setSelectedRow(record)
     setTaskOpen(true)
   }
@@ -75,7 +75,7 @@ const ListServerTasksTable = ({ serverId }: { serverId: number }) => {
       {!taskOpen && <CreateNewServerTaskForm serverId={serverId} />}
       {!taskOpen && data && data.length > 0 ? (
         <>
-          
+
           <Table
             columns={columns}
             dataSource={data}
@@ -106,7 +106,7 @@ const ListServerTasksTable = ({ serverId }: { serverId: number }) => {
         </>
       )}
       {taskOpen && selectedRow && (
-        <ViewServerTask action={selectedRow} onClose={handleViewTaskClose} />
+        <ViewServerTask task={selectedRow} onClose={handleViewTaskClose} />
       )}
     </div>
   )

@@ -1,4 +1,4 @@
-export type ServerAction = {
+export type ServerTask = {
   id: number;
   title: string;
   assignedTo: string;
@@ -15,9 +15,10 @@ export type ServerAction = {
   isPublic: boolean;
 };
 
-export type Task = {
+export type SubTask = {
   id: number;
   title: string;
+  description: string;
   assignedTo: string | null;
   createdAt: Date;
   updatedAt: Date;
