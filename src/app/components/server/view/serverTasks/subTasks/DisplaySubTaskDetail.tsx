@@ -4,6 +4,7 @@ import React from 'react'
 import { toggleSubTaskComplete } from '@/app/actions/serverTasks/crudSubTasks'
 import { useMutation } from '@tanstack/react-query'
 import { useQueryClient } from '@tanstack/react-query'
+import SubTaskAssignedTo from './SubTaskAssignedTo'
 
 const DisplaySubTaskDetail = ({ subTask }: { subTask: SubTask }) => {
   const queryClient = useQueryClient()
@@ -20,7 +21,7 @@ const DisplaySubTaskDetail = ({ subTask }: { subTask: SubTask }) => {
 
   return (
     <div className='px-4'>
-      <div className="flex justify-between">
+      <div className="flex justify-between mb-2">
         <div className="text-xl font-bold">{subTask.title}</div>
         <div className='flex gap-2 items-center'>
           <div>{subTask.isComplete ? <span className="text-green-500 text-lg">Task complete</span> : ''}</div>
@@ -31,7 +32,8 @@ const DisplaySubTaskDetail = ({ subTask }: { subTask: SubTask }) => {
           />
         </div>
       </div>
-      <div>{subTask.description}</div>
+      <SubTaskAssignedTo subTask={subTask} showChangeUser={true} />
+      <div className='mt-2'>{subTask.description}</div>
     </div>
   )
 }

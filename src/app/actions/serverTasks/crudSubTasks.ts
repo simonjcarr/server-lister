@@ -33,3 +33,13 @@ export const toggleSubTaskComplete = async (subTaskId: number) => {
   }).where(eq(subTasks.id, subTaskId)).returning()
   return task[0]
 }
+
+// Refactored to accept a single object argument for React Query compatibility
+export const updateSubTask = async ({ subTaskId, assignedTo }: { subTaskId: number; assignedTo: string }) => {
+  const date = new Date()
+  const task = await db.update(subTasks).set({
+    assignedTo,
+    updatedAt: date,
+  }).where(eq(subTasks.id, subTaskId)).returning()
+  return task[0]
+}

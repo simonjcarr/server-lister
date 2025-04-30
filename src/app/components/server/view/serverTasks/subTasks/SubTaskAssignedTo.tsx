@@ -1,11 +1,13 @@
 import React from 'react'
 import { SubTask } from '@/types'
+import SelectAssignedToUserModal from './SelectAssignedToUserModal'
 
-const SubTaskAssignedTo = ({ subTask }: { subTask: SubTask }) => {
+const SubTaskAssignedTo = ({ subTask, showChangeUser = false }: { subTask: SubTask, showChangeUser?: boolean }) => {
   return (
-    <div>
-      <div>Assigned To</div>
-      <div>{subTask.assignedTo}</div>
+    <div className='flex gap-2 items-center'>
+      <div>Assigned To:</div>
+      <div>{subTask.assignedTo || 'Not assigned'}</div>
+      {showChangeUser && <SelectAssignedToUserModal subTask={subTask} />}
     </div>
   )
 }
