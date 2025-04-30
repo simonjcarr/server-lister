@@ -9,8 +9,6 @@ import DisplaySubTaskDetail from './DisplaySubTaskDetail'
 import SubTaskCompleteIcon from './SubTaskCompleteIcon'
 
 
-
-
 const SubTaskList = ({ taskId }: { taskId: number }) => {
   const [selectedSubTask, setSelectedSubTask] = useState<SubTask | null>(null)
 
@@ -21,6 +19,8 @@ const SubTaskList = ({ taskId }: { taskId: number }) => {
       ...item.sub_tasks,
       assignedTo: item.user?.name,
     }))),
+    staleTime: 60 * 1000, // 1 minute
+    refetchInterval: 60 * 1000 // 10 minutes
   })
 
   useEffect(() => {
