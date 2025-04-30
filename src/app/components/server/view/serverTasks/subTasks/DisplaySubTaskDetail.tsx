@@ -22,7 +22,8 @@ const DisplaySubTaskDetail = ({ subTask }: { subTask: SubTask }) => {
     <div className='px-4'>
       <div className="flex justify-between">
         <div className="text-xl font-bold">{subTask.title}</div>
-        <div className='flex gap-2'>
+        <div className='flex gap-2 items-center'>
+          <div>{subTask.isComplete ? <span className="text-green-500 text-lg">Task complete</span> : ''}</div>
           <Switch
             className="text-green-500"
             checked={subTask.isComplete}

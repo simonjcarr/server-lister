@@ -42,7 +42,7 @@ const SubTaskList = ({ taskId }: { taskId: number }) => {
             <Splitter.Panel defaultSize="20%">
               <List size='small'>
                 {subTaskData?.map((subTask) => (
-                  <List.Item key={subTask.id} onClick={() => setSelectedSubTask(subTask)}>
+                  <List.Item key={subTask.id} onClick={() => setSelectedSubTask(subTask)} className={selectedSubTask?.id == subTask.id ? "bg-gray-800" : "cursor-pointer"}>
                     <div>
                       <span className="whitespace-nowrap flex gap-2 items-center" style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>
                         <SubTaskCompleteIcon subTask={subTask} />
