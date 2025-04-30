@@ -20,3 +20,16 @@ export const createSubTask = async (taskId: number, title: string, description: 
   }).returning()
   return task[0]
 }
+
+export const toggleSubTaskComplete = async (subTaskId: number) => {
+  // Get the current task
+  const originalTask = await db.select().from(subTasks).where(eq(subTasks.id, subTaskId))
+  
+  // update the task and toggle the isComplete field
+  const date = new Date()
+  const task = await db.update(subTasks).set({
+    isComplete: !originalTask[0].isComplete,
+    updatedAt: date,
+  }).where(eq(subTasks.id, subTaskId)).returning()
+  return task[0]
+}

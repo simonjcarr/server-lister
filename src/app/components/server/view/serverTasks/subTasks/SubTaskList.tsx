@@ -3,7 +3,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { getServerSubTasks } from '@/app/actions/serverTasks/crudSubTasks'
 import { List, Splitter } from 'antd'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { SubTask } from '@/types'
 import DisplaySubTaskDetail from './DisplaySubTaskDetail'
 import SubTaskCompleteIcon from './SubTaskCompleteIcon'
@@ -22,6 +22,13 @@ const SubTaskList = ({ taskId }: { taskId: number }) => {
       assignedTo: item.user?.name,
     }))),
   })
+
+  useEffect(() => {
+    const tempSubTask = subTaskData?.find((subTask) => subTask.id == selectedSubTask?.id)
+    if(tempSubTask) {
+      setSelectedSubTask(tempSubTask)
+    }
+  }, [subTaskData, selectedSubTask?.id])
 
   return (
     <div>
