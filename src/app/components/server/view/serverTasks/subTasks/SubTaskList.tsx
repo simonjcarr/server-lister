@@ -44,7 +44,7 @@ const SubTaskList = ({ taskId }: { taskId: number }) => {
                 {subTaskData?.map((subTask) => (
                   <List.Item key={subTask.id} onClick={() => setSelectedSubTask(subTask)}>
                     <div>
-                      <span className="whitespace-nowrap block flex gap-2 items-center" style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      <span className="whitespace-nowrap flex gap-2 items-center" style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>
                         <SubTaskCompleteIcon subTask={subTask} />
                         <span className={subTask.isComplete ? "text-gray-500" : ""}>{subTask.title}</span>
                       </span>
