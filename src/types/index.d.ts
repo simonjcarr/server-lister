@@ -1,3 +1,6 @@
+import type { User } from "@/db/schema"
+  
+
 export type ServerTask = {
   id: number;
   title: string;
@@ -18,11 +21,13 @@ export type ServerTask = {
 export type SubTask = {
   id: number;
   title: string;
-  description: string;
+  description?: string | null;
+  taskId: number;
   assignedTo: string | null;
   createdAt: Date;
   updatedAt: Date;
   key: number;
   isComplete: boolean;
-};
+} & User;
+
 

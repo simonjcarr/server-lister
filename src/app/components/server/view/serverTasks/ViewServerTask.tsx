@@ -3,10 +3,10 @@ import { Button, Card } from 'antd'
 import React from 'react'
 import { IoMdArrowRoundBack } from 'react-icons/io'
 import type { ServerTask } from "@/types"
-import ServerActionDetail from './ServerActionDetail'
+import ServerTaskDetail from './ServerTaskDetail'
 
-import SubTaskList from './SubTaskList'
-import CreateServerSubTaskForm from './CreateServerSubTaskForm'
+import SubTaskList from './subTasks/SubTaskList'
+import CreateServerSubTaskForm from './subTasks/CreateServerSubTaskForm'
 
 const ViewServerTask = ({ task, onClose }: { task: ServerTask, onClose: () => void }) => {
   return (
@@ -17,7 +17,7 @@ const ViewServerTask = ({ task, onClose }: { task: ServerTask, onClose: () => vo
           <div className='font-semibold'>{task.title}</div>
         </div>
       }>
-        <ServerActionDetail action={task} />
+        <ServerTaskDetail task={task} />
       </Card>
       <div className='mt-4'>
         <Card title={<span className="flex justify-between">

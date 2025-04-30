@@ -32,6 +32,10 @@ export const getServerTasks = async (serverId: number) => {
     .where(and(eq(tasks.serverId, serverId), or(...conditions)));
 }
 
+export const getTaskById = async (taskId: number) => {
+  return db.select().from(tasks).innerJoin(users, eq(tasks.userId, users.id)).where(eq(tasks.id, taskId))
+}
+
 export const createServerAction = async (serverId: number, title: string, description: string, isPublic: boolean = true) => {
   const session = await auth();
   const userId = session?.user?.id;

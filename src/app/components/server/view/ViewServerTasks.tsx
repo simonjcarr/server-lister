@@ -1,4 +1,4 @@
-import ListServerTasksTable from "./serverActions/ListServerTasksTable"
+import ListServerTasksTable from "./serverTasks/ListServerTasksTable"
 
 const ViewServerTasks = ({ serverId }: { serverId: number }) => {
   return (
