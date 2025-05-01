@@ -1,6 +1,6 @@
 import React from 'react'
-import { Dropdown } from 'antd'
-import { EllipsisOutlined } from '@ant-design/icons'
+import { Dropdown, Button } from 'antd'
+import { DownOutlined } from '@ant-design/icons'
 import { SubTask } from '@/types'
 
 interface SubTaskActionsDropdownProps {
@@ -24,23 +24,14 @@ const SubTaskActionsDropdown: React.FC<SubTaskActionsDropdownProps> = ({ subTask
   }
 
   return (
-    <Dropdown menu={{ items: menuItems, onClick: handleMenuClick }} trigger={['click']} placement="bottomRight">
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        width: 36,
-        height: 36,
-        borderRadius: '50%',
-        background: '#222',
-        color: '#fff',
-        boxShadow: '0 1px 4px rgba(0,0,0,0.12)',
-        cursor: 'pointer',
-        border: '1px solid #444',
-        transition: 'background 0.2s',
-      }}>
-        <EllipsisOutlined style={{ fontSize: 22 }} />
-      </div>
+    <Dropdown
+      menu={{ items: menuItems, onClick: handleMenuClick }}
+      trigger={['click']}
+      placement="bottomRight"
+    >
+      <Button size="small" ghost>
+        Actions <DownOutlined />
+      </Button>
     </Dropdown>
   )
 }
