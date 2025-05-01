@@ -2,18 +2,28 @@
 import { Form, Input, Button, Drawer } from 'antd'
 import { useState } from 'react'
 import { BsListTask } from 'react-icons/bs'
-import { useMutation } from '@tanstack/react-query'
+import { useMutation, useQuery } from '@tanstack/react-query'
 import { createSubTask } from '@/app/actions/serverTasks/crudSubTasks'
 import { useQueryClient } from '@tanstack/react-query'
+import { getTaskById } from '@/app/actions/serverTasks'
 
 const CreateServerSubTaskForm = ({ taskId }: { taskId: number }) => {
   const queryClient = useQueryClient()
   const [open, setOpen] = useState(false)
+
+
+  const { data } = useQuery({
+    queryKey: ["task", taskId],
+    queryFn: () => getTaskById(taskId),
+  })
+  const serverId = data?.[0]?.tasks.serverId
+  
   const mutation = useMutation({
     mutationFn: ({ title, description }: { title: string; description: string }) => createSubTask(taskId, title, description),
     onSuccess: () => {
       setOpen(false)
       queryClient.invalidateQueries({ queryKey: ['subTasks', taskId] })
+      queryClient.invalidateQueries({ queryKey: ['serverTasks', serverId] })
     }
   })
 

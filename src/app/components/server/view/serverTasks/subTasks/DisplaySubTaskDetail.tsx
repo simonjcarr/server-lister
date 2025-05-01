@@ -3,7 +3,8 @@ import { Switch, Modal, message as antdMessage } from 'antd'
 import { ExclamationCircleOutlined } from '@ant-design/icons'
 import React from 'react'
 import { toggleSubTaskComplete, deleteSubTask } from '@/app/actions/serverTasks/crudSubTasks'
-import { useMutation } from '@tanstack/react-query'
+import { getTaskById } from '@/app/actions/serverTasks/crudTasks'
+import { useMutation, useQuery } from '@tanstack/react-query'
 import { useQueryClient } from '@tanstack/react-query'
 import SubTaskAssignedTo from './SubTaskAssignedTo'
 import EditServerSubTaskForm from './EditServerSubTaskForm'
@@ -11,10 +12,19 @@ import SubTaskActionsDropdown from './SubTaskActionsDropdown'
 
 const DisplaySubTaskDetail = ({ subTask }: { subTask: SubTask }) => {
   const queryClient = useQueryClient()
+  
+  // Get serverId from subTask.taskId
+  const { data } = useQuery({
+    queryKey: ["task", subTask.taskId],
+    queryFn: () => getTaskById(subTask.taskId),
+  })
+
+  const serverId = data?.[0]?.tasks.serverId
   const mutation = useMutation({
     mutationFn: toggleSubTaskComplete,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["subTasks", subTask.taskId] })
+      queryClient.invalidateQueries({ queryKey: ["serverTasks", serverId] })
     }
   })
 
