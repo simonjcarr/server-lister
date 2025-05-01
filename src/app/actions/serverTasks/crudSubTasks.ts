@@ -14,6 +14,7 @@ export const createSubTask = async (taskId: number, title: string, description: 
     taskId,
     title,
     description,
+    order: 999,
     isComplete: false,
     createdAt: date,
     updatedAt: date,
