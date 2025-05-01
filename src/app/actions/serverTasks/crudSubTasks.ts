@@ -35,12 +35,14 @@ export const toggleSubTaskComplete = async (subTaskId: number) => {
   return task[0]
 }
 
-// Refactored to accept a single object argument for React Query compatibility
-export const updateSubTask = async ({ subTaskId, assignedTo }: { subTaskId: number; assignedTo: string }) => {
+// Expanded to allow editing title, description, and assignedTo
+export const updateSubTask = async ({ subTaskId, title, description, assignedTo }: { subTaskId: number; title?: string; description?: string; assignedTo?: string }) => {
   const date = new Date()
-  const task = await db.update(subTasks).set({
-    assignedTo,
-    updatedAt: date,
-  }).where(eq(subTasks.id, subTaskId)).returning()
+  // Build the update object dynamically
+  const updateObj: Record<string, unknown> = { updatedAt: date }
+  if (title !== undefined) updateObj.title = title
+  if (description !== undefined) updateObj.description = description
+  if (assignedTo !== undefined) updateObj.assignedTo = assignedTo
+  const task = await db.update(subTasks).set(updateObj).where(eq(subTasks.id, subTaskId)).returning()
   return task[0]
 }
