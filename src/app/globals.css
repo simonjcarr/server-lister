@@ -169,3 +169,24 @@ body {
   color: #e5e7eb !important;
   border-bottom: 1px solid #404040;
 }
+
+/* Server View Card: Theme-adaptive backgrounds */
+.server-view-card .ant-card-head {
+  background-color: var(--background) !important;
+  color: var(--foreground) !important;
+  border-bottom: 1px solid #d9d9d9;
+}
+.dark .server-view-card .ant-card-head {
+  background-color: #1f1f1f !important;
+  color: #e5e7eb !important;
+  border-bottom: 1px solid #303030;
+}
+
+.server-view-card .ant-card-body {
+  background-color: var(--background) !important;
+  color: var(--foreground) !important;
+}
+.dark .server-view-card .ant-card-body {
+  background-color: #141414 !important;
+  color: #e5e7eb !important;
+}

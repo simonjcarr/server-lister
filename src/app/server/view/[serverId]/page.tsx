@@ -14,12 +14,12 @@ function Page() {
   
   return (
     <Card 
-      className="min-h-[90vh] w-full max-w-[1400px] mx-auto" 
+      className="min-h-[90vh] w-full max-w-[1400px] mx-auto server-view-card" 
       title={<ServerDetailHeader serverId={serverId} />}
       extra={<FormEditServer serverId={serverId}><Button type="text" icon={<EditOutlined />} className="text-gray-400 hover:text-white" /></FormEditServer>}
       styles={{ 
-        header: { backgroundColor: '#1f1f1f', borderBottom: '1px solid #303030' },
-        body: { backgroundColor: '#141414' }
+        header: {},
+        body: {}
       }}
     >
       <ViewServerDetails serverId={serverId} />
