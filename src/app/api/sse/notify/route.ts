@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { sendEventToUser } from '../notifications/route';
+import { sendEventToUser } from '../notifications/helpers';
 
 export async function POST(request: NextRequest) {
   try {
