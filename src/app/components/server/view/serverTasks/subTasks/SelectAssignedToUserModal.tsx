@@ -13,7 +13,13 @@ interface UserSelectOption {
   value: string;
 }
 
-const SelectAssignedToUserModal = ({ subTask }: { subTask: SubTask }) => {
+interface SelectAssignedToUserModalProps {
+  subTask: SubTask
+  open?: boolean
+  onClose?: () => void
+}
+
+const SelectAssignedToUserModal = ({ subTask, open, onClose }: SelectAssignedToUserModalProps) => {
   const [isOpen, setIsOpen] = useState(false)
   const queryClient = useQueryClient()
   const { data: usersData } = useQuery({
@@ -26,7 +32,6 @@ const SelectAssignedToUserModal = ({ subTask }: { subTask: SubTask }) => {
           value: item.id,
         }));
       } else {
-        // Optionally, you could handle/display the error here
         return [];
       }
     }),
@@ -37,16 +42,26 @@ const SelectAssignedToUserModal = ({ subTask }: { subTask: SubTask }) => {
       queryClient.invalidateQueries({ queryKey: ["subTasks", subTask.taskId] })
     }
   })
+
+  // Determine modal open state
+  const modalOpen = open !== undefined ? open : isOpen
+  const handleClose = () => {
+    if (onClose) onClose()
+    if (open === undefined) setIsOpen(false)
+  }
+
   return (
     <div>
-      <Button onClick={() => setIsOpen(true)} size="small"><FaUserEdit /></Button>
-      <Modal title="Change Assigned User" open={isOpen} onCancel={() => setIsOpen(false)} footer={null}>
+      {open === undefined && (
+        <Button onClick={() => setIsOpen(true)} size="small"><FaUserEdit /></Button>
+      )}
+      <Modal title="Change Assigned User" open={modalOpen} onCancel={handleClose} footer={null}>
         <Select
           style={{width: '100%'}}
           options={usersData}
           value={subTask.assignedTo || undefined}
           onChange={(value) => {
-            setIsOpen(false)
+            handleClose()
             updateSubTaskMutation.mutate({
               subTaskId: subTask.id,
               assignedTo: value,

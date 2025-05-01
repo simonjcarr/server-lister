@@ -46,3 +46,9 @@ export const updateSubTask = async ({ subTaskId, title, description, assignedTo 
   const task = await db.update(subTasks).set(updateObj).where(eq(subTasks.id, subTaskId)).returning()
   return task[0]
 }
+
+// Delete a subtask by ID
+export const deleteSubTask = async (subTaskId: number) => {
+  await db.delete(subTasks).where(eq(subTasks.id, subTaskId))
+  return { success: true }
+}

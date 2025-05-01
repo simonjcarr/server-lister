@@ -85,6 +85,7 @@ const ListServerTasksTable = ({ serverId }: { serverId: number }) => {
             loading={isLoading}
             pagination={false}
             rowHoverable={true}
+            className="server-tasks-table"
             rowClassName={(record) => {
               // Only apply if more than one task and complete === not complete
               if (

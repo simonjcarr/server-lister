@@ -2,18 +2,16 @@
 // import type { ServerTask } from '@/types'
 import { useQuery } from '@tanstack/react-query'
 import { reorderSubTasks, getServerSubTasks } from '@/app/actions/serverTasks'
-import { List, Splitter, Button } from 'antd'
+import { List, Splitter } from 'antd'
 import { useEffect, useState } from 'react'
 import { SubTask } from '@/types'
 import DisplaySubTaskDetail from './DisplaySubTaskDetail'
 import SubTaskCompleteIcon from './SubTaskCompleteIcon'
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd'
-import EditServerSubTaskForm from './EditServerSubTaskForm'
 
 const SubTaskList = ({ taskId }: { taskId: number }) => {
   const [selectedSubTask, setSelectedSubTask] = useState<SubTask | null>(null)
   const [subTasks, setSubTasks] = useState<SubTask[]>([])
-  const [editSubTask, setEditSubTask] = useState<SubTask | null>(null)
 
   const { data: subTaskData, isLoading: subTaskLoading } = useQuery({
     queryKey: ["subTasks", taskId],
@@ -89,7 +87,6 @@ const SubTaskList = ({ taskId }: { taskId: number }) => {
                                     </span>
                                     <span className="block text-xs text-gray-500">{subTask.assignedTo ? <span className="text-green-400 opacity-50">Assigned: {subTask.assignedTo}</span> : <span className="text-orange-400 opacity-50">Not Assigned</span>}</span>
                                   </div>
-                                  <Button size="small" onClick={e => { e.stopPropagation(); setEditSubTask(subTask); }} style={{ marginLeft: 8 }}>Edit</Button>
                                 </div>
                               </List.Item>
                             )}
@@ -110,14 +107,6 @@ const SubTaskList = ({ taskId }: { taskId: number }) => {
               </div>
             </Splitter.Panel>
           </Splitter>
-          {editSubTask && (
-            <EditServerSubTaskForm
-              subTask={editSubTask}
-              open={!!editSubTask}
-              onClose={() => setEditSubTask(null)}
-              taskId={taskId}
-            />
-          )}
         </>
       )}
     </div>
