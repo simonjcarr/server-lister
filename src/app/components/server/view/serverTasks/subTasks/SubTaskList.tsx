@@ -5,9 +5,9 @@ import { reorderSubTasks, getServerSubTasks } from '@/app/actions/serverTasks'
 import { List, Splitter } from 'antd'
 import { useEffect, useState } from 'react'
 import { SubTask } from '@/types'
-import DisplaySubTaskDetail from './DisplaySubTaskDetail'
 import SubTaskCompleteIcon from './SubTaskCompleteIcon'
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd'
+import SubTaskDetailTabs from './SubTaskDetailTabs'
 
 const SubTaskList = ({ taskId }: { taskId: number }) => {
   const [selectedSubTask, setSelectedSubTask] = useState<SubTask | null>(null)
@@ -102,7 +102,7 @@ const SubTaskList = ({ taskId }: { taskId: number }) => {
             <Splitter.Panel defaultSize="80%">
               <div className=''>
                 {selectedSubTask && (
-                  <DisplaySubTaskDetail subTask={selectedSubTask} />
+                  <SubTaskDetailTabs subTask={selectedSubTask} />
                 )}
               </div>
             </Splitter.Panel>
