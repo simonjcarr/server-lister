@@ -1,4 +1,4 @@
-import { pgTable, text, serial, boolean, timestamp, integer } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, boolean, timestamp, integer, jsonb } from "drizzle-orm/pg-core";
 import { createInsertSchema, createSelectSchema, createUpdateSchema } from "drizzle-zod";
 import { z } from "zod";
 import { servers } from "./servers";
@@ -40,9 +40,10 @@ export const subTaskComments = pgTable(
   "sub_task_comments",
   {
     id: serial("id").primaryKey(),
-    taskId: integer("taskId").notNull().references(() => tasks.id, { onDelete: "cascade" }),
+    subTaskId: integer("subTaskId").notNull().references(() => subTasks.id, { onDelete: "cascade" }),
     userId: text("userId").notNull().references(() => users.id, { onDelete: "cascade" }),
     comment: text("comment").notNull(),
+    mentions: jsonb("mentions").notNull().default([]),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
   }
