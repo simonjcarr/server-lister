@@ -15,11 +15,11 @@
     "db:push": "drizzle-kit push",
     "cypress:open": "DATABASE_URL=test NODE_ENV=test cypress open",
     "test:e2e": "DATABASE_URL=test NODE_ENV=test CYPRESS_TESTING=true start-server-and-test dev:3008 http://localhost:3008 cypress:open"
-
   },
   "dependencies": {
     "@ant-design/cssinjs": "^1.23.0",
     "@auth/drizzle-adapter": "^1.8.0",
+    "@hello-pangea/dnd": "^18.0.1",
     "@preact/signals-react": "^3.0.1",
     "@tanstack/react-form": "^1.1.2",
     "@tanstack/react-query": "^5.67.2",
