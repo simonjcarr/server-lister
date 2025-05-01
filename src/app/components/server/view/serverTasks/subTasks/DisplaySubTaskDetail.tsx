@@ -33,7 +33,7 @@ const DisplaySubTaskDetail = ({ subTask }: { subTask: SubTask }) => {
   })
 
   // State to control showing the assign UI
-  const [showAssign, setShowAssign] = React.useState(false)
+  const [showAssign] = React.useState(false)
 
   return (
     <div className='px-4'>
@@ -57,7 +57,10 @@ const DisplaySubTaskDetail = ({ subTask }: { subTask: SubTask }) => {
       </div>
       <SubTaskAssignedTo subTask={subTask} showChangeUser={showAssign} />
       <div className='mt-2 whitespace-pre-wrap break-words'>{subTask.description}</div>
-      <EditServerSubTaskForm subTask={subTask} open={editOpen} onClose={() => setEditOpen(false)} taskId={subTask.taskId} />
+      {/* Only render the edit form when editOpen is true to avoid useForm warning */}
+      {editOpen && (
+        <EditServerSubTaskForm subTask={subTask} open={editOpen} onClose={() => setEditOpen(false)} taskId={subTask.taskId} />
+      )}
       <Modal
         open={deleteModalOpen}
         title={<span style={{ color: 'red', fontWeight: 600 }}>Delete Subtask</span>}
