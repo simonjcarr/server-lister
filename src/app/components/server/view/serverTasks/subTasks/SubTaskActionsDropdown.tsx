@@ -25,7 +25,22 @@ const SubTaskActionsDropdown: React.FC<SubTaskActionsDropdownProps> = ({ subTask
 
   return (
     <Dropdown menu={{ items: menuItems, onClick: handleMenuClick }} trigger={['click']} placement="bottomRight">
-      <EllipsisOutlined style={{ fontSize: 24, cursor: 'pointer' }} />
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: 36,
+        height: 36,
+        borderRadius: '50%',
+        background: '#222',
+        color: '#fff',
+        boxShadow: '0 1px 4px rgba(0,0,0,0.12)',
+        cursor: 'pointer',
+        border: '1px solid #444',
+        transition: 'background 0.2s',
+      }}>
+        <EllipsisOutlined style={{ fontSize: 22 }} />
+      </div>
     </Dropdown>
   )
 }

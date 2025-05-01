@@ -48,22 +48,22 @@ const DisplaySubTaskDetail = ({ subTask }: { subTask: SubTask }) => {
   return (
     <div className='px-4'>
       {contextHolder}
-      <div className="flex justify-between mb-2">
+      <div className="flex items-center justify-between mb-1">
         <div className="text-xl font-bold">{subTask.title}</div>
-        <div className='flex gap-2 items-center'>
-          <SubTaskActionsDropdown
-            subTask={subTask}
-            onEdit={() => setEditOpen(true)}
-            onToggleComplete={() => mutation.mutate(subTask.id)}
-            onDelete={() => setDeleteModalOpen(true)}
-          />
-          <div>{subTask.isComplete ? <span className="text-green-500 text-lg">Task complete</span> : 'Task Open'}</div>
-          <Switch
-            className="text-green-500"
-            checked={subTask.isComplete}
-            onChange={() => mutation.mutate(subTask.id)}
-          />
-        </div>
+        <SubTaskActionsDropdown
+          subTask={subTask}
+          onEdit={() => setEditOpen(true)}
+          onToggleComplete={() => mutation.mutate(subTask.id)}
+          onDelete={() => setDeleteModalOpen(true)}
+        />
+      </div>
+      <div className='flex gap-2 items-center mb-2'>
+        <div>{subTask.isComplete ? <span className="text-green-500 text-lg">Task complete</span> : 'Task Open'}</div>
+        <Switch
+          className="text-green-500"
+          checked={subTask.isComplete}
+          onChange={() => mutation.mutate(subTask.id)}
+        />
       </div>
       <SubTaskAssignedTo subTask={subTask} showChangeUser={showAssign} />
       <div className='mt-2 whitespace-pre-wrap break-words'>{subTask.description}</div>
