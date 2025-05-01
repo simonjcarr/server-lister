@@ -26,6 +26,7 @@ export const subTasks = pgTable(
     id: serial("id").primaryKey(),
     taskId: integer("taskId").notNull().references(() => tasks.id, { onDelete: "cascade" }),
     title: text("title").notNull(),
+    order: integer("order").notNull().default(0),
     description: text("description"),
     isComplete: boolean("isComplete").notNull().default(false),
     assignedTo: text("assignedTo").references(() => users.id, { onDelete: "set null" }),

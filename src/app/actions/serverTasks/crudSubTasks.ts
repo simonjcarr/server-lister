@@ -1,10 +1,10 @@
 'use server'
 import { db } from "@/db"
 import { subTasks, users } from "@/db/schema"
-import { eq } from "drizzle-orm"
+import { eq, asc } from "drizzle-orm"
 
 export const getServerSubTasks = async (taskId: number) => {
-  const taskResults = await db.select().from(subTasks).leftJoin(users, eq(subTasks.assignedTo, users.id)).where(eq(subTasks.taskId, taskId))
+  const taskResults = await db.select().from(subTasks).leftJoin(users, eq(subTasks.assignedTo, users.id)).where(eq(subTasks.taskId, taskId)).orderBy(asc(subTasks.order), asc(subTasks.createdAt))
   return taskResults
 }
 
