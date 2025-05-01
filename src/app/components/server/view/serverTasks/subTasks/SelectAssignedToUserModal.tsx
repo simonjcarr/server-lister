@@ -40,7 +40,7 @@ const SelectAssignedToUserModal = ({ subTask }: { subTask: SubTask }) => {
   return (
     <div>
       <Button onClick={() => setIsOpen(true)} size="small"><FaUserEdit /></Button>
-      <Modal title="Change Assigned User" open={isOpen} onCancel={() => setIsOpen(false)}>
+      <Modal title="Change Assigned User" open={isOpen} onCancel={() => setIsOpen(false)} footer={null}>
         <Select
           style={{width: '100%'}}
           options={usersData}

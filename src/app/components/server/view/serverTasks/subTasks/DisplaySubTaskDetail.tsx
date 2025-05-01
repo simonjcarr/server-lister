@@ -24,7 +24,7 @@ const DisplaySubTaskDetail = ({ subTask }: { subTask: SubTask }) => {
       <div className="flex justify-between mb-2">
         <div className="text-xl font-bold">{subTask.title}</div>
         <div className='flex gap-2 items-center'>
-          <div>{subTask.isComplete ? <span className="text-green-500 text-lg">Task complete</span> : ''}</div>
+          <div>{subTask.isComplete ? <span className="text-green-500 text-lg">Task complete</span> : 'Task Open'}</div>
           <Switch
             className="text-green-500"
             checked={subTask.isComplete}
@@ -33,7 +33,7 @@ const DisplaySubTaskDetail = ({ subTask }: { subTask: SubTask }) => {
         </div>
       </div>
       <SubTaskAssignedTo subTask={subTask} showChangeUser={true} />
-      <div className='mt-2'>{subTask.description}</div>
+      <div className='mt-2 whitespace-pre-wrap break-words'>{subTask.description}</div>
     </div>
   )
 }

@@ -24,7 +24,7 @@ const CreateServerSubTaskForm = ({ taskId }: { taskId: number }) => {
   return (
     <>
     <Button size='small' ghost onClick={() => setOpen(true)}><BsListTask />New Sub Task</Button>
-    <Drawer title="Create sub task" placement="right" width={400} onClose={() => setOpen(false)} open={open}>
+    <Drawer destroyOnClose title="Create sub task" placement="right" width={400} onClose={() => setOpen(false)} open={open}>
       <Form layout="vertical" onFinish={handleOnFinish}>
         <Form.Item name="title" label="Title" required>
           <Input />
