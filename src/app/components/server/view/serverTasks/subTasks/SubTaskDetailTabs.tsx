@@ -4,14 +4,19 @@ import DisplaySubTaskDetail from './DisplaySubTaskDetail'
 import type { SubTask } from '@/types'
 
 const SubTaskDetailTabs = ({ subTask }: { subTask: SubTask }) => {
-  return (
-    <Tabs>
-      <Tabs.TabPane tab="Details" key="details">
-        <DisplaySubTaskDetail subTask={subTask} />
-      </Tabs.TabPane>
-      <Tabs.TabPane tab="Comments" key="comments"></Tabs.TabPane>
-    </Tabs>
-  )
+  const items = [
+    {
+      key: 'details',
+      label: 'Details',
+      children: <DisplaySubTaskDetail subTask={subTask} />,
+    },
+    {
+      key: 'comments',
+      label: 'Comments',
+      children: null,
+    },
+  ]
+  return <Tabs items={items} />
 }
 
 export default SubTaskDetailTabs
