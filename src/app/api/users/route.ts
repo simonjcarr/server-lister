@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { getAllUsers } from "@/app/actions/users/userActions";
 
-export async function GET(req: NextRequest) {
+export async function GET() {
   const users = await getAllUsers();
   // Only return id and name/email for assignment
   const safeUsers = Array.isArray(users)
