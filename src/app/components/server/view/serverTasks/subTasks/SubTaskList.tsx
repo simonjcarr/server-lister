@@ -100,7 +100,7 @@ const SubTaskList = ({ taskId }: { taskId: number }) => {
               </DragDropContext>
             </Splitter.Panel>
             <Splitter.Panel defaultSize="80%">
-              <div className=''>
+              <div className='pl-4'>
                 {selectedSubTask && (
                   <SubTaskDetailTabs subTask={selectedSubTask} />
                 )}
