@@ -8,7 +8,6 @@ import { getAvailableBookingCodesForServer, createEngineerHours } from '@/app/ac
 import dayjs from 'dayjs';
 
 const { TextArea } = Input;
-const { Option } = Select;
 
 interface EngineerHoursDropdownProps {
   serverId: number;
@@ -73,7 +72,7 @@ const EngineerHoursDropdown: React.FC<EngineerHoursDropdownProps> = ({ serverId 
   // Check for debugging conditions
   const hasNoBookingCodes = bookingCodesData?.success && (!bookingCodesData.data || bookingCodesData.data.length === 0);
   const hasError = bookingCodesData?.success === false;
-  const debugMessage = (bookingCodesData as any)?.debug;
+  const debugMessage = bookingCodesData?.debug;
   
   // Show debugging tooltip instead of hiding completely
   if (hasNoBookingCodes || hasError) {
@@ -109,13 +108,15 @@ const EngineerHoursDropdown: React.FC<EngineerHoursDropdownProps> = ({ serverId 
         loading={isLoadingBookingCodes}
         onChange={value => setSelectedBookingCode(value)}
         disabled={isLoadingBookingCodes || !bookingCodesData?.success}
-      >
-        {bookingCodesData?.success && bookingCodesData.data && bookingCodesData.data.map((code: { id: number; groupName: string; code: string }) => (
-          <Option key={code.id} value={code.id}>
-            {code.groupName}: {code.code}
-          </Option>
-        ))}
-      </Select>
+        options={bookingCodesData?.success && bookingCodesData.data ? 
+          bookingCodesData.data.map((code) => ({
+            key: code.id,
+            value: code.id,
+            label: `${code.groupName}: ${code.code}`
+          }))
+          : undefined
+        }
+      />
 
       <Button 
         type="primary" 

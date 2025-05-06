@@ -7,7 +7,6 @@ import { getAvailableBookingCodesForServer, createEngineerHours } from '@/app/ac
 import dayjs from 'dayjs';
 
 const { TextArea } = Input;
-const { Option } = Select;
 
 interface EngineerHoursFormProps {
   serverId: number;
@@ -57,7 +56,7 @@ const EngineerHoursForm: React.FC<EngineerHoursFormProps> = ({ serverId, onSucce
 
   // Show debugging information if no booking codes are found
   const hasNoBookingCodes = bookingCodesData?.success && (!bookingCodesData.data || bookingCodesData.data.length === 0);
-  const debugMessage = (bookingCodesData as any)?.debug;
+  const debugMessage = bookingCodesData?.debug;
   
   return (
     <div className="p-4 bg-gray-800/50 rounded-lg">
@@ -107,13 +106,15 @@ const EngineerHoursForm: React.FC<EngineerHoursFormProps> = ({ serverId, onSucce
             placeholder="Select a booking code"
             loading={isLoadingBookingCodes}
             disabled={isLoadingBookingCodes || !bookingCodesData?.success || hasNoBookingCodes}
-          >
-            {bookingCodesData?.success && bookingCodesData.data && bookingCodesData.data.map((code: { id: number; groupName: string; code: string; description?: string }) => (
-              <Option key={code.id} value={code.id}>
-                {code.groupName}: {code.code} {code.description ? `- ${code.description}` : ''}
-              </Option>
-            ))}
-          </Select>
+            options={bookingCodesData?.success && bookingCodesData.data ? 
+              bookingCodesData.data.map((code) => ({
+                key: code.id,
+                value: code.id,
+                label: `${code.groupName}: ${code.code}${code.description ? ` - ${code.description}` : ''}`
+              })) 
+              : undefined
+            }
+          />
         </Form.Item>
 
         <Form.Item

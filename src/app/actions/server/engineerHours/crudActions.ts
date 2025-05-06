@@ -8,7 +8,7 @@ import {
 } from "@/db/schema/engineerHours";
 import { servers } from "@/db/schema/servers";
 import { bookingCodes, projectBookingCodes, bookingCodeGroups } from "@/db/schema/bookingCodes";
-import { desc, eq, count, sql } from "drizzle-orm";
+import { desc, eq, count } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
 // Define error type to replace any
@@ -230,7 +230,16 @@ export async function getAvailableBookingCodesForServer(serverId: number) {
       
       // Get all booking codes for these groups with a safer approach
       // We need to handle each group ID separately
-      let bookingCodesResult = [];
+      type BookingCodeResult = {
+        id: number;
+        code: string;
+        description: string | null;
+        groupId: number;
+        validFrom: Date | null;
+        validTo: Date | null;
+      };
+      
+      let bookingCodesResult: BookingCodeResult[] = [];
       for (const group of projectGroups) {
         const groupCodes = await db
           .select({
@@ -249,7 +258,7 @@ export async function getAvailableBookingCodesForServer(serverId: number) {
       }
       
       // Get group names - again, safer approach
-      let groups = [];
+      const groups = [];
       for (const groupId of groupIds) {
         const group = await db
           .select({
