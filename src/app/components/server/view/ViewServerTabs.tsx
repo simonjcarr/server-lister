@@ -14,6 +14,7 @@ import ServerDrawings from "./drawings/ServerDrawings"
 import ServerOnboardingStatus from "./ServerOnboardingStatus"
 import ProjectTabData from "./project/ProjectTabData"
 import ViewServerTasks from "./ViewServerTasks"
+import { EngineerHoursTab } from "./engineerHours"
 
 
 const ViewServerTabs = ({ serverId }: { serverId: number }) => {
@@ -37,6 +38,7 @@ const ViewServerTabs = ({ serverId }: { serverId: number }) => {
     { key: 'drawings', label: 'Drawings', children: <ServerDrawings serverId={serverId} /> },
     { key: 'notes', label: 'Notes', children: <ViewServerNotes serverId={serverId} /> },
     { key: 'tasks', label: 'Tasks', children: <ViewServerTasks serverId={serverId} /> },
+    { key: 'hours', label: 'Engineer Hours', children: <EngineerHoursTab serverId={serverId} /> },
   ]
   return (
     <App>

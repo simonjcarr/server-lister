@@ -17,3 +17,4 @@ export * from './chat';
 export * from './bookingCodes';
 export * from './softwareWhitelist';
 export * from './serverTasks';
+export * from './engineerHours';
