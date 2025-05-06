@@ -5,6 +5,7 @@ import { Card, Spin, Empty, Radio, RadioChangeEvent, Select, Space, Alert } from
 import { useQuery } from '@tanstack/react-query';
 import { getEngineerHoursChartData, getCumulativeEngineerHoursChartData } from '@/app/actions/server/engineerHours/reportActions';
 import { useSession } from 'next-auth/react';
+import dayjs from 'dayjs';
 import {
   LineChart,
   Line,
@@ -75,6 +76,9 @@ const EngineerHoursChart: React.FC<EngineerHoursChartProps> = ({ serverId }) => 
   // Use the appropriate query based on chart type
   const { data: chartsData, isLoading, error } = 
     chartType === 'individual' ? individualQuery : cumulativeQuery;
+    
+  // Extract time range boundaries for chart display
+  const timeRangeBoundaries = chartsData?.success ? chartsData.timeRangeBoundaries : null;
 
   // Helper to format the X-axis labels based on time range
   const formatXAxisTick = (value: string) => {
@@ -119,6 +123,37 @@ const EngineerHoursChart: React.FC<EngineerHoursChartProps> = ({ serverId }) => 
     // We need one entry per date, with all engineers' hours for that date
     const chartDataByDate = new Map();
     
+    // If we have time range boundaries, generate empty data points for the full range
+    if (timeRangeBoundaries && timeRange !== 'all') {
+      const { startDate, endDate, intervalType } = timeRangeBoundaries;
+      
+      let current = dayjs(startDate);
+      const end = dayjs(endDate);
+      
+      // Generate data points for the entire requested range
+      while (current.isBefore(end) || current.isSame(end, 'day')) {
+        let dateKey: string;
+        
+        if (intervalType === 'day') {
+          dateKey = current.format('YYYY-MM-DD');
+          current = current.add(1, 'day');
+        } else if (intervalType === 'week') {
+          // For week intervals, use the start of the week as the key
+          dateKey = current.startOf('week').format('YYYY-MM-DD');
+          current = current.add(1, 'week');
+        } else {
+          // For month intervals
+          dateKey = current.format('YYYY-MM');
+          current = current.add(1, 'month');
+        }
+        
+        if (!chartDataByDate.has(dateKey)) {
+          chartDataByDate.set(dateKey, { date: dateKey });
+        }
+      }
+    }
+    
+    // Now populate with actual data
     (chartsData.data as EngineerDataPoint[]).forEach(item => {
       if (!chartDataByDate.has(item.date)) {
         chartDataByDate.set(item.date, { date: item.date });
@@ -127,6 +162,16 @@ const EngineerHoursChart: React.FC<EngineerHoursChartProps> = ({ serverId }) => 
       const dateEntry = chartDataByDate.get(item.date);
       // Store hours by engineer name to ensure unique keys
       dateEntry[item.engineerName] = item.totalHours;
+    });
+    
+    // Make sure all engineers have entries for all dates (with 0 if no data)
+    const engineerNames = Array.from(engineers.values()).map(e => e.name);
+    chartDataByDate.forEach(entry => {
+      engineerNames.forEach(name => {
+        if (entry[name] === undefined) {
+          entry[name] = 0;
+        }
+      });
     });
     
     // Convert to array sorted by date
@@ -154,10 +199,60 @@ const EngineerHoursChart: React.FC<EngineerHoursChartProps> = ({ serverId }) => 
     setShowCurrentUserOnly(value);
   };
 
+  // Process data for cumulative chart
+  const prepareCumulativeChartData = () => {
+    if (!chartsData?.success || !chartsData.data) return [];
+    
+    const cumulativeData = new Map();
+    
+    // If we have time range boundaries, generate empty data points for the full range
+    if (timeRangeBoundaries && timeRange !== 'all') {
+      const { startDate, endDate, intervalType } = timeRangeBoundaries;
+      
+      let current = dayjs(startDate);
+      const end = dayjs(endDate);
+      
+      // Generate data points for the entire requested range
+      while (current.isBefore(end) || current.isSame(end, 'day')) {
+        let dateKey: string;
+        
+        if (intervalType === 'day') {
+          dateKey = current.format('YYYY-MM-DD');
+          current = current.add(1, 'day');
+        } else if (intervalType === 'week') {
+          // For week intervals, use the start of the week as the key
+          dateKey = current.startOf('week').format('YYYY-MM-DD');
+          current = current.add(1, 'week');
+        } else {
+          // For month intervals
+          dateKey = current.format('YYYY-MM');
+          current = current.add(1, 'month');
+        }
+        
+        if (!cumulativeData.has(dateKey)) {
+          cumulativeData.set(dateKey, { 
+            date: dateKey,
+            totalHours: 0,
+            totalMinutes: 0 
+          });
+        }
+      }
+    }
+    
+    // Now add the actual data
+    chartsData.data.forEach(item => {
+      cumulativeData.set(item.date, item);
+    });
+    
+    // Convert to array sorted by date
+    return Array.from(cumulativeData.values())
+      .sort((a, b) => a.date.localeCompare(b.date));
+  };
+
   // Prepare chart data based on chart type
   const chartData = chartType === 'individual' 
     ? prepareIndividualChartData() 
-    : (chartsData?.success && chartsData.data ? chartsData.data : []);
+    : prepareCumulativeChartData();
 
   // Get unique engineers from the data for individual chart
   const engineers = new Map();
@@ -289,6 +384,8 @@ const EngineerHoursChart: React.FC<EngineerHoursChartProps> = ({ serverId }) => 
                 <XAxis 
                   dataKey="date"
                   tickFormatter={formatXAxisTick}
+                  interval={timeRange === 'week' ? 0 : timeRange === 'month' ? 2 : 'preserveEnd'}
+                  minTickGap={5}
                 />
                 <YAxis 
                   label={{ 
@@ -297,6 +394,8 @@ const EngineerHoursChart: React.FC<EngineerHoursChartProps> = ({ serverId }) => 
                     position: 'insideLeft',
                     style: { textAnchor: 'middle' }
                   }}
+                  allowDecimals={false}
+                  domain={[0, 'auto']}
                 />
                 <RechartsTooltip content={renderTooltipContent} />
                 <Legend />
@@ -334,6 +433,8 @@ const EngineerHoursChart: React.FC<EngineerHoursChartProps> = ({ serverId }) => 
                 <XAxis 
                   dataKey="date"
                   tickFormatter={formatXAxisTick}
+                  interval={timeRange === 'week' ? 0 : timeRange === 'month' ? 2 : 'preserveEnd'}
+                  minTickGap={5}
                 />
                 <YAxis 
                   label={{ 
@@ -342,6 +443,8 @@ const EngineerHoursChart: React.FC<EngineerHoursChartProps> = ({ serverId }) => 
                     position: 'insideLeft',
                     style: { textAnchor: 'middle' }
                   }}
+                  allowDecimals={false}
+                  domain={[0, 'auto']}
                 />
                 <RechartsTooltip content={renderTooltipContent} />
                 <Legend />

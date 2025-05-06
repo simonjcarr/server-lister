@@ -115,11 +115,20 @@ export async function getEngineerHoursChartData({
       totalHours: Math.round((Number(item.totalMinutes) || 0) / 60 * 10) / 10, // Round to 1 decimal
     }));
 
+    // Calculate expected time periods based on requested time range
+    const timeRangeBoundaries = {
+      startDate,
+      endDate,
+      intervalType,
+      timeRange,
+    };
+
     return {
       success: true,
       data: transformedData,
       timeRange,
       intervalType,
+      timeRangeBoundaries,
     };
   } catch (error) {
     console.error("Error fetching engineer hours chart data:", error);
@@ -175,6 +184,7 @@ export async function getCumulativeEngineerHoursChartData({
       data: Array.from(cumulativeByDate.values()),
       timeRange,
       intervalType: detailedResult.intervalType,
+      timeRangeBoundaries: detailedResult.timeRangeBoundaries
     };
   } catch (error) {
     console.error("Error fetching cumulative engineer hours chart data:", error);
