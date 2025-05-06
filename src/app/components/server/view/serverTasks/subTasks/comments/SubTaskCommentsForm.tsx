@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Form, Button, App, Input, Tabs, Typography, Card } from 'antd'
+import { Form, Button, App, Input, Tabs, Typography } from 'antd'
 import { EditOutlined, FormOutlined, EyeOutlined } from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
 import { useSession } from 'next-auth/react'
@@ -85,19 +85,7 @@ const SubTaskCommentsForm = ({ subTaskId, onSubmitSuccess }: SubTaskCommentsForm
   if (!users) return (<div>Error loading users</div>)
 
   return (
-    <div className="comment-form">
-      <Card size="small" className="mb-2">
-        <Text className="text-sm mb-2 block">
-          Markdown is supported. You can mention users with @username. 
-          For code blocks, use triple backticks with optional language identifier:
-        </Text>
-        <pre className="bg-gray-100 p-2 text-xs mb-0 rounded">
-          ```js<br/>
-          console.log(&apos;Hello, world!&apos;);<br/>
-          ```
-        </pre>
-      </Card>
-      
+    <div className="comment-form">      
       <Form form={form} onFinish={onFinish}>
         <Tabs 
           activeKey={activeTab} 
@@ -110,7 +98,7 @@ const SubTaskCommentsForm = ({ subTaskId, onSubmitSuccess }: SubTaskCommentsForm
                 <Form.Item name="comment" rules={[{ required: true, message: 'Please enter a comment' }]}>
                   <TextArea
                     rows={5}
-                    placeholder="Add a comment with Markdown support..."
+                    placeholder="Add a comment... (Markdown and code blocks supported: ```js code here ```)"
                     onChange={handleContentChange}
                   />
                 </Form.Item>
@@ -120,14 +108,16 @@ const SubTaskCommentsForm = ({ subTaskId, onSubmitSuccess }: SubTaskCommentsForm
               key: 'preview',
               label: <span><EyeOutlined /> Preview</span>,
               children: (
-                <div className="markdown-preview p-3 border rounded min-h-[120px] bg-white">
+                <div className="markdown-preview p-3 border rounded min-h-[120px] bg-white dark:bg-[#141414] dark:border-[#303030] markdown-content">
                   {previewContent ? (
-                    <ReactMarkdown
-                      rehypePlugins={[rehypeRaw, [rehypeHighlight, { detect: true }]]}
-                      remarkPlugins={[remarkGfm]}
-                    >
-                      {previewContent}
-                    </ReactMarkdown>
+                    <div className="dark:bg-transparent markdown-block">
+                      <ReactMarkdown
+                        rehypePlugins={[rehypeRaw, [rehypeHighlight, { detect: true }]]}
+                        remarkPlugins={[remarkGfm]}
+                      >
+                        {previewContent}
+                      </ReactMarkdown>
+                    </div>
                   ) : (
                     <Text type="secondary" italic>Nothing to preview</Text>
                   )}

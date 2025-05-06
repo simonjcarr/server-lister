@@ -258,10 +258,14 @@ body {
   border-radius: 0.25rem;
   overflow: auto;
   margin: 0.5rem 0;
+  color: #1f2937;
+  border: 1px solid #e5e7eb;
 }
 
 .dark .markdown-content pre {
-  background-color: #1e1e1e;
+  background-color: #1e1e1e !important;
+  color: #e5e7eb !important;
+  border: 1px solid #374151 !important;
 }
 
 .markdown-content code {
@@ -273,10 +277,123 @@ body {
   background-color: #f3f4f6;
   padding: 0.125rem 0.25rem;
   border-radius: 0.25rem;
+  color: #1f2937;
 }
 
 .dark .markdown-content :not(pre) > code {
+  background-color: #2d2d2d !important;
+  color: #e5e7eb !important;
+}
+
+/* Ensure code inside pre has dark background in dark mode */
+.dark .markdown-content pre code {
+  background-color: transparent !important;
+  color: #e5e7eb !important;
+}
+
+/* Override highlight.js light theme in dark mode */
+.dark .hljs,
+.dark code[class*="language-"],
+.dark pre[class*="language-"],
+.dark .token,
+.dark code.hljs {
+  background-color: #1e1e1e !important;
+  color: #e5e7eb !important;
+}
+
+/* Force all code containers to have dark background in dark mode */
+.dark [class*="hljs-"],
+.dark [class*="language-"],
+.dark code,
+.dark pre > code {
+  background-color: #1e1e1e !important;
+}
+
+/* Ensure markdown blocks' code is properly themed */
+.dark .markdown-block pre,
+.dark pre.hljs {
+  background-color: #1e1e1e !important;
+  color: #e5e7eb !important;
+  border: 1px solid #374151 !important;
+  border-radius: 0.25rem !important;
+  padding: 1rem !important;
+  margin: 0.5rem 0 !important;
+}
+
+.dark .markdown-block code {
+  background-color: transparent !important;
+  color: #e5e7eb !important;
+}
+
+.dark .markdown-block pre code {
+  color: #e5e7eb !important;
+  background-color: transparent !important;
+}
+
+/* Syntax highlighting colors for dark mode */
+.dark .hljs-comment,
+.dark .hljs-quote {
+  color: #8b949e;
+}
+
+.dark .hljs-keyword,
+.dark .hljs-selector-tag,
+.dark .hljs-addition {
+  color: #ff7b72;
+}
+
+.dark .hljs-number,
+.dark .hljs-string,
+.dark .hljs-meta .hljs-meta-string,
+.dark .hljs-literal,
+.dark .hljs-doctag,
+.dark .hljs-regexp {
+  color: #a5d6ff;
+}
+
+.dark .hljs-title,
+.dark .hljs-section,
+.dark .hljs-name,
+.dark .hljs-selector-id,
+.dark .hljs-selector-class {
+  color: #d2a8ff;
+}
+
+.dark .hljs-attribute,
+.dark .hljs-attr,
+.dark .hljs-variable,
+.dark .hljs-template-variable,
+.dark .hljs-class .hljs-title,
+.dark .hljs-type {
+  color: #79c0ff;
+}
+
+.dark .hljs-symbol,
+.dark .hljs-bullet,
+.dark .hljs-subst,
+.dark .hljs-meta,
+.dark .hljs-meta .hljs-keyword,
+.dark .hljs-selector-attr,
+.dark .hljs-selector-pseudo,
+.dark .hljs-link {
+  color: #79c0ff;
+}
+
+.dark .hljs-built_in,
+.dark .hljs-deletion {
+  color: #ffa198;
+}
+
+.dark .hljs-formula {
   background-color: #2d2d2d;
+}
+
+.dark .hljs-emphasis {
+  font-style: italic;
+}
+
+.dark .hljs-strong {
+  font-weight: bold;
 }
 
 .markdown-content table {

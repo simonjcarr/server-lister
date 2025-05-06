@@ -140,12 +140,14 @@ const SubTaskComments = ({ subTaskId }: { subTaskId: number }) => {
                       </Text>
                     </div>
                     <div className="mt-1 markdown-content">
-                      <ReactMarkdown
-                        rehypePlugins={[rehypeRaw, [rehypeHighlight, { detect: true }]]}
-                        remarkPlugins={[remarkGfm]}
-                      >
-                        {comment.comment}
-                      </ReactMarkdown>
+                      <div className="dark:bg-transparent markdown-block">
+                        <ReactMarkdown
+                          rehypePlugins={[rehypeRaw, [rehypeHighlight, { detect: true }]]}
+                          remarkPlugins={[remarkGfm]}
+                        >
+                          {comment.comment}
+                        </ReactMarkdown>
+                      </div>
                     </div>
                   </div>
                 </div>
