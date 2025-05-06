@@ -8,7 +8,7 @@ import {
 } from "@/db/schema/engineerHours";
 import { servers } from "@/db/schema/servers";
 import { bookingCodes, projectBookingCodes, bookingCodeGroups } from "@/db/schema/bookingCodes";
-import { desc, eq, count } from "drizzle-orm";
+import { desc, eq, count, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
 // Define error type to replace any
@@ -237,6 +237,7 @@ export async function getAvailableBookingCodesForServer(serverId: number) {
         groupId: number;
         validFrom: Date | null;
         validTo: Date | null;
+        enabled: boolean;
       };
       
       let bookingCodesResult: BookingCodeResult[] = [];
@@ -249,9 +250,15 @@ export async function getAvailableBookingCodesForServer(serverId: number) {
             groupId: bookingCodes.groupId,
             validFrom: bookingCodes.validFrom,
             validTo: bookingCodes.validTo,
+            enabled: bookingCodes.enabled,
           })
           .from(bookingCodes)
-          .where(eq(bookingCodes.groupId, group.groupId))
+          .where(
+            sql`${bookingCodes.groupId} = ${group.groupId} AND
+                ${bookingCodes.enabled} = true AND
+                ${bookingCodes.validFrom} <= CURRENT_TIMESTAMP AND
+                ${bookingCodes.validTo} >= CURRENT_TIMESTAMP`
+          )
           .orderBy(desc(bookingCodes.validFrom));
           
         bookingCodesResult = [...bookingCodesResult, ...groupCodes];
