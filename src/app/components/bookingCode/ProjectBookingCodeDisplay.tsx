@@ -1,11 +1,12 @@
-import React from 'react';
-import { Card, Typography, Tag, Space, Button } from 'antd';
+import React, { useState } from 'react';
+import { Card, Typography, Tag, Space, Button, Row, Col } from 'antd';
 import { useQuery } from '@tanstack/react-query';
 import { getProjectActiveBookingCode } from '@/app/actions/bookingCodes/crudActions';
 import dayjs from 'dayjs';
 import AssignBookingCodeToProject from './AssignBookingCodeToProject';
-import { LinkOutlined } from '@ant-design/icons';
+import { LinkOutlined, BarChartOutlined, LineChartOutlined } from '@ant-design/icons';
 import ClickToCopy from '../utils/ClickToCopy';
+import { EngineerHoursSummary } from '@/app/components/server/view/engineerHours';
 
 const { Title, Text } = Typography;
 
@@ -14,6 +15,8 @@ interface ProjectBookingCodeDisplayProps {
 }
 
 const ProjectBookingCodeDisplay: React.FC<ProjectBookingCodeDisplayProps> = ({ projectId }) => {
+  const [showHoursSummary, setShowHoursSummary] = useState(false);
+  
   const { data, isLoading, refetch } = useQuery({
     queryKey: ['projectActiveBookingCode', projectId],
     queryFn: () => getProjectActiveBookingCode(projectId),
@@ -51,7 +54,19 @@ const ProjectBookingCodeDisplay: React.FC<ProjectBookingCodeDisplayProps> = ({ p
 
   return (
     <Card 
-      title="Booking Code" 
+      title={(
+        <div className="flex items-center justify-between">
+          <span>Booking Code</span>
+          <Button
+            type="text"
+            size="small"
+            icon={showHoursSummary ? <LineChartOutlined /> : <BarChartOutlined />}
+            onClick={() => setShowHoursSummary(!showHoursSummary)}
+          >
+            {showHoursSummary ? 'Hide Hours Summary' : 'Show Hours Summary'}
+          </Button>
+        </div>
+      )}
       className="mb-4"
       extra={
         <AssignBookingCodeToProject
@@ -67,36 +82,55 @@ const ProjectBookingCodeDisplay: React.FC<ProjectBookingCodeDisplayProps> = ({ p
         </AssignBookingCodeToProject>
       }
     >
-      <div className="flex flex-col">
-        <div className="flex items-center mb-2">
-          <Title level={4} className="m-0 mr-2"><ClickToCopy text={bookingCode.code} /></Title>
-          {isExpired ? (
-            <Tag color="red">Expired</Tag>
-          ) : bookingCode.enabled ? (
-            <Tag color="green">Active</Tag>
-          ) : (
-            <Tag color="orange">Disabled</Tag>
-          )}
-        </div>
-        
-        <div className="mb-2">
-          <Text type="secondary">Group: </Text>
-          <Text strong>{bookingCode.groupName}</Text>
-        </div>
-        
-        {bookingCode.description && (
-          <div className="mb-2">
-            <Text>{bookingCode.description}</Text>
+      <Row gutter={[16, 16]}>
+        <Col span={showHoursSummary ? 12 : 24}>
+          <div className="flex flex-col">
+            <div className="flex items-center mb-2">
+              <Title level={4} className="m-0 mr-2"><ClickToCopy text={bookingCode.code} /></Title>
+              {isExpired ? (
+                <Tag color="red">Expired</Tag>
+              ) : bookingCode.enabled ? (
+                <Tag color="green">Active</Tag>
+              ) : (
+                <Tag color="orange">Disabled</Tag>
+              )}
+            </div>
+            
+            <div className="mb-2">
+              <Text type="secondary">Group: </Text>
+              <Text strong>{bookingCode.groupName}</Text>
+            </div>
+            
+            {bookingCode.description && (
+              <div className="mb-2">
+                <Text>{bookingCode.description}</Text>
+              </div>
+            )}
+            
+            <div className="text-xs text-gray-500">
+              <Space>
+                <span>Valid From: {dayjs(bookingCode.validFrom).format('YYYY-MM-DD')}</span>
+                <span>Valid To: {dayjs(bookingCode.validTo).format('YYYY-MM-DD')}</span>
+              </Space>
+            </div>
           </div>
-        )}
+        </Col>
         
-        <div className="text-xs text-gray-500">
-          <Space>
-            <span>Valid From: {dayjs(bookingCode.validFrom).format('YYYY-MM-DD')}</span>
-            <span>Valid To: {dayjs(bookingCode.validTo).format('YYYY-MM-DD')}</span>
-          </Space>
-        </div>
-      </div>
+        {showHoursSummary && (
+          <Col span={12}>
+            <EngineerHoursSummary
+              summaryType="bookingCodeGroup"
+              entityId={bookingCode.groupId}
+              title={`Hours - ${bookingCode.code}`}
+              compactMode={true}
+              showControls={false}
+              defaultTimeRange="month"
+              defaultChartType="cumulative"
+              defaultChartStyle="bar"
+            />
+          </Col>
+        )}
+      </Row>
     </Card>
   );
 };

@@ -8,7 +8,7 @@ import {
 } from "@/db/schema/engineerHours";
 import { servers } from "@/db/schema/servers";
 import { bookingCodes, projectBookingCodes, bookingCodeGroups } from "@/db/schema/bookingCodes";
-import { desc, eq, count, sql, and, gte, lte } from "drizzle-orm";
+import { desc, eq, count, sql, and, gte, lte, sum } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { users } from "@/db/schema/users";
 import dayjs from "dayjs";
@@ -496,6 +496,340 @@ export async function getAvailableBookingCodesForServer(serverId: number) {
     return { 
       success: false, 
       error: typedError.message || "Failed to fetch available booking codes for server" 
+    };
+  }
+}
+
+// Get engineer hours data for all servers in a project
+export async function getProjectEngineerHoursSummary(
+  projectId: number,
+  timeRange: 'week' | 'month' | '6months' | 'year' | 'all',
+  chartType: 'individual' | 'cumulative'
+) {
+  try {
+    // Calculate the start date based on the time range
+    const now = dayjs();
+    const endDate = now.endOf("day").toDate();
+    let startDate: Date;
+
+    switch (timeRange) {
+      case "week":
+        startDate = now.subtract(1, "week").startOf("day").toDate();
+        break;
+      case "month":
+        startDate = now.subtract(1, "month").startOf("day").toDate();
+        break;
+      case "6months":
+        startDate = now.subtract(6, "months").startOf("day").toDate();
+        break;
+      case "year":
+        startDate = now.subtract(1, "year").startOf("day").toDate();
+        break;
+      case "all":
+      default:
+        // For "all", we'll use a very old date as the start
+        startDate = new Date(2000, 0, 1);
+    }
+
+    // Determine grouping precision based on time range
+    // For shorter ranges, we'll group by day, for longer ranges by week or month
+    let intervalType: "day" | "week" | "month";
+
+    if (timeRange === "week") {
+      intervalType = "day";
+    } else if (timeRange === "month") {
+      intervalType = "day";
+    } else if (timeRange === "6months") {
+      intervalType = "week";
+    } else {
+      intervalType = "month";
+    }
+
+    // First, get all servers for this project
+    const projectServers = await db
+      .select({ id: servers.id })
+      .from(servers)
+      .where(eq(servers.projectId, projectId));
+
+    if (projectServers.length === 0) {
+      return {
+        success: true,
+        data: [],
+        timeRangeBoundaries: {
+          startDate,
+          endDate,
+          intervalType,
+          timeRange,
+        }
+      };
+    }
+
+    // Create an array of server IDs
+    const serverIds = projectServers.map(server => server.id);
+
+    // SQL conditional for date formatting based on interval type
+    let dateExpr;
+    if (intervalType === "day") {
+      dateExpr = sql`TO_CHAR(${engineerHours.date}, 'YYYY-MM-DD')`;
+    } else if (intervalType === "week") {
+      dateExpr = sql`TO_CHAR(DATE_TRUNC('week', ${engineerHours.date}), 'YYYY-MM-DD')`;
+    } else {
+      dateExpr = sql`TO_CHAR(${engineerHours.date}, 'YYYY-MM')`;
+    }
+
+    // Fetch data based on chart type
+    if (chartType === 'individual') {
+      // For individual engineers data
+      const result = await db
+        .select({
+          date: dateExpr,
+          engineerId: engineerHours.userId,
+          engineerName: users.name,
+          totalMinutes: sum(engineerHours.minutes),
+        })
+        .from(engineerHours)
+        .innerJoin(users, eq(engineerHours.userId, users.id))
+        .innerJoin(bookingCodes, eq(engineerHours.bookingCodeId, bookingCodes.id))
+        .where(
+          and(
+            sql`${engineerHours.serverId} IN (${sql.join(serverIds, sql`, `)})`,
+            gte(engineerHours.date, startDate),
+            lte(engineerHours.date, endDate)
+          )
+        )
+        .groupBy(dateExpr, engineerHours.userId, users.name)
+        .orderBy(dateExpr);
+
+      // Transform the results into chart-ready data
+      const transformedData = result.map(item => ({
+        date: item.date ? String(item.date) : "",
+        engineerId: item.engineerId,
+        engineerName: item.engineerName || "Unknown",
+        totalMinutes: Number(item.totalMinutes) || 0,
+        totalHours: Math.round((Number(item.totalMinutes) || 0) / 60 * 10) / 10, // Round to 1 decimal
+      }));
+
+      return {
+        success: true,
+        data: transformedData,
+        timeRange,
+        intervalType,
+        timeRangeBoundaries: {
+          startDate,
+          endDate,
+          intervalType,
+          timeRange,
+        }
+      };
+    } else {
+      // For cumulative data
+      const result = await db
+        .select({
+          date: dateExpr,
+          totalMinutes: sum(engineerHours.minutes),
+        })
+        .from(engineerHours)
+        .where(
+          and(
+            sql`${engineerHours.serverId} IN (${sql.join(serverIds, sql`, `)})`,
+            gte(engineerHours.date, startDate),
+            lte(engineerHours.date, endDate)
+          )
+        )
+        .groupBy(dateExpr)
+        .orderBy(dateExpr);
+
+      // Transform the results into chart-ready data
+      const transformedData = result.map(item => ({
+        date: item.date ? String(item.date) : "",
+        totalMinutes: Number(item.totalMinutes) || 0,
+        totalHours: Math.round((Number(item.totalMinutes) || 0) / 60 * 10) / 10, // Round to 1 decimal
+      }));
+
+      return {
+        success: true,
+        data: transformedData,
+        timeRange,
+        intervalType,
+        timeRangeBoundaries: {
+          startDate,
+          endDate,
+          intervalType,
+          timeRange,
+        }
+      };
+    }
+  } catch (error) {
+    console.error("Error fetching project engineer hours summary:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "An unknown error occurred",
+    };
+  }
+}
+
+// Get engineer hours data for all servers with booking codes from a specific group
+export async function getBookingCodeGroupEngineerHoursSummary(
+  groupId: number,
+  timeRange: 'week' | 'month' | '6months' | 'year' | 'all',
+  chartType: 'individual' | 'cumulative'
+) {
+  try {
+    // Calculate the start date based on the time range
+    const now = dayjs();
+    const endDate = now.endOf("day").toDate();
+    let startDate: Date;
+
+    switch (timeRange) {
+      case "week":
+        startDate = now.subtract(1, "week").startOf("day").toDate();
+        break;
+      case "month":
+        startDate = now.subtract(1, "month").startOf("day").toDate();
+        break;
+      case "6months":
+        startDate = now.subtract(6, "months").startOf("day").toDate();
+        break;
+      case "year":
+        startDate = now.subtract(1, "year").startOf("day").toDate();
+        break;
+      case "all":
+      default:
+        // For "all", we'll use a very old date as the start
+        startDate = new Date(2000, 0, 1);
+    }
+
+    // Determine grouping precision based on time range
+    let intervalType: "day" | "week" | "month";
+
+    if (timeRange === "week") {
+      intervalType = "day";
+    } else if (timeRange === "month") {
+      intervalType = "day";
+    } else if (timeRange === "6months") {
+      intervalType = "week";
+    } else {
+      intervalType = "month";
+    }
+
+    // SQL conditional for date formatting based on interval type
+    let dateExpr;
+    if (intervalType === "day") {
+      dateExpr = sql`TO_CHAR(${engineerHours.date}, 'YYYY-MM-DD')`;
+    } else if (intervalType === "week") {
+      dateExpr = sql`TO_CHAR(DATE_TRUNC('week', ${engineerHours.date}), 'YYYY-MM-DD')`;
+    } else {
+      dateExpr = sql`TO_CHAR(${engineerHours.date}, 'YYYY-MM')`;
+    }
+
+    // Fetch all booking codes in this group (including inactive ones)
+    const allBookingCodes = await db
+      .select({ id: bookingCodes.id })
+      .from(bookingCodes)
+      .where(eq(bookingCodes.groupId, groupId));
+
+    if (allBookingCodes.length === 0) {
+      return {
+        success: true,
+        data: [],
+        timeRangeBoundaries: {
+          startDate,
+          endDate,
+          intervalType,
+          timeRange,
+        }
+      };
+    }
+
+    // Create an array of booking code IDs
+    const bookingCodeIds = allBookingCodes.map(code => code.id);
+
+    // Fetch data based on chart type
+    if (chartType === 'individual') {
+      // For individual engineers data
+      const result = await db
+        .select({
+          date: dateExpr,
+          engineerId: engineerHours.userId,
+          engineerName: users.name,
+          totalMinutes: sum(engineerHours.minutes),
+        })
+        .from(engineerHours)
+        .innerJoin(users, eq(engineerHours.userId, users.id))
+        .where(
+          and(
+            sql`${engineerHours.bookingCodeId} IN (${sql.join(bookingCodeIds, sql`, `)})`,
+            gte(engineerHours.date, startDate),
+            lte(engineerHours.date, endDate)
+          )
+        )
+        .groupBy(dateExpr, engineerHours.userId, users.name)
+        .orderBy(dateExpr);
+
+      // Transform the results into chart-ready data
+      const transformedData = result.map(item => ({
+        date: item.date ? String(item.date) : "",
+        engineerId: item.engineerId,
+        engineerName: item.engineerName || "Unknown",
+        totalMinutes: Number(item.totalMinutes) || 0,
+        totalHours: Math.round((Number(item.totalMinutes) || 0) / 60 * 10) / 10, // Round to 1 decimal
+      }));
+
+      return {
+        success: true,
+        data: transformedData,
+        timeRange,
+        intervalType,
+        timeRangeBoundaries: {
+          startDate,
+          endDate,
+          intervalType,
+          timeRange,
+        }
+      };
+    } else {
+      // For cumulative data
+      const result = await db
+        .select({
+          date: dateExpr,
+          totalMinutes: sum(engineerHours.minutes),
+        })
+        .from(engineerHours)
+        .where(
+          and(
+            sql`${engineerHours.bookingCodeId} IN (${sql.join(bookingCodeIds, sql`, `)})`,
+            gte(engineerHours.date, startDate),
+            lte(engineerHours.date, endDate)
+          )
+        )
+        .groupBy(dateExpr)
+        .orderBy(dateExpr);
+
+      // Transform the results into chart-ready data
+      const transformedData = result.map(item => ({
+        date: item.date ? String(item.date) : "",
+        totalMinutes: Number(item.totalMinutes) || 0,
+        totalHours: Math.round((Number(item.totalMinutes) || 0) / 60 * 10) / 10, // Round to 1 decimal
+      }));
+
+      return {
+        success: true,
+        data: transformedData,
+        timeRange,
+        intervalType,
+        timeRangeBoundaries: {
+          startDate,
+          endDate,
+          intervalType,
+          timeRange,
+        }
+      };
+    }
+  } catch (error) {
+    console.error("Error fetching booking code group engineer hours summary:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "An unknown error occurred",
     };
   }
 }

@@ -16,6 +16,7 @@ import FormAddBookingCodeGroup from './FormAddBookingCodeGroup';
 import FormEditBookingCodeGroup from './FormEditBookingCodeGroup';
 import FormAddBookingCode from './FormAddBookingCode';
 import FormEditBookingCode from './FormEditBookingCode';
+import { EngineerHoursSummary } from '@/app/components/server/view/engineerHours';
 import dayjs from 'dayjs';
 
 const { Title, Text } = Typography;
@@ -286,8 +287,24 @@ const BookingCodeGroupsList: React.FC = () => {
       },
     ];
 
+    // We've already imported EngineerHoursSummary at the top of the file
+
     return (
       <Card size="small" className="mt-2 mb-4">
+        <div className="mb-4">
+          <Title level={5}>Engineer Hours Summary</Title>
+          <EngineerHoursSummary
+            summaryType="bookingCodeGroup"
+            entityId={record.id}
+            title={`Engineer Hours - ${record.name} Group`}
+            compactMode={true}
+            showControls={false}
+            defaultTimeRange="month"
+            defaultChartType="cumulative"
+            defaultChartStyle="bar"
+          />
+        </div>
+        
         <Title level={5}>Booking Codes</Title>
         {record.codes && record.codes.length > 0 ? (
           <Table

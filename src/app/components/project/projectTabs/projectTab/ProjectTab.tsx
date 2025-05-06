@@ -5,6 +5,7 @@ import { Col, Row, Divider } from 'antd'
 import PrimaryEngineerList from './PrimaryEngineerList'
 import PreviewDrawingsCard from './PreviewDrawingsCard'
 import ProjectServers from './ProjectServers'
+import { EngineerHoursSummary } from '@/app/components/server/view/engineerHours'
 
 const ProjectTab = ({ projectId }: { projectId: number }) => {
   const { data, error, isLoading } = useQuery({
@@ -26,6 +27,19 @@ const ProjectTab = ({ projectId }: { projectId: number }) => {
         </Col>
         <Col span={12}>
           <PreviewDrawingsCard projectId={projectId} />
+        </Col>
+      </Row>
+      
+      <Row className="mb-6">
+        <Col span={24}>
+          <EngineerHoursSummary 
+            summaryType="project" 
+            entityId={projectId} 
+            title={`Engineer Hours Summary - ${data.name}`}
+            compactMode={false}
+            defaultTimeRange="month"
+            defaultChartType="cumulative"
+          />
         </Col>
       </Row>
       
