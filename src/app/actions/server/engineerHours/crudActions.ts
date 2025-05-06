@@ -10,6 +10,7 @@ import { servers } from "@/db/schema/servers";
 import { bookingCodes, projectBookingCodes, bookingCodeGroups } from "@/db/schema/bookingCodes";
 import { desc, eq, count, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
+import { users } from "@/db/schema/users";
 
 // Define error type to replace any
 type ErrorWithMessage = {
@@ -23,6 +24,7 @@ export async function createEngineerHours(data: {
   minutes: number;
   note?: string | null;
   date: Date;
+  userId: string;
 }) {
   try {
     const validatedData = insertEngineerHoursSchema.parse({
@@ -124,28 +126,61 @@ export async function getEngineerHoursById(id: number) {
   }
 }
 
-export async function getEngineerHoursByServerId(serverId: number) {
+export async function getEngineerHoursByServerId(serverId: number, currentUserId?: string) {
   try {
-    const result = await db
-      .select({
-        id: engineerHours.id,
-        serverId: engineerHours.serverId,
-        bookingCodeId: engineerHours.bookingCodeId,
-        minutes: engineerHours.minutes,
-        note: engineerHours.note,
-        date: engineerHours.date,
-        createdAt: engineerHours.createdAt,
-        updatedAt: engineerHours.updatedAt,
-        bookingCode: bookingCodes.code,
-        bookingCodeDescription: bookingCodes.description,
-      })
-      .from(engineerHours)
-      .innerJoin(
-        bookingCodes,
-        eq(engineerHours.bookingCodeId, bookingCodes.id)
-      )
-      .where(eq(engineerHours.serverId, serverId))
-      .orderBy(desc(engineerHours.date));
+    // We'll use different queries based on whether we need to filter by user
+    let result;
+    
+    // Base query
+    const baseQuery = {
+      id: engineerHours.id,
+      serverId: engineerHours.serverId,
+      bookingCodeId: engineerHours.bookingCodeId,
+      userId: engineerHours.userId,
+      minutes: engineerHours.minutes,
+      note: engineerHours.note,
+      date: engineerHours.date,
+      createdAt: engineerHours.createdAt,
+      updatedAt: engineerHours.updatedAt,
+      bookingCode: bookingCodes.code,
+      bookingCodeDescription: bookingCodes.description,
+      userName: users.name,
+      userEmail: users.email,
+    };
+    
+    // If filtering by user
+    if (currentUserId) {
+      result = await db
+        .select(baseQuery)
+        .from(engineerHours)
+        .innerJoin(
+          bookingCodes,
+          eq(engineerHours.bookingCodeId, bookingCodes.id)
+        )
+        .innerJoin(
+          users,
+          eq(engineerHours.userId, users.id)
+        )
+        .where(
+          sql`${engineerHours.serverId} = ${serverId} AND ${engineerHours.userId} = ${currentUserId}`
+        )
+        .orderBy(desc(engineerHours.date));
+    } else {
+      // No user filter
+      result = await db
+        .select(baseQuery)
+        .from(engineerHours)
+        .innerJoin(
+          bookingCodes,
+          eq(engineerHours.bookingCodeId, bookingCodes.id)
+        )
+        .innerJoin(
+          users,
+          eq(engineerHours.userId, users.id)
+        )
+        .where(eq(engineerHours.serverId, serverId))
+        .orderBy(desc(engineerHours.date));
+    }
 
     return { success: true, data: result };
   } catch (error) {

@@ -4,6 +4,7 @@ import { createInsertSchema, createSelectSchema, createUpdateSchema } from "driz
 import { z } from "zod";
 import { servers } from "./servers";
 import { bookingCodes } from "./bookingCodes";
+import { users } from "./users";
 
 export const engineerHours = pgTable(
   "engineer_hours",
@@ -15,6 +16,9 @@ export const engineerHours = pgTable(
     bookingCodeId: integer("booking_code_id")
       .notNull()
       .references(() => bookingCodes.id, { onDelete: "cascade" }),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "set null" }),
     minutes: integer("minutes").notNull(),
     note: text("note"),
     date: timestamp("date", { withTimezone: true }).notNull(),
@@ -29,6 +33,7 @@ export const engineerHours = pgTable(
     // Indexes for efficient lookups
     index("engineer_hours_server_id_idx").on(table.serverId),
     index("engineer_hours_booking_code_id_idx").on(table.bookingCodeId),
+    index("engineer_hours_user_id_idx").on(table.userId),
     index("engineer_hours_date_idx").on(table.date),
   ]
 );

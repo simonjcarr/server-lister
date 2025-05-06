@@ -6,6 +6,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ClockCircleOutlined } from '@ant-design/icons';
 import { getAvailableBookingCodesForServer, createEngineerHours } from '@/app/actions/server/engineerHours/crudActions';
 import dayjs from 'dayjs';
+import { useSession } from "next-auth/react";
 
 const { TextArea } = Input;
 
@@ -14,6 +15,7 @@ interface EngineerHoursDropdownProps {
 }
 
 const EngineerHoursDropdown: React.FC<EngineerHoursDropdownProps> = ({ serverId }) => {
+  const { data: session } = useSession();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedBookingCode, setSelectedBookingCode] = useState<number | null>(null);
   const [form] = Form.useForm();
@@ -56,6 +58,11 @@ const EngineerHoursDropdown: React.FC<EngineerHoursDropdownProps> = ({ serverId 
 
   const handleSubmit = async () => {
     try {
+      if (!session?.user?.id) {
+        messageApi.error('You must be logged in to log hours');
+        return;
+      }
+      
       const values = await form.validateFields();
       await createMutation.mutateAsync({
         serverId,
@@ -63,6 +70,7 @@ const EngineerHoursDropdown: React.FC<EngineerHoursDropdownProps> = ({ serverId 
         minutes: values.minutes,
         note: values.note,
         date: values.date.toDate(),
+        userId: session.user.id
       });
     } catch (error) {
       console.error('Validation failed:', error);

@@ -5,6 +5,7 @@ import { Form, Input, Button, Select, DatePicker, InputNumber, message } from 'a
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getAvailableBookingCodesForServer, createEngineerHours } from '@/app/actions/server/engineerHours/crudActions';
 import dayjs from 'dayjs';
+import { useSession } from "next-auth/react";
 
 const { TextArea } = Input;
 
@@ -14,6 +15,7 @@ interface EngineerHoursFormProps {
 }
 
 const EngineerHoursForm: React.FC<EngineerHoursFormProps> = ({ serverId, onSuccess }) => {
+  const { data: session } = useSession();
   const [form] = Form.useForm();
   const [messageApi, contextHolder] = message.useMessage();
   const queryClient = useQueryClient();
@@ -45,12 +47,18 @@ const EngineerHoursForm: React.FC<EngineerHoursFormProps> = ({ serverId, onSucce
   });
 
   const handleSubmit = async (values: { bookingCodeId: number; minutes: number; note?: string; date: dayjs.Dayjs }) => {
+    if (!session?.user?.id) {
+      messageApi.error('You must be logged in to log hours');
+      return;
+    }
+    
     await createMutation.mutateAsync({
       serverId,
       bookingCodeId: values.bookingCodeId,
       minutes: values.minutes,
       note: values.note,
       date: values.date.toDate(),
+      userId: session.user.id,
     });
   };
 
@@ -59,9 +67,8 @@ const EngineerHoursForm: React.FC<EngineerHoursFormProps> = ({ serverId, onSucce
   const debugMessage = bookingCodesData?.debug;
   
   return (
-    <div className="p-4 bg-gray-800/50 rounded-lg">
+    <div>
       {contextHolder}
-      <h3 className="text-lg font-medium mb-4">Log Engineer Hours</h3>
       
       {/* Show debug information if needed */}
       {hasNoBookingCodes && (
@@ -148,15 +155,16 @@ const EngineerHoursForm: React.FC<EngineerHoursFormProps> = ({ serverId, onSucce
           />
         </Form.Item>
 
-        <Form.Item>
-          <Button 
-            type="primary" 
-            htmlType="submit" 
-            loading={createMutation.isPending}
-            className="w-full"
-          >
-            Log Hours
-          </Button>
+        <Form.Item className="mb-0">
+          <div className="flex justify-end gap-2">
+            <Button 
+              type="primary" 
+              htmlType="submit" 
+              loading={createMutation.isPending}
+            >
+              Submit
+            </Button>
+          </div>
         </Form.Item>
       </Form>
     </div>

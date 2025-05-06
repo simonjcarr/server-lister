@@ -1,13 +1,14 @@
 'use client';
 
-import React from 'react';
-import { Table, Button, Typography, Tooltip, message, Popconfirm } from 'antd';
+import React, { useState } from 'react';
+import { Table, Button, Typography, Tooltip, message, Popconfirm, Switch, Space } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getEngineerHoursByServerId, deleteEngineerHours } from '@/app/actions/server/engineerHours/crudActions';
-import { DeleteOutlined } from '@ant-design/icons';
+import { DeleteOutlined, UserOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
+import { useSession } from "next-auth/react";
 
 dayjs.extend(relativeTime);
 
@@ -18,6 +19,9 @@ interface EngineerHoursRecord {
   id: number;
   serverId: number;
   bookingCodeId: number;
+  userId: string;
+  userName: string | null;
+  userEmail: string | null;
   minutes: number;
   note: string | null;
   date: string | Date;
@@ -32,14 +36,17 @@ interface EngineerHoursListProps {
 }
 
 const EngineerHoursList: React.FC<EngineerHoursListProps> = ({ serverId }) => {
+  const { data: session } = useSession();
+  const [showOnlyMine, setShowOnlyMine] = useState(true);
   const [messageApi, contextHolder] = message.useMessage();
   const queryClient = useQueryClient();
+  const currentUserId = session?.user?.id;
 
   // Query to get engineer hours for this server
   const { data, isLoading } = useQuery({
-    queryKey: ['engineerHours', serverId],
-    queryFn: () => getEngineerHoursByServerId(serverId),
-    enabled: !!serverId,
+    queryKey: ['engineerHours', serverId, showOnlyMine, currentUserId],
+    queryFn: () => getEngineerHoursByServerId(serverId, showOnlyMine ? currentUserId : undefined),
+    enabled: !!serverId && (showOnlyMine ? !!currentUserId : true),
   });
 
   // Mutation for deleting engineer hours
@@ -70,6 +77,19 @@ const EngineerHoursList: React.FC<EngineerHoursListProps> = ({ serverId }) => {
       key: 'date',
       render: (date) => dayjs(date).format('YYYY-MM-DD'),
       sorter: (a, b) => dayjs(a.date).unix() - dayjs(b.date).unix(),
+    },
+    {
+      title: 'Engineer',
+      dataIndex: 'userName',
+      key: 'userName',
+      render: (name, record) => (
+        <Tooltip title={record.userEmail || ''}>
+          <Text>
+            <UserOutlined className="mr-1" />
+            {name || 'Unknown User'}
+          </Text>
+        </Tooltip>
+      ),
     },
     {
       title: 'Booking Code',
@@ -104,20 +124,23 @@ const EngineerHoursList: React.FC<EngineerHoursListProps> = ({ serverId }) => {
       title: 'Actions',
       key: 'actions',
       render: (_, record) => (
-        <Popconfirm
-          title="Delete record"
-          description="Are you sure you want to delete this record?"
-          onConfirm={() => handleDelete(record.id)}
-          okText="Yes"
-          cancelText="No"
-        >
-          <Button 
-            type="text" 
-            danger 
-            icon={<DeleteOutlined />} 
-            loading={deleteMutation.isPending}
-          />
-        </Popconfirm>
+        // Only show delete button for the current user's records
+        record.userId === currentUserId ? (
+          <Popconfirm
+            title="Delete record"
+            description="Are you sure you want to delete this record?"
+            onConfirm={() => handleDelete(record.id)}
+            okText="Yes"
+            cancelText="No"
+          >
+            <Button 
+              type="text" 
+              danger 
+              icon={<DeleteOutlined />} 
+              loading={deleteMutation.isPending}
+            />
+          </Popconfirm>
+        ) : null
       ),
     },
   ];
@@ -125,6 +148,15 @@ const EngineerHoursList: React.FC<EngineerHoursListProps> = ({ serverId }) => {
   return (
     <div>
       {contextHolder}
+      <div className="mb-4 flex justify-end">
+        <Space>
+          <Text>Show only my hours:</Text>
+          <Switch 
+            checked={showOnlyMine} 
+            onChange={setShowOnlyMine} 
+          />
+        </Space>
+      </div>
       <Table
         columns={columns}
         dataSource={data?.success ? data.data : []}
