@@ -54,3 +54,10 @@ export type InsertUser = z.infer<typeof insertUserSchema>;
 export type SelectUser = z.infer<typeof selectUserSchema> & { roles: string[] };
 export type UpdateUser = z.infer<typeof updateUserSchema>;
 ```
+
+# Component size and structure
+- Components should be as small as possible
+- Components should be as simple as possible
+- Components should be as reusable as possible
+- Components should be as self-contained as possible
+- Create new folders for higher level components that contain multiple sub components
