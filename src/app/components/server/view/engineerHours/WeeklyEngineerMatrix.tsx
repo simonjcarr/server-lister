@@ -62,7 +62,11 @@ const WeeklyEngineerMatrix: React.FC<WeeklyEngineerMatrixProps> = ({ serverId })
         className="mb-4"
       >
         <div className="flex justify-center items-center py-4">
-          <Spin size="small" tip={<span className="text-xs">Loading data...</span>} />
+          <Spin spinning={true} size="small">
+            <div className="h-12 flex items-center justify-center text-xs text-gray-500">
+              Loading data...
+            </div>
+          </Spin>
         </div>
       </Card>
     );

@@ -1,9 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { Row, Col, Card, Button, Modal } from 'antd';
+import { Row, Col, Card, Button, Modal, Tabs } from 'antd';
 import EngineerHoursForm from './EngineerHoursForm';
 import EngineerHoursList from './EngineerHoursList';
+import EngineerHoursChart from './EngineerHoursChart';
+import WeeklyEngineerMatrix from './WeeklyEngineerMatrix';
 import { PlusOutlined } from '@ant-design/icons';
 
 interface EngineerHoursTabProps {
@@ -25,6 +27,24 @@ const EngineerHoursTab: React.FC<EngineerHoursTabProps> = ({ serverId }) => {
     setIsModalVisible(false);
   };
 
+  const items = [
+    {
+      key: 'list',
+      label: 'Hours List',
+      children: <EngineerHoursList serverId={serverId} />
+    },
+    {
+      key: 'chart',
+      label: 'Hours Chart',
+      children: <EngineerHoursChart serverId={serverId} />
+    },
+    {
+      key: 'matrix',
+      label: 'Weekly Matrix',
+      children: <WeeklyEngineerMatrix serverId={serverId} />
+    }
+  ];
+
   return (
     <Row gutter={[16, 16]}>
       <Col xs={24}>
@@ -37,8 +57,8 @@ const EngineerHoursTab: React.FC<EngineerHoursTabProps> = ({ serverId }) => {
             Log Hours
           </Button>
         </div>
-        <Card title="Hours History" className="h-full">
-          <EngineerHoursList serverId={serverId} />
+        <Card className="h-full">
+          <Tabs defaultActiveKey="list" items={items} />
         </Card>
       </Col>
 
