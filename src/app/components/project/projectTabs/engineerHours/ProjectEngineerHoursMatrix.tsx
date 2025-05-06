@@ -132,10 +132,13 @@ const ProjectEngineerHoursMatrix: React.FC<ProjectEngineerHoursMatrixProps> = ({
           <div>{period.label}</div>
         </div>
       ),
-      dataIndex: ['periodHours', period.key],
       key: `period-${period.key}`,
       align: 'center' as const,
-      render: (hours: number, record: any) => {
+      render: (text: string, record: any) => {
+        // Don't use dataIndex, instead calculate the value here to ensure proper engineer filtering
+        // This protects against any data cross-contamination
+        const hours = record.periodHours?.[period.key] || 0;
+        
         if (hours <= 0) return <Text className={record.engineer.id === 'total' ? 'font-bold' : ''}>-</Text>;
         return <Text className={record.engineer.id === 'total' ? 'font-bold' : ''}>{hours.toFixed(1)}</Text>;
       },
@@ -144,14 +147,19 @@ const ProjectEngineerHoursMatrix: React.FC<ProjectEngineerHoursMatrixProps> = ({
     // Add a total column
     const totalColumn = {
       title: <div className="text-xs">Total</div>,
-      dataIndex: 'totalHours',
       key: 'total',
       align: 'center' as const,
       fixed: 'right' as const,
       width: 100,
-      render: (hours: number, record: any) => {
-        if (hours <= 0) return <Text className={record.engineer.id === 'total' ? 'font-bold' : ''}>-</Text>;
-        return <Text className={record.engineer.id === 'total' ? 'font-bold' : ''}>{hours.toFixed(1)}</Text>;
+      render: (text: string, record: any) => {
+        // Calculate total from the record to ensure it's accurate
+        const totalHours = Object.values(record.periodHours || {}).reduce(
+          (sum: number, hours: any) => sum + (typeof hours === 'number' ? hours : 0), 
+          0
+        );
+        
+        if (totalHours <= 0) return <Text className={record.engineer.id === 'total' ? 'font-bold' : ''}>-</Text>;
+        return <Text className={record.engineer.id === 'total' ? 'font-bold' : ''}>{totalHours.toFixed(1)}</Text>;
       },
     };
     
@@ -166,24 +174,59 @@ const ProjectEngineerHoursMatrix: React.FC<ProjectEngineerHoursMatrixProps> = ({
     
     const matrixData = data.data;
     
+    // Completely rebuild the data to avoid any reference issues
     if (isEngineerMatrixData(matrixData)) {
-      // Return the matrix rows directly for engineer breakdown
-      return matrixData.matrix.map(row => ({
-        key: row.engineer.id,
-        engineer: row.engineer,
-        periodHours: row.periodHours,
-        totalHours: row.totalHours,
-      }));
+      // This is a safety precaution - manual deep copy with validation
+      return matrixData.matrix
+        .filter(row => row.engineer && typeof row.engineer.id === 'string') // Ensure valid rows
+        .map(row => {
+          // Always create new objects
+          const newRow = {
+            key: row.engineer.id,
+            engineer: { 
+              id: row.engineer.id, 
+              name: row.engineer.name || 'Unknown'
+            },
+            periodHours: {},
+            totalHours: 0 // We'll recalculate this
+          };
+          
+          // Process each period individually
+          matrixData.periods.forEach(period => {
+            const periodValue = row.periodHours[period.key];
+            // Only assign non-zero values that are actually numbers
+            if (typeof periodValue === 'number' && periodValue > 0) {
+              newRow.periodHours[period.key] = periodValue;
+              newRow.totalHours += periodValue;
+            } else {
+              newRow.periodHours[period.key] = 0;
+            }
+          });
+          
+          return newRow;
+        });
     } else {
-      // For totals only, create a single row
-      return [
-        {
-          key: 'total',
-          engineer: { id: 'total', name: 'Total Hours' },
-          periodHours: matrixData.periodTotals,
-          totalHours: matrixData.grandTotal,
-        },
-      ];
+      // For totals only, create a single row with validated data
+      const newTotalsRow = {
+        key: 'total',
+        engineer: { id: 'total', name: 'Total Hours' },
+        periodHours: {},
+        totalHours: 0
+      };
+      
+      // Process each period individually for the totals row too
+      matrixData.periods.forEach(period => {
+        const periodValue = matrixData.periodTotals[period.key];
+        // Only assign non-zero values that are actually numbers
+        if (typeof periodValue === 'number' && periodValue > 0) {
+          newTotalsRow.periodHours[period.key] = periodValue;
+          newTotalsRow.totalHours += periodValue;
+        } else {
+          newTotalsRow.periodHours[period.key] = 0;
+        }
+      });
+      
+      return [newTotalsRow];
     }
   };
   

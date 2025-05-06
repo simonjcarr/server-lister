@@ -7,6 +7,11 @@ import { bookingCodes } from "@/db/schema/bookingCodes";
 import { servers } from "@/db/schema/servers";
 import { and, eq, gte, lte, sql, sum } from "drizzle-orm";
 import dayjs from "dayjs";
+import isoWeek from "dayjs/plugin/isoWeek";
+
+// Extend dayjs with ISO week plugin
+// isoWeek plugin already includes isoWeekYear functionality
+dayjs.extend(isoWeek);
 
 type TimeRange = "week" | "month" | "6months" | "year" | "all";
 
@@ -216,8 +221,8 @@ export async function getProjectEngineerHoursMatrix(
     // Determine start date and format based on timeGrouping
     switch (timeGrouping) {
       case 'week':
-        startDate = now.subtract(periodsToShow - 1, 'week').startOf('week');
-        dateFormat = 'YYYY-[W]ww'; // Format: 2023-W01
+        startDate = now.subtract(periodsToShow - 1, 'week').startOf('isoWeek');
+        dateFormat = 'YYYY-[W]WW'; // Format: 2023-W01 (using ISO week)
         intervalUnit = 'week';
         break;
       case 'month':
@@ -273,10 +278,12 @@ export async function getProjectEngineerHoursMatrix(
       let periodEndDate: string;
       
       if (timeGrouping === 'week') {
-        periodKey = current.format(dateFormat);
-        periodLabel = `${current.format('MMM DD')} - ${current.endOf('week').format('MMM DD')}`;
+        // Ensure we use consistent date format everywhere
+        const weekNum = current.isoWeek().toString().padStart(2, '0');
+        periodKey = `${current.format('YYYY')}-W${weekNum}`;
+        periodLabel = `${current.format('MMM DD')} - ${current.endOf('isoWeek').format('MMM DD')}`;
         periodStartDate = current.format('YYYY-MM-DD');
-        periodEndDate = current.endOf('week').format('YYYY-MM-DD');
+        periodEndDate = current.endOf('isoWeek').format('YYYY-MM-DD');
         current = current.add(1, 'week');
       } else if (timeGrouping === 'month') {
         periodKey = current.format(dateFormat);
@@ -301,24 +308,18 @@ export async function getProjectEngineerHoursMatrix(
       });
     }
 
-    // SQL expression for period grouping
-    let periodExpr;
-    if (timeGrouping === 'week') {
-      periodExpr = sql`TO_CHAR(DATE_TRUNC('week', ${engineerHours.date}), 'YYYY-') || 'W' || TO_CHAR(DATE_TRUNC('week', ${engineerHours.date}), 'IW')`;
-    } else if (timeGrouping === 'month') {
-      periodExpr = sql`TO_CHAR(${engineerHours.date}, 'YYYY-MM')`;
-    } else {
-      periodExpr = sql`TO_CHAR(${engineerHours.date}, 'YYYY')`;
-    }
+    // We need to get the raw hours data first instead of aggregating in SQL
+    // This is the key fix - we'll fetch the raw data and group it ourselves
     
-    // Fetch engineer hours data grouped by the selected period and engineer (if includeBreakdown is true)
-    const query = db
+    const rawHoursQuery = db
       .select({
-        period: periodExpr,
-        ...(includeBreakdown ? { engineerId: engineerHours.userId, engineerName: users.name } : {}),
-        totalMinutes: sum(engineerHours.minutes),
+        date: engineerHours.date,
+        engineerId: engineerHours.userId,
+        engineerName: users.name,
+        minutes: engineerHours.minutes,
       })
       .from(engineerHours)
+      .innerJoin(users, eq(engineerHours.userId, users.id))
       .where(
         and(
           sql`${engineerHours.serverId} IN (${sql.join(serverIds, sql`, `)})`,
@@ -326,70 +327,122 @@ export async function getProjectEngineerHoursMatrix(
           lte(engineerHours.date, endDate.toDate())
         )
       );
-
-    // Add the inner join to users table if we need engineer names
-    if (includeBreakdown) {
-      query.innerJoin(users, eq(engineerHours.userId, users.id));
-    }
-
-    // Complete the query with group by and order by
-    const hoursData = await query
-      .groupBy(cb => {
-        const groups = [periodExpr];
-        if (includeBreakdown) {
-          groups.push(engineerHours.userId, users.name);
-        }
-        return groups;
-      })
-      .orderBy(periodExpr);
-
-    // Process the results into a matrix format
-    if (includeBreakdown) {
-      // Get the unique list of engineers
-      const engineersMap = new Map<string, { id: string; name: string }>();
-      hoursData.forEach(record => {
-        if ('engineerId' in record && record.engineerId && !engineersMap.has(record.engineerId)) {
-          engineersMap.set(record.engineerId, {
-            id: record.engineerId,
-            name: record.engineerName || 'Unknown'
+      
+    const rawHoursData = await rawHoursQuery;
+    
+    // Group the data ourselves, so we have complete control
+    // First, create a map of engineers
+    const engineersMap = new Map<string, { id: string; name: string }>();
+    rawHoursData.forEach(record => {
+      if (record.engineerId && !engineersMap.has(record.engineerId)) {
+        engineersMap.set(record.engineerId, {
+          id: record.engineerId,
+          name: record.engineerName || 'Unknown'
+        });
+      }
+    });
+    
+    // Create our aggregated data map: engineerId -> period -> minutes
+    const aggregatedData = new Map<string, Map<string, number>>();
+    
+    // Initialize all engineers with all periods set to 0
+    engineersMap.forEach((engineer, engineerId) => {
+      const engineerData = new Map<string, number>();
+      periods.forEach(period => {
+        engineerData.set(period.key, 0);
+      });
+      aggregatedData.set(engineerId, engineerData);
+    });
+    
+    // Now aggregate the data ourselves, ensuring correct period assignment
+    rawHoursData.forEach(record => {
+      if (!record.engineerId || !record.date) return;
+      
+      // For each record, determine which period it belongs to
+      const recordDate = dayjs(record.date);
+      let periodKey: string | null = null;
+      
+      if (timeGrouping === 'week') {
+        const weekNum = recordDate.isoWeek().toString().padStart(2, '0');
+        periodKey = `${recordDate.format('YYYY')}-W${weekNum}`;
+      } else if (timeGrouping === 'month') {
+        periodKey = recordDate.format('YYYY-MM');
+      } else {
+        periodKey = recordDate.format('YYYY');
+      }
+      
+      // Get the engineer's data map
+      const engineerDataMap = aggregatedData.get(record.engineerId);
+      if (engineerDataMap && periodKey && engineerDataMap.has(periodKey)) {
+        // Add the minutes to the correct period
+        const currentMinutes = engineerDataMap.get(periodKey) || 0;
+        engineerDataMap.set(periodKey, currentMinutes + record.minutes);
+      }
+    });
+    
+    // Convert the aggregated data for our response format
+    const hoursData = [];
+    aggregatedData.forEach((periodMap, engineerId) => {
+      periodMap.forEach((minutes, periodKey) => {
+        if (minutes > 0) { // Only include non-zero entries
+          const engineer = engineersMap.get(engineerId);
+          hoursData.push({
+            period: periodKey,
+            engineerId,
+            engineerName: engineer?.name || 'Unknown',
+            totalMinutes: minutes
           });
         }
       });
+    });
+      
+    // Use our newly aggregated data to build the matrix
+    if (includeBreakdown) {
+      // Convert our maps to arrays for the response
       const engineers = Array.from(engineersMap.values());
       
-      // Create the matrix
+      // Define the matrix row type
       type MatrixRow = {
         engineer: { id: string; name: string };
         periodHours: { [key: string]: number };
         totalHours: number;
       };
       
-      const matrix: MatrixRow[] = engineers.map(engineer => {
+      // Create the matrix using our pre-aggregated data
+      const matrix: MatrixRow[] = [];
+      
+      // Add a row for each engineer
+      engineersMap.forEach((engineer, engineerId) => {
+        const periodDataMap = aggregatedData.get(engineerId);
+        if (!periodDataMap) return;
+        
+        // Create a new row for this engineer
         const row: MatrixRow = {
-          engineer,
+          engineer: { 
+            id: engineer.id,
+            name: engineer.name 
+          },
           periodHours: {},
           totalHours: 0
         };
         
-        // Initialize all periods with zero
+        // Convert the period data to hours and calculate totals
+        let totalHours = 0;
+        
         periods.forEach(period => {
-          row.periodHours[period.key] = 0;
+          const minutes = periodDataMap.get(period.key) || 0;
+          const hours = Math.round(minutes / 60 * 10) / 10; // Round to 1 decimal
+          
+          row.periodHours[period.key] = hours;
+          totalHours += hours;
         });
         
-        // Fill in actual data
-        hoursData.forEach(record => {
-          if ('engineerId' in record && record.engineerId === engineer.id && record.period) {
-            const minutes = Number(record.totalMinutes) || 0;
-            const hours = Math.round(minutes / 60 * 10) / 10; // Round to 1 decimal
-            
-            if (record.period in row.periodHours) {
-              row.periodHours[record.period] = hours;
-              row.totalHours += hours;
-            }
-          }
-        });
+        row.totalHours = totalHours;
         
-        return row;
+        // Only add rows for engineers who have logged some time
+        if (totalHours > 0) {
+          matrix.push(row);
+        }
       });
       
       // Add a totals row
@@ -399,17 +452,15 @@ export async function getProjectEngineerHoursMatrix(
         totalHours: 0
       };
       
-      // Initialize all periods with zero in totals row
+      // Calculate period totals
       periods.forEach(period => {
-        totalsRow.periodHours[period.key] = 0;
-      });
-      
-      // Sum up columns for totals
-      matrix.forEach(row => {
-        Object.keys(row.periodHours).forEach(periodKey => {
-          totalsRow.periodHours[periodKey] += row.periodHours[periodKey];
+        let totalForPeriod = 0;
+        matrix.forEach(row => {
+          totalForPeriod += row.periodHours[period.key] || 0;
         });
-        totalsRow.totalHours += row.totalHours;
+        
+        totalsRow.periodHours[period.key] = totalForPeriod;
+        totalsRow.totalHours += totalForPeriod;
       });
       
       // Add the totals row to the matrix
@@ -425,12 +476,8 @@ export async function getProjectEngineerHoursMatrix(
         }
       };
     } else {
-      // Simpler format for totals only
-      type PeriodTotals = {
-        [periodKey: string]: number;
-      };
-      
-      const periodTotals: PeriodTotals = {};
+      // Simpler format for totals only - build directly from aggregated data
+      const periodTotals: { [key: string]: number } = {};
       let grandTotal = 0;
       
       // Initialize all periods with zero
@@ -438,17 +485,13 @@ export async function getProjectEngineerHoursMatrix(
         periodTotals[period.key] = 0;
       });
       
-      // Fill in actual data
-      hoursData.forEach(record => {
-        if (record.period) {
-          const minutes = Number(record.totalMinutes) || 0;
+      // Sum up all engineers for each period
+      aggregatedData.forEach((periodMap) => {
+        periodMap.forEach((minutes, periodKey) => {
           const hours = Math.round(minutes / 60 * 10) / 10; // Round to 1 decimal
-          
-          if (record.period in periodTotals) {
-            periodTotals[record.period] = hours;
-            grandTotal += hours;
-          }
-        }
+          periodTotals[periodKey] = (periodTotals[periodKey] || 0) + hours;
+          grandTotal += hours;
+        });
       });
       
       return {
