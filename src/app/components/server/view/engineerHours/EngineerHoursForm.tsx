@@ -1,11 +1,12 @@
 'use client';
 
-import React from 'react';
-import { Form, Input, Button, Select, DatePicker, InputNumber, message } from 'antd';
+import React, { useState } from 'react';
+import { Form, Input, Button, Select, DatePicker, message, Tooltip } from 'antd';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getAvailableBookingCodesForServer, createEngineerHours } from '@/app/actions/server/engineerHours/crudActions';
 import dayjs from 'dayjs';
 import { useSession } from "next-auth/react";
+import { parseTimeInput, formatTimeFromMinutes } from '@/lib/utils/timeParser';
 
 const { TextArea } = Input;
 
@@ -19,6 +20,8 @@ const EngineerHoursForm: React.FC<EngineerHoursFormProps> = ({ serverId, onSucce
   const [form] = Form.useForm();
   const [messageApi, contextHolder] = message.useMessage();
   const queryClient = useQueryClient();
+  const [timeInputValue, setTimeInputValue] = useState<string>('30m');
+  const [parsedMinutes, setParsedMinutes] = useState<number | null>(30);
   
   // Query to get available booking codes for this server
   const { data: bookingCodesData, isLoading: isLoadingBookingCodes } = useQuery({
@@ -35,6 +38,8 @@ const EngineerHoursForm: React.FC<EngineerHoursFormProps> = ({ serverId, onSucce
         messageApi.success('Hours logged successfully');
         queryClient.invalidateQueries({ queryKey: ['engineerHours', serverId] });
         form.resetFields();
+        setTimeInputValue('30m');
+        setParsedMinutes(30);
         if (onSuccess) onSuccess();
       } else {
         messageApi.error(data.error || 'Failed to log hours');
@@ -46,16 +51,33 @@ const EngineerHoursForm: React.FC<EngineerHoursFormProps> = ({ serverId, onSucce
     },
   });
 
+  const handleTimeInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setTimeInputValue(value);
+    
+    const minutes = parseTimeInput(value);
+    setParsedMinutes(minutes);
+    
+    // Update the hidden form field with the parsed minutes
+    form.setFieldValue('minutes', minutes);
+  };
+
   const handleSubmit = async (values: { bookingCodeId: number; minutes: number; note?: string; date: dayjs.Dayjs }) => {
     if (!session?.user?.id) {
       messageApi.error('You must be logged in to log hours');
       return;
     }
     
+    // Validate that we have valid minutes
+    if (parsedMinutes === null || parsedMinutes <= 0) {
+      messageApi.error('Please enter a valid time format');
+      return;
+    }
+    
     await createMutation.mutateAsync({
       serverId,
       bookingCodeId: values.bookingCodeId,
-      minutes: values.minutes,
+      minutes: parsedMinutes, // Use the parsed minutes from our custom input
       note: values.note,
       date: values.date.toDate(),
       userId: session.user.id,
@@ -100,7 +122,7 @@ const EngineerHoursForm: React.FC<EngineerHoursFormProps> = ({ serverId, onSucce
         onFinish={handleSubmit}
         initialValues={{
           date: dayjs(),
-          minutes: 30,
+          minutes: 30, // This is a hidden field that will be updated based on the time input
         }}
       >
         <Form.Item
@@ -124,16 +146,30 @@ const EngineerHoursForm: React.FC<EngineerHoursFormProps> = ({ serverId, onSucce
           />
         </Form.Item>
 
+        {/* Hidden field to store the parsed minutes value */}
         <Form.Item
           name="minutes"
-          label="Minutes"
-          rules={[{ required: true, message: 'Please enter minutes' }]}
+          hidden
         >
-          <InputNumber
-            min={1}
-            max={1440}
+          <Input type="hidden" />
+        </Form.Item>
+
+        {/* Custom time input field */}
+        <Form.Item
+          label={
+            <Tooltip title="Supports formats like: 30m, 1h 30m, 1:30, 1.5h">
+              <span>Time <span className="text-gray-400">(hover for formats)</span></span>
+            </Tooltip>
+          }
+          required
+          validateStatus={parsedMinutes === null ? 'error' : 'success'}
+          help={parsedMinutes === null ? 'Please enter a valid time format (e.g., 30m, 1h 30m, 1:30)' : parsedMinutes > 0 ? `${formatTimeFromMinutes(parsedMinutes)} (${parsedMinutes} minutes)` : 'Time must be greater than 0'}
+        >
+          <Input
+            value={timeInputValue}
+            onChange={handleTimeInputChange}
+            placeholder="e.g., 30m, 1h 30m, 1:30"
             style={{ width: '100%' }}
-            placeholder="Enter minutes worked"
           />
         </Form.Item>
 
@@ -161,6 +197,7 @@ const EngineerHoursForm: React.FC<EngineerHoursFormProps> = ({ serverId, onSucce
               type="primary" 
               htmlType="submit" 
               loading={createMutation.isPending}
+              disabled={parsedMinutes === null || parsedMinutes <= 0}
             >
               Submit
             </Button>
