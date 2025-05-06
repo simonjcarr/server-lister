@@ -7,6 +7,11 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { getComments } from '@/app/actions/serverTasks/subTaskComments'
 import SubTaskCommentsForm from './SubTaskCommentsForm'
 import DistanceToNow from '@/app/components/utils/DistanceToNow'
+import ReactMarkdown from 'react-markdown'
+import rehypeHighlight from 'rehype-highlight'
+import rehypeRaw from 'rehype-raw'
+import remarkGfm from 'remark-gfm'
+import 'highlight.js/styles/github.css'
 
 // Define a type for the comments returned by the server
 type CommentWithUser = {
@@ -134,8 +139,13 @@ const SubTaskComments = ({ subTaskId }: { subTaskId: number }) => {
                         <DistanceToNow date={comment.createdAt} />
                       </Text>
                     </div>
-                    <div className="mt-1 whitespace-pre-wrap">
-                      {comment.comment}
+                    <div className="mt-1 markdown-content">
+                      <ReactMarkdown
+                        rehypePlugins={[rehypeRaw, [rehypeHighlight, { detect: true }]]}
+                        remarkPlugins={[remarkGfm]}
+                      >
+                        {comment.comment}
+                      </ReactMarkdown>
                     </div>
                   </div>
                 </div>
