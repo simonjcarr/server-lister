@@ -38,12 +38,6 @@ function AdminUsersTable() {
     queryFn: async () => {
       const result = await getAllUsers();
       
-      // Check if result is an error object (has success property and it's false)
-      if (result && typeof result === 'object' && 'success' in result && result.success === false) {
-        throw new Error(result.error || 'Failed to fetch users');
-      }
-      
-      // If we got here, result should be an array of users
       return Array.isArray(result) 
         ? result.map(user => ({ ...user, key: user.id })) as UserTableRecord[]
         : [];

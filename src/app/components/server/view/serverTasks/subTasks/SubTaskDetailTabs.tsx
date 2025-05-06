@@ -2,6 +2,7 @@ import React from 'react'
 import { Tabs } from 'antd'
 import DisplaySubTaskDetail from './DisplaySubTaskDetail'
 import type { SubTask } from '@/types'
+import SubTaskComments from './comments/SubTaskComments'
 
 const SubTaskDetailTabs = ({ subTask }: { subTask: SubTask }) => {
   const items = [
@@ -13,7 +14,7 @@ const SubTaskDetailTabs = ({ subTask }: { subTask: SubTask }) => {
     {
       key: 'comments',
       label: 'Comments',
-      children: null,
+      children: <SubTaskComments />,
     },
   ]
   return <Tabs items={items} />
