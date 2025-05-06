@@ -8,9 +8,14 @@ import {
 } from "@/db/schema/engineerHours";
 import { servers } from "@/db/schema/servers";
 import { bookingCodes, projectBookingCodes, bookingCodeGroups } from "@/db/schema/bookingCodes";
-import { desc, eq, count, sql } from "drizzle-orm";
+import { desc, eq, count, sql, and, gte, lte } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { users } from "@/db/schema/users";
+import dayjs from "dayjs";
+import isoWeek from "dayjs/plugin/isoWeek";
+
+// Extend dayjs with isoWeek plugin
+dayjs.extend(isoWeek);
 
 // Define error type to replace any
 type ErrorWithMessage = {
@@ -191,6 +196,143 @@ export async function getEngineerHoursByServerId(serverId: number, currentUserId
 }
 
 // Get available booking codes for a server
+// Get weekly engineer hours matrix
+export async function getWeeklyEngineerHoursMatrix(serverId: number, weeksToShow: number = 4) {
+  try {
+    // Calculate the date range - ensure we get full weeks
+    const now = dayjs();
+    const endDate = now.endOf('day');
+    // Get start of current week, then go back (weeksToShow-1) weeks
+    const currentWeekStart = now.startOf('isoWeek');
+    const startDate = currentWeekStart.clone().subtract(weeksToShow - 1, 'week');
+    
+    // Get all engineer hours within this date range
+    const hoursData = await db
+      .select({
+        id: engineerHours.id,
+        userId: engineerHours.userId,
+        userName: users.name,
+        minutes: engineerHours.minutes,
+        date: engineerHours.date,
+      })
+      .from(engineerHours)
+      .innerJoin(
+        users,
+        eq(engineerHours.userId, users.id)
+      )
+      .where(
+        and(
+          eq(engineerHours.serverId, serverId),
+          gte(engineerHours.date, startDate.toDate()),
+          lte(engineerHours.date, endDate.toDate())
+        )
+      );
+    
+    if (hoursData.length === 0) {
+      return { 
+        success: true, 
+        data: {
+          weeks: [],
+          engineers: [],
+          matrix: []
+        } 
+      };
+    }
+
+    // Generate the list of week ranges
+    const weeks: {
+      start: string;
+      end: string;
+      weekNumber: number;
+      year: number;
+      label: string;
+    }[] = [];
+    
+    // Generate weeks using the current week as reference
+    for (let i = 0; i < weeksToShow; i++) {
+      // Calculate week by starting with current week and going back i weeks
+      const weekStart = now.clone().startOf('isoWeek').subtract(i, 'week');
+      const weekEnd = weekStart.clone().endOf('isoWeek');
+      
+      
+      weeks.push({
+        start: weekStart.format('YYYY-MM-DD'),
+        end: weekEnd.format('YYYY-MM-DD'),
+        weekNumber: weekStart.isoWeek(),
+        year: weekStart.year(),
+        label: `W${weekStart.isoWeek()} (${weekStart.format('MMM DD')} - ${weekEnd.format('MMM DD')})`
+      });
+    }
+    // Reverse to show oldest week first
+    weeks.reverse();
+
+    // Extract unique engineers
+    const engineersMap = new Map();
+    hoursData.forEach(record => {
+      if (!engineersMap.has(record.userId)) {
+        engineersMap.set(record.userId, {
+          id: record.userId,
+          name: record.userName || 'Unknown'
+        });
+      }
+    });
+    const engineers = Array.from(engineersMap.values());
+
+    // Create the matrix data
+    const matrix = engineers.map(engineer => {
+      const weeklyHours = weeks.map(week => {
+        // Find all entries for this engineer in this week
+        const weekStart = dayjs(week.start);
+        const weekEnd = dayjs(week.end);
+        
+        const weekEntries = hoursData.filter(record => {
+          const recordDate = dayjs(record.date);
+          // Check if the record date is within the week
+          // We need to ignore time part for proper comparison
+          const normalizedRecordDate = recordDate.format('YYYY-MM-DD');
+          const normalizedWeekStart = weekStart.format('YYYY-MM-DD');
+          const normalizedWeekEnd = weekEnd.format('YYYY-MM-DD');
+          
+          return (
+            record.userId === engineer.id &&
+            normalizedRecordDate >= normalizedWeekStart && 
+            normalizedRecordDate <= normalizedWeekEnd
+          );
+        });
+
+        // Sum up the minutes
+        const totalMinutes = weekEntries.reduce((sum, record) => sum + record.minutes, 0);
+        
+        return {
+          minutes: totalMinutes,
+          hours: Math.round(totalMinutes / 60 * 10) / 10, // Round to 1 decimal place
+        };
+      });
+
+      return {
+        engineer,
+        weeklyHours
+      };
+    });
+
+    return {
+      success: true,
+      data: {
+        weeks,
+        engineers,
+        matrix
+      }
+    };
+  } catch (error) {
+    const typedError = error as ErrorWithMessage;
+    console.error("Error generating weekly engineer hours matrix:", typedError);
+    return {
+      success: false,
+      error: typedError.message || "Failed to generate weekly engineer hours matrix"
+    };
+  }
+}
+
 export async function getAvailableBookingCodesForServer(serverId: number) {
   try {
     console.log(`Getting booking codes for server ID: ${serverId}`);

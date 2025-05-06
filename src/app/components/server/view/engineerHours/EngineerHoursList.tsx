@@ -9,6 +9,7 @@ import { DeleteOutlined, UserOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import { useSession } from "next-auth/react";
+import WeeklyEngineerMatrix from './WeeklyEngineerMatrix';
 
 dayjs.extend(relativeTime);
 
@@ -72,14 +73,14 @@ const EngineerHoursList: React.FC<EngineerHoursListProps> = ({ serverId }) => {
 
   const columns: ColumnsType<EngineerHoursRecord> = [
     {
-      title: 'Date',
+      title: <div className="text-xs">Date</div>,
       dataIndex: 'date',
       key: 'date',
       render: (date) => dayjs(date).format('YYYY-MM-DD'),
       sorter: (a, b) => dayjs(a.date).unix() - dayjs(b.date).unix(),
     },
     {
-      title: 'Engineer',
+      title: <div className="text-xs">Engineer</div>,
       dataIndex: 'userName',
       key: 'userName',
       render: (name, record) => (
@@ -92,7 +93,7 @@ const EngineerHoursList: React.FC<EngineerHoursListProps> = ({ serverId }) => {
       ),
     },
     {
-      title: 'Booking Code',
+      title: <div className="text-xs">Booking Code</div>,
       dataIndex: 'bookingCode',
       key: 'bookingCode',
       render: (code, record) => (
@@ -102,13 +103,13 @@ const EngineerHoursList: React.FC<EngineerHoursListProps> = ({ serverId }) => {
       ),
     },
     {
-      title: 'Minutes',
+      title: <div className="text-xs">Minutes</div>,
       dataIndex: 'minutes',
       key: 'minutes',
       sorter: (a, b) => a.minutes - b.minutes,
     },
     {
-      title: 'Note',
+      title: <div className="text-xs">Note</div>,
       dataIndex: 'note',
       key: 'note',
       ellipsis: true,
@@ -121,7 +122,7 @@ const EngineerHoursList: React.FC<EngineerHoursListProps> = ({ serverId }) => {
       ),
     },
     {
-      title: 'Actions',
+      title: <div className="text-xs">Actions</div>,
       key: 'actions',
       render: (_, record) => (
         // Only show delete button for the current user's records
@@ -148,12 +149,18 @@ const EngineerHoursList: React.FC<EngineerHoursListProps> = ({ serverId }) => {
   return (
     <div>
       {contextHolder}
-      <div className="mb-4 flex justify-end">
-        <Space>
-          <Text>Show only my hours:</Text>
+      
+      {/* Weekly Engineer Hours Matrix */}
+      <WeeklyEngineerMatrix serverId={serverId} />
+      
+      {/* Detailed Hours Logs */}
+      <div className="mb-2 flex justify-end">
+        <Space size="small">
+          <Text className="text-sm">Show only my hours:</Text>
           <Switch 
             checked={showOnlyMine} 
             onChange={setShowOnlyMine} 
+            size="small"
           />
         </Space>
       </div>
@@ -165,6 +172,7 @@ const EngineerHoursList: React.FC<EngineerHoursListProps> = ({ serverId }) => {
         pagination={{ pageSize: 10 }}
         scroll={{ x: true }}
         locale={{ emptyText: 'No hours logged yet' }}
+        size="small"
       />
     </div>
   );
