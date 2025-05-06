@@ -1,11 +1,12 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { useQuery } from "@tanstack/react-query"
 import { getProjectById } from "@/app/actions/projects/crudActions"
-import { Col, Row, Divider } from 'antd'
+import { Col, Row, Divider, Tabs, Card } from 'antd'
 import PrimaryEngineerList from './PrimaryEngineerList'
 import PreviewDrawingsCard from './PreviewDrawingsCard'
 import ProjectServers from './ProjectServers'
 import { EngineerHoursSummary } from '@/app/components/server/view/engineerHours'
+import ProjectEngineerHoursMatrix from '../engineerHours/ProjectEngineerHoursMatrix'
 
 const ProjectTab = ({ projectId }: { projectId: number }) => {
   const { data, error, isLoading } = useQuery({
@@ -14,6 +15,7 @@ const ProjectTab = ({ projectId }: { projectId: number }) => {
     enabled: !!projectId,
     staleTime: 60 * 1000
   })
+  
   return (
     <>
       {isLoading && <p>Loading...</p>}
@@ -32,14 +34,36 @@ const ProjectTab = ({ projectId }: { projectId: number }) => {
       
       <Row className="mb-6">
         <Col span={24}>
-          <EngineerHoursSummary 
-            summaryType="project" 
-            entityId={projectId} 
-            title={`Engineer Hours Summary - ${data.name}`}
-            compactMode={false}
-            defaultTimeRange="month"
-            defaultChartType="cumulative"
-          />
+          <Card title="Engineer Hours" className="mb-4">
+            <Tabs
+              defaultActiveKey="chart"
+              items={[
+                {
+                  key: 'chart',
+                  label: 'Chart View',
+                  children: (
+                    <EngineerHoursSummary 
+                      summaryType="project" 
+                      entityId={projectId} 
+                      title={`Hours Summary - ${data.name}`}
+                      compactMode={false}
+                      defaultTimeRange="month"
+                      defaultChartType="cumulative"
+                    />
+                  ),
+                },
+                {
+                  key: 'matrix',
+                  label: 'Matrix View',
+                  children: (
+                    <ProjectEngineerHoursMatrix 
+                      projectId={projectId} 
+                    />
+                  ),
+                },
+              ]}
+            />
+          </Card>
         </Col>
       </Row>
       
