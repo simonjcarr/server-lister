@@ -14,7 +14,7 @@ const SubTaskDetailTabs = ({ subTask }: { subTask: SubTask }) => {
     {
       key: 'comments',
       label: 'Comments',
-      children: <SubTaskComments />,
+      children: <SubTaskComments subTaskId={subTask.id} />,
     },
   ]
   return <Tabs items={items} />

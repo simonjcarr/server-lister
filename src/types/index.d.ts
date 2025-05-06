@@ -30,4 +30,19 @@ export type SubTask = {
   isComplete: boolean;
 } & User;
 
+export type SubTaskComment = {
+  id: number;
+  subTaskId: number;
+  userId: string;
+  comment: string;
+  mentions: string[];
+  createdAt: Date;
+  updatedAt: Date;
+  user?: {
+    id: string;
+    name: string | null;
+    email: string | null;
+    image: string | null;
+  }
+};
 

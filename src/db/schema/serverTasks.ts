@@ -1,4 +1,5 @@
 import { pgTable, text, serial, boolean, timestamp, integer, jsonb } from "drizzle-orm/pg-core";
+import { relations } from "drizzle-orm";
 import { createInsertSchema, createSelectSchema, createUpdateSchema } from "drizzle-zod";
 import { z } from "zod";
 import { servers } from "./servers";
@@ -48,6 +49,44 @@ export const subTaskComments = pgTable(
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
   }
 );
+
+// Define relations for tasks
+export const tasksRelations = relations(tasks, ({ many, one }) => ({
+  server: one(servers, {
+    fields: [tasks.serverId],
+    references: [servers.id],
+  }),
+  user: one(users, {
+    fields: [tasks.userId],
+    references: [users.id],
+  }),
+  subTasks: many(subTasks),
+}));
+
+// Define relations for subTasks
+export const subTasksRelations = relations(subTasks, ({ one, many }) => ({
+  task: one(tasks, {
+    fields: [subTasks.taskId],
+    references: [tasks.id],
+  }),
+  assignedUser: one(users, {
+    fields: [subTasks.assignedTo],
+    references: [users.id],
+  }),
+  comments: many(subTaskComments),
+}));
+
+// Define relations for subTaskComments
+export const subTaskCommentsRelations = relations(subTaskComments, ({ one }) => ({
+  subTask: one(subTasks, {
+    fields: [subTaskComments.subTaskId],
+    references: [subTasks.id],
+  }),
+  user: one(users, {
+    fields: [subTaskComments.userId],
+    references: [users.id],
+  }),
+}));
 
 // Zod schemas and TypeScript types
 export const insertTaskSchema = createInsertSchema(tasks);

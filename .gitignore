@@ -52,3 +52,5 @@ sqlite.db
 tests/screenshots
 tests_output
 .aider*
+
+**/.claude/settings.local.json
