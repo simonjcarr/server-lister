@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Button, Form, Select, Modal, message } from 'antd';
 import { 
   assignBookingCodeToProject,
-  getBookingCodeGroups
+  getAvailableBookingCodeGroups
 } from '@/app/actions/bookingCodes/crudActions';
 import { useMutation, useQuery } from '@tanstack/react-query';
 
@@ -22,8 +22,8 @@ const AssignBookingCodeToProject: React.FC<AssignBookingCodeToProjectProps> = ({
   const [messageApi, contextHolder] = message.useMessage();
 
   const { data: bookingCodeGroupsData, isLoading } = useQuery({
-    queryKey: ['bookingCodeGroups'],
-    queryFn: () => getBookingCodeGroups(),
+    queryKey: ['availableBookingCodeGroups', projectId],
+    queryFn: () => getAvailableBookingCodeGroups(projectId),
     enabled: isModalOpen,
   });
 

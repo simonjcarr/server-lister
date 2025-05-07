@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { createProjectDrawing, getProjectById, getProjectDrawingIds, deleteProject } from "@/app/actions/projects/crudActions"
 import ClickToCopy from "../utils/ClickToCopy"
-import ProjectBookingCodeDisplay from "../bookingCode/ProjectBookingCodeDisplay"
+import ProjectBookingCodeGroupsTable from "../bookingCode/ProjectBookingCodeGroupsTable"
 import type { TabsProps } from "antd"
 import ProjectTab from "./projectTabs/projectTab/ProjectTab"
 import PrimaryEngineerTab from "./projectTabs/primaryEngineerTab/PrimaryEngineerTab"
@@ -122,7 +122,7 @@ const ViewProject = ({ projectId }: { projectId: number }) => {
       {error && <p>Error: {error.message}</p>}
       {data && (
         <>
-          <ProjectBookingCodeDisplay projectId={projectId} />
+          <ProjectBookingCodeGroupsTable projectId={projectId} />
           <Tabs className="max-h-[90vh]" tabPosition="top" items={items} defaultActiveKey="0" />
         </>
       )}

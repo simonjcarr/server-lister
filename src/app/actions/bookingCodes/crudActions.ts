@@ -98,6 +98,37 @@ export async function getBookingCodeGroups() {
   }
 }
 
+// Get booking code groups that are not yet assigned to a project
+export async function getAvailableBookingCodeGroups(projectId: number) {
+  try {
+    // Get all booking code groups
+    const allGroups = await db
+      .select()
+      .from(bookingCodeGroups)
+      .orderBy(asc(bookingCodeGroups.name));
+    
+    // Get booking code groups already assigned to the project
+    const assignedGroups = await db
+      .select({
+        bookingCodeGroupId: projectBookingCodes.bookingCodeGroupId,
+      })
+      .from(projectBookingCodes)
+      .where(eq(projectBookingCodes.projectId, projectId));
+    
+    // Create a set of assigned group IDs for efficient lookup
+    const assignedGroupIds = new Set(assignedGroups.map(group => group.bookingCodeGroupId));
+    
+    // Filter out already assigned groups
+    const availableGroups = allGroups.filter(group => !assignedGroupIds.has(group.id));
+    
+    return { success: true, data: availableGroups };
+  } catch (error) {
+    const typedError = error as ErrorWithMessage;
+    console.error("Error fetching available booking code groups:", typedError);
+    return { success: false, error: typedError.message || "Failed to fetch available booking code groups" };
+  }
+}
+
 export async function getBookingCodeGroupById(id: number) {
   try {
     const result = await db
@@ -516,6 +547,55 @@ export async function getProjectsWithBookingCodes() {
     return {
       success: false,
       error: typedError.message || "Failed to fetch projects with booking codes",
+    };
+  }
+}
+
+// Get all booking code groups for a project with their active booking codes
+export async function getProjectBookingCodeGroups(projectId: number) {
+  try {
+    // Get all booking code groups assigned to the project
+    const projectBookingCodeGroups = await db
+      .select({
+        id: projectBookingCodes.id,
+        projectId: projectBookingCodes.projectId,
+        bookingCodeGroupId: projectBookingCodes.bookingCodeGroupId,
+        groupName: bookingCodeGroups.name,
+      })
+      .from(projectBookingCodes)
+      .innerJoin(
+        bookingCodeGroups,
+        eq(projectBookingCodes.bookingCodeGroupId, bookingCodeGroups.id)
+      )
+      .where(eq(projectBookingCodes.projectId, projectId));
+
+    if (projectBookingCodeGroups.length === 0) {
+      return { success: true, data: [] };
+    }
+
+    // Get the active booking code for each group
+    const result = await Promise.all(
+      projectBookingCodeGroups.map(async (group) => {
+        const activeCodeResult = await getActiveBookingCode(group.bookingCodeGroupId);
+        
+        return {
+          id: group.id,
+          projectId: group.projectId,
+          bookingCodeGroupId: group.bookingCodeGroupId,
+          groupName: group.groupName,
+          activeBookingCode: activeCodeResult.success ? activeCodeResult.data : null,
+          isExpired: activeCodeResult.isExpired || false,
+        };
+      })
+    );
+
+    return { success: true, data: result };
+  } catch (error) {
+    const typedError = error as ErrorWithMessage;
+    console.error("Error fetching project booking code groups:", typedError);
+    return {
+      success: false,
+      error: typedError.message || "Failed to fetch project booking code groups",
     };
   }
 }
