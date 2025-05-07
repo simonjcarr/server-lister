@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Button, Form, Input, Modal, DatePicker, Switch, message } from 'antd';
 import { 
   updateBookingCode, 
-  getBookingCodeById 
+  getBookingCodeById,
+  checkBookingCodeOverlap
 } from '@/app/actions/bookingCodes/crudActions';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import dayjs from 'dayjs';
@@ -70,17 +71,43 @@ const FormEditBookingCode: React.FC<FormEditBookingCodeProps> = ({
     setIsModalOpen(false);
   };
 
-  const onFinish = (values: { 
+  const onFinish = async (values: { 
     code: string; 
     description: string; 
     validFrom: dayjs.Dayjs; 
     validTo: dayjs.Dayjs; 
     enabled: boolean 
   }) => {
+    // Convert dates to JS Date objects
+    const validFrom = values.validFrom ? values.validFrom.toDate() : undefined;
+    const validTo = values.validTo ? values.validTo.toDate() : undefined;
+    
+    // Only check for overlaps if we have valid dates and the booking code data
+    if (validFrom && validTo && bookingCodeData?.success && bookingCodeData.data) {
+      // Check for overlapping booking codes, excluding the current one
+      const overlapCheck = await checkBookingCodeOverlap(
+        bookingCodeData.data.groupId,
+        validFrom,
+        validTo,
+        bookingCodeId
+      );
+      
+      if (!overlapCheck.success) {
+        messageApi.error('Failed to check for overlapping booking codes. Please try again.');
+        return;
+      }
+      
+      if (overlapCheck.hasOverlap) {
+        messageApi.error('This date range would overlap with an existing active booking code in this group. There should only be one active booking code at a time.');
+        return;
+      }
+    }
+    
+    // If no overlap, proceed with updating the booking code
     mutate({
       ...values,
-      validFrom: values.validFrom ? values.validFrom.toDate() : undefined,
-      validTo: values.validTo ? values.validTo.toDate() : undefined,
+      validFrom,
+      validTo,
     });
   };
 
@@ -129,7 +156,17 @@ const FormEditBookingCode: React.FC<FormEditBookingCodeProps> = ({
           <Form.Item
             name="validTo"
             label="Valid To"
-            rules={[{ required: true, message: 'Please select valid to date' }]}
+            rules={[
+              { required: true, message: 'Please select valid to date' },
+              ({ getFieldValue }) => ({
+                validator(_, value) {
+                  if (!value || !getFieldValue('validFrom') || value.isAfter(getFieldValue('validFrom'))) {
+                    return Promise.resolve();
+                  }
+                  return Promise.reject(new Error('Valid to date must be after valid from date'));
+                },
+              }),
+            ]}
           >
             <DatePicker className="w-full" />
           </Form.Item>

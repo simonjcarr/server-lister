@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Button, Form, Input, Modal, DatePicker, Switch, message } from 'antd';
-import { createBookingCode } from '@/app/actions/bookingCodes/crudActions';
+import { createBookingCode, checkBookingCodeOverlap } from '@/app/actions/bookingCodes/crudActions';
 import { useMutation } from '@tanstack/react-query';
 import dayjs from 'dayjs';
 
@@ -60,17 +60,39 @@ const FormAddBookingCode: React.FC<FormAddBookingCodeProps> = ({
     setIsModalOpen(false);
   };
 
-  const onFinish = (values: { 
+  const onFinish = async (values: { 
     code: string; 
     description: string; 
     validFrom: dayjs.Dayjs; 
     validTo: dayjs.Dayjs; 
     enabled: boolean 
   }) => {
+    // Convert dates to JS Date objects
+    const validFrom = values.validFrom.toDate();
+    const validTo = values.validTo.toDate();
+    
+    // Check for overlapping booking codes
+    const overlapCheck = await checkBookingCodeOverlap(
+      groupId,
+      validFrom,
+      validTo
+    );
+    
+    if (!overlapCheck.success) {
+      messageApi.error('Failed to check for overlapping booking codes. Please try again.');
+      return;
+    }
+    
+    if (overlapCheck.hasOverlap) {
+      messageApi.error('This date range would overlap with an existing active booking code in this group. There should only be one active booking code at a time.');
+      return;
+    }
+    
+    // If no overlap, proceed with creating the booking code
     mutate({
       ...values,
-      validFrom: values.validFrom.toDate(),
-      validTo: values.validTo.toDate(),
+      validFrom,
+      validTo,
     });
   };
 
@@ -118,7 +140,17 @@ const FormAddBookingCode: React.FC<FormAddBookingCodeProps> = ({
           <Form.Item
             name="validTo"
             label="Valid To"
-            rules={[{ required: true, message: 'Please select valid to date' }]}
+            rules={[
+              { required: true, message: 'Please select valid to date' },
+              ({ getFieldValue }) => ({
+                validator(_, value) {
+                  if (!value || !getFieldValue('validFrom') || value.isAfter(getFieldValue('validFrom'))) {
+                    return Promise.resolve();
+                  }
+                  return Promise.reject(new Error('Valid to date must be after valid from date'));
+                },
+              }),
+            ]}
           >
             <DatePicker className="w-full" />
           </Form.Item>

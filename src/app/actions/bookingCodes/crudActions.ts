@@ -123,6 +123,27 @@ export async function createBookingCode(data: {
   enabled: boolean;
 }) {
   try {
+    // Check for overlap with existing booking codes
+    const overlapCheck = await checkBookingCodeOverlap(
+      data.groupId,
+      data.validFrom,
+      data.validTo
+    );
+    
+    if (!overlapCheck.success) {
+      return { 
+        success: false, 
+        error: overlapCheck.error || "Failed to check for booking code overlap" 
+      };
+    }
+    
+    if (overlapCheck.hasOverlap) {
+      return { 
+        success: false, 
+        error: "This date range would overlap with an existing active booking code in this group. There should only be one active booking code at a time." 
+      };
+    }
+    
     const validatedData = insertBookingCodeSchema.parse({
       ...data,
       createdAt: new Date(),
@@ -150,6 +171,41 @@ export async function updateBookingCode(
   }
 ) {
   try {
+    // Get the current booking code to check its groupId
+    const currentBookingCode = await db
+      .select()
+      .from(bookingCodes)
+      .where(eq(bookingCodes.id, id))
+      .limit(1);
+      
+    if (currentBookingCode.length === 0) {
+      return { success: false, error: "Booking code not found" };
+    }
+    
+    // If dates are being updated, check for overlap
+    if (data.validFrom !== undefined && data.validTo !== undefined) {
+      const overlapCheck = await checkBookingCodeOverlap(
+        currentBookingCode[0].groupId,
+        data.validFrom,
+        data.validTo,
+        id // Exclude the current booking code from the check
+      );
+      
+      if (!overlapCheck.success) {
+        return { 
+          success: false, 
+          error: overlapCheck.error || "Failed to check for booking code overlap" 
+        };
+      }
+      
+      if (overlapCheck.hasOverlap) {
+        return { 
+          success: false, 
+          error: "This date range would overlap with an existing active booking code in this group. There should only be one active booking code at a time." 
+        };
+      }
+    }
+    
     const validatedData = updateBookingCodeSchema.parse({
       ...data,
       updatedAt: new Date(),
@@ -270,6 +326,62 @@ export async function getActiveBookingCode(groupId: number) {
     const typedError = error as ErrorWithMessage;
     console.error("Error fetching active booking code:", typedError);
     return { success: false, error: typedError.message || "Failed to fetch active booking code" };
+  }
+}
+
+
+/**
+ * Checks if a booking code with the given date range would overlap with existing booking codes in the same group
+ * @param groupId The ID of the booking code group to check
+ * @param validFrom The start date of the booking code
+ * @param validTo The end date of the booking code
+ * @param excludeBookingCodeId Optional booking code ID to exclude from the check (useful for edit operations)
+ * @returns True if there's an overlap with an existing active booking code, false otherwise
+ */
+export async function checkBookingCodeOverlap(
+  groupId: number,
+  validFrom: Date,
+  validTo: Date,
+  excludeBookingCodeId?: number
+): Promise<{ success: boolean; hasOverlap: boolean; error?: string }> {
+  try {
+    // Build the base query conditions
+    let conditions = and(
+      eq(bookingCodes.groupId, groupId),
+      eq(bookingCodes.enabled, true),
+      // Check for overlap: 
+      // (new start date < existing end date) AND (new end date > existing start date)
+      lt(bookingCodes.validFrom, validTo),
+      gte(bookingCodes.validTo, validFrom)
+    );
+    
+    // If we're editing an existing booking code, exclude it from the check
+    if (excludeBookingCodeId) {
+      conditions = and(conditions, 
+        // Exclude the booking code being edited
+        eq(bookingCodes.id, excludeBookingCodeId, true) // eq(x, y, true) is equivalent to NOT eq
+      );
+    }
+    
+    // Check for any overlapping active booking codes
+    const overlappingCodes = await db
+      .select()
+      .from(bookingCodes)
+      .where(conditions)
+      .limit(1);
+    
+    return { 
+      success: true, 
+      hasOverlap: overlappingCodes.length > 0 
+    };
+  } catch (error) {
+    const typedError = error as ErrorWithMessage;
+    console.error("Error checking booking code overlap:", typedError);
+    return { 
+      success: false, 
+      hasOverlap: false, 
+      error: typedError.message || "Failed to check booking code overlap" 
+    };
   }
 }
 
