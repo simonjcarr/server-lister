@@ -10,8 +10,8 @@ import ServerActivityChart from './ServerActivityChart';
 import { DashboardStats } from '@/app/types/dashboard';
 import { TabsProps } from 'antd';
 import { useState } from 'react';
-import ProjectEngineerHoursMatrix from '../project/projectTabs/engineerHours/ProjectEngineerHoursMatrix';
-import EngineerHoursSummary from '../server/view/engineerHours/EngineerHoursSummary';
+import DashboardEngineerHoursMatrix from './DashboardEngineerHoursMatrix';
+import DashboardEngineerHoursSummary from './DashboardEngineerHoursSummary';
 
 // Interface for the component props
 interface DashboardProps {
@@ -217,40 +217,13 @@ const Dashboard: React.FC<DashboardProps> = ({ onTabChange }) => {
       </Col>
       
       <Col xs={24} md={24} lg={24} xl={24} className="mb-6">
-        {dashboardStats?.highlightedProjectId ? (
-          <EngineerHoursSummary
-            summaryType="project"
-            entityId={dashboardStats.highlightedProjectId}
-            title="Engineer Hours Summary"
-            defaultTimeRange="6months"
-            defaultChartType="cumulative"
-            defaultChartStyle="line"
-          />
-        ) : (
-          <Card title="Engineer Hours Summary" size="small" className="mb-4">
-            <div className="flex justify-center items-center py-4">
-              <div className="h-12 flex items-center justify-center text-xs text-gray-500">
-                No highlighted project available
-              </div>
-            </div>
-          </Card>
-        )}
+        <DashboardEngineerHoursSummary
+          title="Project Hours Summary"
+        />
       </Col>
       
       <Col xs={24} md={24} lg={24} xl={24} className="mb-6">
-        {dashboardStats?.highlightedProjectId ? (
-          <ProjectEngineerHoursMatrix
-            projectId={dashboardStats.highlightedProjectId}
-          />
-        ) : (
-          <Card title="Engineer Hours Matrix" size="small" className="mb-4">
-            <div className="flex justify-center items-center py-4">
-              <div className="h-12 flex items-center justify-center text-xs text-gray-500">
-                No highlighted project available
-              </div>
-            </div>
-          </Card>
-        )}
+        <DashboardEngineerHoursMatrix />
       </Col>
     </Row>
   );

@@ -2,7 +2,7 @@
 
 import db from "@/db/getdb";
 import { servers, os, locations, business, bookingCodeGroups, bookingCodes } from "@/db/schema";
-import { count, eq, desc } from "drizzle-orm";
+import { count, eq } from "drizzle-orm";
 
 export async function getNonOnboardedServerCount() {
   try {
@@ -212,60 +212,19 @@ export async function getBookingCodeStatusCounts(): Promise<BookingCodeStatusCou
   }
 }
 
-// Helper function to get highlighted project based on most recent engineer hours
-async function getHighlightedProject() {
-  try {
-    // Import projects and engineerHours from schema
-    const { projects } = await import("@/db/schema/projects");
-    const { engineerHours } = await import("@/db/schema/engineerHours");
-    const { servers } = await import("@/db/schema/servers");
-    
-    // First, get the project with the most recent engineer hours
-    const result = await db
-      .select({
-        projectId: projects.id,
-      })
-      .from(projects)
-      .innerJoin(servers, eq(servers.projectId, projects.id))
-      .innerJoin(engineerHours, eq(engineerHours.serverId, servers.id))
-      .orderBy(desc(engineerHours.date))
-      .limit(1);
-    
-    if (result.length > 0) {
-      return result[0].projectId;
-    }
-    
-    // If no engineer hours are recorded, get the most recent project
-    const fallbackResult = await db
-      .select({
-        id: projects.id,
-      })
-      .from(projects)
-      .orderBy(desc(projects.createdAt))
-      .limit(1);
-      
-    return fallbackResult.length > 0 ? fallbackResult[0].id : undefined;
-  } catch (error) {
-    console.error("Error getting highlighted project:", error);
-    return undefined;
-  }
-}
-
 export async function getDashboardStats() {
   // Get all stats in parallel for efficiency
-  const [totalCount, nonOnboardedCount, itarCount, bookingCodeStatusCounts, highlightedProjectId] = await Promise.all([
+  const [totalCount, nonOnboardedCount, itarCount, bookingCodeStatusCounts] = await Promise.all([
     getTotalServerCount(),
     getNonOnboardedServerCount(),
     getItarServerCount(),
-    getBookingCodeStatusCounts(),
-    getHighlightedProject()
+    getBookingCodeStatusCounts()
   ]);
   
   return {
     totalServers: totalCount.count,
     nonOnboardedServers: nonOnboardedCount.count,
     itarServers: itarCount.count,
-    bookingCodeStatuses: bookingCodeStatusCounts,
-    highlightedProjectId
+    bookingCodeStatuses: bookingCodeStatusCounts
   };
 }
