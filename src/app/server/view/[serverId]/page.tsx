@@ -7,7 +7,6 @@ import { useParams } from 'next/navigation'
 import ViewServerDetails from '@/app/components/server/view/ViewServerDetails'
 import FormEditServer from '@/app/components/server/FormEditServer'
 import ServerDetailHeader from '@/app/components/server/view/header/ServerDetailHeader'
-import EngineerHoursDropdown from '@/app/components/server/view/header/EngineerHoursDropdown'
 
 function Page() {
   const params = useParams<{ serverId: string }>()
@@ -19,7 +18,6 @@ function Page() {
       title={<ServerDetailHeader serverId={serverId} />}
       extra={
         <Space size="middle">
-          <EngineerHoursDropdown serverId={serverId} />
           <FormEditServer serverId={serverId}>
             <Button type="text" icon={<EditOutlined />} className="text-gray-400 hover:text-white" />
           </FormEditServer>

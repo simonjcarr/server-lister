@@ -17,7 +17,6 @@ interface EngineerHoursDropdownProps {
 const EngineerHoursDropdown: React.FC<EngineerHoursDropdownProps> = ({ serverId }) => {
   const { data: session } = useSession();
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedBookingCode, setSelectedBookingCode] = useState<number | null>(null);
   const [form] = Form.useForm();
   const [messageApi, contextHolder] = message.useMessage();
   const queryClient = useQueryClient();
@@ -48,13 +47,6 @@ const EngineerHoursDropdown: React.FC<EngineerHoursDropdownProps> = ({ serverId 
     },
   });
 
-  const handleOpenModal = () => {
-    if (selectedBookingCode) {
-      setIsModalOpen(true);
-    } else {
-      messageApi.warning('Please select a booking code first');
-    }
-  };
 
   const handleSubmit = async () => {
     try {
@@ -66,7 +58,7 @@ const EngineerHoursDropdown: React.FC<EngineerHoursDropdownProps> = ({ serverId 
       const values = await form.validateFields();
       await createMutation.mutateAsync({
         serverId,
-        bookingCodeId: selectedBookingCode!,
+        bookingCodeId: values.bookingCodeId,
         minutes: values.minutes,
         note: values.note,
         date: values.date.toDate(),
@@ -110,27 +102,10 @@ const EngineerHoursDropdown: React.FC<EngineerHoursDropdownProps> = ({ serverId 
   return (
     <div className="flex items-center">
       {contextHolder}
-      <Select
-        placeholder="Select booking code"
-        style={{ width: 200, marginRight: 8 }}
-        loading={isLoadingBookingCodes}
-        onChange={value => setSelectedBookingCode(value)}
-        disabled={isLoadingBookingCodes || !bookingCodesData?.success}
-        options={bookingCodesData?.success && bookingCodesData.data ? 
-          bookingCodesData.data.map((code) => ({
-            key: code.id,
-            value: code.id,
-            label: `${code.groupName}: ${code.code}`
-          }))
-          : undefined
-        }
-      />
-
       <Button 
         type="primary" 
         icon={<ClockCircleOutlined />} 
-        onClick={handleOpenModal}
-        disabled={!selectedBookingCode}
+        onClick={() => setIsModalOpen(true)}
       >
         Log Hours
       </Button>
@@ -150,6 +125,33 @@ const EngineerHoursDropdown: React.FC<EngineerHoursDropdownProps> = ({ serverId 
             minutes: 30,
           }}
         >
+          <Form.Item
+            name="bookingCodeId"
+            label="Booking Code"
+            rules={[{ required: true, message: 'Please select a booking code' }]}
+            help={hasNoBookingCodes ? "No booking codes available for this server" : ""}
+          >
+            <Select
+              placeholder="Select a booking code"
+              loading={isLoadingBookingCodes}
+              disabled={isLoadingBookingCodes || !bookingCodesData?.success || hasNoBookingCodes}
+              options={bookingCodesData?.success && bookingCodesData.data ? 
+                bookingCodesData.data.map((code) => ({
+                  key: code.id,
+                  value: code.id,
+                  label: `${code.groupName}: ${code.code}${code.description ? ` - ${code.description}` : ''}`
+                })) 
+                : undefined
+              }
+              style={{ width: '100%' }}
+              showSearch
+              filterOption={(input, option) => 
+                (option?.label?.toString().toLowerCase() || '').includes(input.toLowerCase())
+              }
+              optionFilterProp="label"
+            />
+          </Form.Item>
+
           <Form.Item
             name="minutes"
             label="Minutes"

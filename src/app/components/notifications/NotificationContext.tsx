@@ -198,7 +198,11 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       
       // Handle connection error
       eventSource.onerror = (error) => {
-        console.error('SSE connection error:', error)
+        // Only log detailed errors and avoid empty object logs
+        if (error && Object.keys(error).length > 0) {
+          console.error('SSE connection error:', error)
+        }
+        
         setSseConnected(false)
         
         // Clean up the current connection
@@ -207,12 +211,15 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
           eventSourceRef.current = null
         }
         
-        // Attempt to reconnect after a delay
+        // Attempt to reconnect after a delay, with increased delay to reduce pressure
         if (!reconnectTimeoutRef.current) {
           reconnectTimeoutRef.current = setTimeout(() => {
             reconnectTimeoutRef.current = null
-            connectToSSE() // Try to reconnect
-          }, 5000)
+            // Only reconnect if the component is still mounted and user is logged in
+            if (session?.user?.id) {
+              connectToSSE() // Try to reconnect
+            }
+          }, 10000) // Increased from 5000ms to 10000ms
         }
       }
     } catch (error) {
@@ -223,21 +230,32 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   
   // Set up SSE connection
   useEffect(() => {
-    connectToSSE()
-    
-    // Clean up on unmount
-    return () => {
-      if (eventSourceRef.current) {
-        eventSourceRef.current.close()
-        eventSourceRef.current = null
-      }
+    // Only connect if the user is logged in
+    if (session?.user?.id) {
+      // Add a small delay before connecting to prevent resource contentions
+      const initTimeout = setTimeout(() => {
+        connectToSSE();
+      }, 1000);
       
-      if (reconnectTimeoutRef.current) {
-        clearTimeout(reconnectTimeoutRef.current)
-        reconnectTimeoutRef.current = null
-      }
+      // Clean up on unmount or when user ID changes
+      return () => {
+        clearTimeout(initTimeout);
+        
+        if (eventSourceRef.current) {
+          eventSourceRef.current.close();
+          eventSourceRef.current = null;
+        }
+        
+        if (reconnectTimeoutRef.current) {
+          clearTimeout(reconnectTimeoutRef.current);
+          reconnectTimeoutRef.current = null;
+        }
+      };
     }
-  }, [session?.user?.id, connectToSSE]) // Re-connect if user ID changes
+    
+    // If no user, just return a no-op cleanup
+    return () => {};
+  }, [session?.user?.id, connectToSSE]); // Re-connect if user ID changes
 
   return (
     <NotificationContext.Provider value={{ notifications, unreadCount, markAsRead, markAllAsRead, deleteNotifications }}>

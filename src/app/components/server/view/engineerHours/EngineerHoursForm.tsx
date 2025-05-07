@@ -143,6 +143,11 @@ const EngineerHoursForm: React.FC<EngineerHoursFormProps> = ({ serverId, onSucce
               })) 
               : undefined
             }
+            showSearch
+            filterOption={(input, option) => 
+              (option?.label?.toString().toLowerCase() || '').includes(input.toLowerCase())
+            }
+            optionFilterProp="label"
           />
         </Form.Item>
 

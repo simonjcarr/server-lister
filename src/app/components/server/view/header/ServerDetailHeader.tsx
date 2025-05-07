@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getServerById } from '@/app/actions/server/crudActions';
-import { getServerBookingCode } from '@/app/actions/server/bookingCode/getServerBookingCode';
 import { Alert, Spin, Typography, Tooltip, Tag, message } from 'antd';
 import { CopyOutlined, InfoCircleOutlined, CheckOutlined } from '@ant-design/icons';
 
@@ -19,10 +18,6 @@ const ServerDetailHeader: React.FC<ServerDetailHeaderProps> = ({ serverId }) => 
     queryFn: () => getServerById(serverId),
   });
   
-  const { data: bookingCodeData } = useQuery({
-    queryKey: ["serverBookingCode", serverId],
-    queryFn: () => getServerBookingCode(serverId),
-  });
 
   if (isLoading) {
     return <div className="flex items-center"><Text strong>Server Details</Text><Spin className="ml-2" /></div>;
@@ -63,14 +58,6 @@ const ServerDetailHeader: React.FC<ServerDetailHeaderProps> = ({ serverId }) => 
               value={serverData.ipv6} 
             />
             
-            {bookingCodeData && (
-              <ServerInfoItem 
-                label="Booking Code" 
-                value={bookingCodeData.code}
-                tooltip={`${bookingCodeData.groupName} (${bookingCodeData.isExpired ? 'Expired' : 'Active'})`}
-                tag={bookingCodeData.isExpired ? { color: "error", text: "Expired" } : undefined}
-              />
-            )}
           </div>
         </div>
       </div>

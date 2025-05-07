@@ -308,3 +308,22 @@ export async function updateServerOnboardingStatus(serverId: number, onboarded: 
     return { success: false };
   }
 }
+
+export async function getServerList() {
+  try {
+    const serverData = await db
+      .select({
+        id: servers.id,
+        hostname: servers.hostname,
+        ipv4: servers.ipv4,
+        ipv6: servers.ipv6,
+      })
+      .from(servers)
+      .orderBy(asc(servers.hostname));
+    
+    return serverData;
+  } catch (error) {
+    console.error("Error getting server list:", error);
+    return [];
+  }
+}
