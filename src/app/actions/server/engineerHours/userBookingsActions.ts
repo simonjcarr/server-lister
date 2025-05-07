@@ -22,11 +22,13 @@ type ErrorWithMessage = {
  */
 export async function getUserBookingHistory(userId: string) {
   try {
+    console.log(`Getting booking history for user: ${userId}`);
+    
     const result = await db
       .select({
         id: engineerHours.id,
         serverId: engineerHours.serverId,
-        serverName: servers.name,
+        serverName: servers.hostname,
         projectId: servers.projectId,
         projectName: projects.name,
         bookingCodeId: engineerHours.bookingCodeId,
@@ -47,14 +49,19 @@ export async function getUserBookingHistory(userId: string) {
       .leftJoin(projects, eq(servers.projectId, projects.id))
       .where(eq(engineerHours.userId, userId))
       .orderBy(desc(engineerHours.date));
-
-    return { success: true, data: result };
+    
+    console.log(`Found ${result.length} booking history records`);
+    
+    // If no data found, return an empty array instead of null/undefined
+    return { success: true, data: result || [] };
   } catch (error) {
     const typedError = error as ErrorWithMessage;
     console.error("Error fetching user booking history:", typedError);
     return {
       success: false,
       error: typedError.message || "Failed to fetch user booking history",
+      // Return an empty array even on error to avoid null/undefined issues
+      data: []
     };
   }
 }

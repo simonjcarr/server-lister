@@ -20,11 +20,53 @@ const MyBookingsPage: React.FC = () => {
   const { data: bookingHistory, isLoading: isHistoryLoading } = useQuery({
     queryKey: ['userBookingHistory', userId],
     queryFn: async () => {
-      if (!userId) return { success: false, data: [] };
-      const res = await getUserBookingHistory(userId);
-      return res;
+      console.log(`Fetching booking history for user ID: ${userId}`);
+      if (!userId) {
+        console.warn('No user ID available for booking history fetch');
+        return { success: false, data: [], error: 'No user ID available' };
+      }
+      
+      try {
+        // Call the server action and log everything
+        console.log('Calling getUserBookingHistory with userId:', userId);
+        const res = await getUserBookingHistory(userId);
+        console.log('Booking history raw response:', JSON.stringify(res, null, 2));
+        
+        if (!res.success) {
+          console.error('Server action returned error:', res.error);
+          return { 
+            success: false, 
+            data: [], 
+            error: res.error || 'Server returned an error'
+          };
+        }
+        
+        if (!res.data || !Array.isArray(res.data)) {
+          console.warn('Server returned non-array data:', res.data);
+          return { 
+            success: true, 
+            data: [], 
+            warning: 'Server returned empty or invalid data'
+          };
+        }
+        
+        console.log(`Successfully retrieved ${res.data.length} booking entries`);
+        return { 
+          success: true, 
+          data: res.data 
+        };
+      } catch (error) {
+        console.error('Exception when fetching booking history:', error);
+        return { 
+          success: false, 
+          data: [], 
+          error: error instanceof Error ? error.message : 'Failed to fetch booking history' 
+        };
+      }
     },
     enabled: !!userId,
+    staleTime: 0, // Don't cache results to ensure fresh data
+    retry: 1      // Only retry once on failure
   });
 
   // Get weekly booking matrix for the current user
@@ -230,14 +272,34 @@ const MyBookingsPage: React.FC = () => {
       label: 'Booking History',
       children: (
         <Card>
-          <Table 
-            dataSource={bookingHistory?.success ? bookingHistory.data : []} 
-            columns={historyColumns}
-            rowKey="id"
-            loading={isHistoryLoading}
-            pagination={{ pageSize: 20 }}
-            scroll={{ x: 'max-content' }}
-          />
+          {isHistoryLoading ? (
+            <div className="text-center py-8">Loading booking history...</div>
+          ) : (
+            <>
+              {bookingHistory?.success ? (
+                <div>
+                  {bookingHistory.data && bookingHistory.data.length > 0 ? (
+                    <Table 
+                      dataSource={bookingHistory.data} 
+                      columns={historyColumns}
+                      rowKey="id"
+                      pagination={{ pageSize: 20 }}
+                      scroll={{ x: 'max-content' }}
+                      locale={{ emptyText: 'No booking history found' }}
+                    />
+                  ) : (
+                    <div className="text-center py-8">
+                      <p>No booking history found.</p>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <p>Error loading booking history.</p>
+                </div>
+              )}
+            </>
+          )}
         </Card>
       )
     }
