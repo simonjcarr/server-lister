@@ -79,11 +79,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onTabChange }) => {
             value={dashboardStats?.nonOnboardedServers || 0}
             prefix={<WarningOutlined style={{ color: '#faad14' }} />}
           />
-          <div className="mt-4">
-            <Button type="primary" size="small" onClick={handleViewNonOnboardedServers}>
-              View Details
-            </Button>
-          </div>
         </Card>
       </Col>
       
