@@ -2,7 +2,7 @@ import React, { ReactNode, useState } from 'react';
 import type { DrawerProps } from 'antd';
 import { Button, Drawer, Space, Menu } from 'antd';
 import Link from 'next/link';
-import { FaCertificate, FaFileInvoiceDollar, FaMap, FaProjectDiagram, FaRegListAlt, FaRegObjectGroup, FaServer, FaTools, FaUsers, FaWindows, FaClipboardCheck, FaComments } from 'react-icons/fa';
+import { FaCertificate, FaFileInvoiceDollar, FaMap, FaProjectDiagram, FaRegListAlt, FaRegObjectGroup, FaServer, FaTools, FaUsers, FaWindows, FaClipboardCheck, FaComments, FaClock } from 'react-icons/fa';
 import { MdAddBox, MdAdminPanelSettings, MdNetworkPing } from 'react-icons/md';
 import { useRouter } from 'next/navigation';
 import { IoIosBusiness } from 'react-icons/io';
@@ -44,6 +44,15 @@ const App: React.FC = () => {
   const router = useRouter();
   // type MenuItem = Required<MenuProps>['items'][number];
   const items: MyMenuItemConfig[] = [
+    {
+      key: 'my-bookings',
+      label: 'My Bookings',
+      "data-testid": 'test-left-menu-my-bookings',
+      icon: <FaClock />,
+      onClick: () => {
+        router.push('/my-bookings');
+      },
+    },
     {
       key: 'server',
       label: 'Server',
