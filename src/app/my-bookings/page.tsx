@@ -8,6 +8,7 @@ import { useSession } from 'next-auth/react';
 import { LeftOutlined, RightOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import Link from 'next/link';
+import ClickToCopy from '../components/utils/ClickToCopy';
 
 const { Title, Text } = Typography;
 
@@ -99,6 +100,7 @@ const MyBookingsPage: React.FC = () => {
       title: 'Booking Code',
       dataIndex: 'bookingCode',
       key: 'bookingCode',
+      render: (text: string) => <ClickToCopy text={text} />,
     },
     {
       title: 'Description',
@@ -219,7 +221,7 @@ const MyBookingsPage: React.FC = () => {
                           {weeklyMatrix.data.matrix.map(row => (
                             <tr key={row.bookingCode.id}>
                               <td className="px-4 py-2 border border-gray-700">
-                                <div>{row.bookingCode.code}</div>
+                                <div><ClickToCopy text={row.bookingCode.code} /></div>
                                 <div className="text-xs text-gray-400">{row.bookingCode.description}</div>
                               </td>
                               {row.dailyMinutes.map((day, index) => (
