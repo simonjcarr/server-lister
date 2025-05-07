@@ -216,30 +216,26 @@ export async function getProjectEngineerHoursMatrix(
     const endDate = now.endOf('day');
     let startDate: dayjs.Dayjs;
     let dateFormat: string;
-    let intervalUnit: 'week' | 'month' | 'year';
+    // We no longer need the intervalUnit variable
     
     // Determine start date and format based on timeGrouping
     switch (timeGrouping) {
       case 'week':
         startDate = now.subtract(periodsToShow - 1, 'week').startOf('isoWeek');
         dateFormat = 'YYYY-[W]WW'; // Format: 2023-W01 (using ISO week)
-        intervalUnit = 'week';
         break;
       case 'month':
         startDate = now.subtract(periodsToShow - 1, 'month').startOf('month');
         dateFormat = 'YYYY-MM'; // Format: 2023-01
-        intervalUnit = 'month';
         break;
       case 'year':
         startDate = now.subtract(periodsToShow - 1, 'year').startOf('year');
         dateFormat = 'YYYY'; // Format: 2023
-        intervalUnit = 'year';
         break;
       default:
         // Default to month
         startDate = now.subtract(periodsToShow - 1, 'month').startOf('month');
         dateFormat = 'YYYY-MM';
-        intervalUnit = 'month';
     }
     
     // First, get all servers for this project

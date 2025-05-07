@@ -5,4 +5,5 @@ export interface DashboardStats {
   nonOnboardedServers: number;
   itarServers: number;
   bookingCodeStatuses: BookingCodeStatusCounts;
+  highlightedProjectId?: number;
 }

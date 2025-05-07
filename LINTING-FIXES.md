@@ -9,6 +9,17 @@
    - Changed `unknown` parameter types to `string` in render functions
    - Added proper return type annotations for mutation callbacks
 
+3. `src/app/actions/server/engineerHours/reportActions.ts`
+   - Fixed unused 'intervalUnit' variable during the implementation of Project Bookings dashboard section
+
+## Pending Issues
+1. `src/app/components/project/projectTabs/engineerHours/ProjectEngineerHoursMatrix.tsx`
+   - Line 10:15: 'Title' is assigned a value but never used
+   - Lines 108, 115, 137, 154, 157: Unexpected `any` type usage
+
+2. `src/app/components/project/projectTabs/projectTab/ProjectTab.tsx`
+   - Line 1:17: 'useState' is defined but never used
+
 ## Potential Future Improvements
 
 There are still numerous linting errors in the codebase that could be addressed:
