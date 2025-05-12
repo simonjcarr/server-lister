@@ -2,6 +2,7 @@
 import { db } from "@/db"
 import { subTasks, users, tasks } from "@/db/schema"
 import { eq, asc } from "drizzle-orm"
+import { createNotification } from '@/lib/notification/notificationService'
 
 export const getServerSubTasks = async (taskId: number) => {
   const taskResults = await db.select().from(subTasks).leftJoin(users, eq(subTasks.assignedTo, users.id)).where(eq(subTasks.taskId, taskId)).orderBy(asc(subTasks.order), asc(subTasks.createdAt))
@@ -35,31 +36,36 @@ export const createSubTask = async (taskId: number, title: string, description: 
     .innerJoin(users, eq(tasks.userId, users.id))
     .where(eq(tasks.id, taskId));
   
-  if (taskWithOwner.length > 0 && taskWithOwner[0].userEmail) {
+  if (taskWithOwner.length > 0) {
     try {
-      // Import the email queue function
-      const { queueEmail } = await import('@/lib/email/emailQueue');
+      // Create a notification message for both browser and email
+      const notificationTitle = `New subtask created: ${title}`;
+      const plainTextMessage = `A new subtask '${title}' has been created for your task: ${taskWithOwner[0].title}`;
       
-      // Queue the email notification
-      await queueEmail({
-        to: taskWithOwner[0].userEmail,
-        subject: `New subtask created: ${title}`,
-        html: `
-          <h1>New Subtask Created</h1>
-          <p>Hello ${taskWithOwner[0].userName},</p>
-          <p>A new subtask has been created for your task: <strong>${taskWithOwner[0].title}</strong></p>
-          <h2>Subtask Details:</h2>
-          <p><strong>Title:</strong> ${title}</p>
-          <p><strong>Description:</strong> ${description || 'No description provided'}</p>
-          <p>You can view and manage this task in your Server Lister dashboard.</p>
-          <p>Thanks,<br/>OPS Hive Team</p>
-        `,
-        text: `New Subtask Created\n\nHello ${taskWithOwner[0].userName},\n\nA new subtask has been created for your task: ${taskWithOwner[0].title}\n\nSubtask Details:\nTitle: ${title}\nDescription: ${description || 'No description provided'}\n\nYou can view and manage this task in your Server Lister dashboard.\n\nThanks,\nOPS Hive Team`
+      // Create a richer HTML message for email
+      const htmlMessage = `
+        <h1>New Subtask Created</h1>
+        <p>Hello ${taskWithOwner[0].userName},</p>
+        <p>A new subtask has been created for your task: <strong>${taskWithOwner[0].title}</strong></p>
+        <h2>Subtask Details:</h2>
+        <p><strong>Title:</strong> ${title}</p>
+        <p><strong>Description:</strong> ${description || 'No description provided'}</p>
+        <p>You can view and manage this task in your Server Lister dashboard.</p>
+        <p>Thanks,<br/>OPS Hive Team</p>
+      `;
+      
+      // Use our unified notification service to send both browser and email notifications
+      await createNotification({
+        title: notificationTitle,
+        message: plainTextMessage,
+        htmlMessage: htmlMessage,
+        userId: taskWithOwner[0].userId,
+        deliveryType: 'both'  // Send to both browser and email
       });
       
-      console.log(`Email notification sent to task owner: ${taskWithOwner[0].userEmail}`);
+      console.log(`Notification sent to task owner (${taskWithOwner[0].userName}) via browser and email`);
     } catch (error) {
-      console.error('Failed to send email notification:', error);
+      console.error('Failed to send notification:', error);
       // Don't throw error here so that the subtask creation still succeeds
     }
   }

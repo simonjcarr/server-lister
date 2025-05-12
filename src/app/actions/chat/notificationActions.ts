@@ -7,10 +7,11 @@ import {
   server_collection_subscriptions, 
   servers_collections, 
   servers,
-  chatCategories 
+  chatCategories
 } from "@/db/schema";
 import { ChatMessage } from "./chatActions";
 import { jobQueue } from "@/lib/queue";
+import { type DeliveryType } from '@/lib/notification/notificationService';
 
 // Send notification to users who have favorited the server or subscribed to a collection containing it
 export async function sendChatNotifications(message: ChatMessage): Promise<void> {
@@ -91,11 +92,27 @@ export async function sendChatNotifications(message: ChatMessage): Promise<void>
     const title = `New message on ${serverDetails.hostname}`;
     const notificationMessage = `${message.userName} posted in ${categoryName}: "${message.message.substring(0, 50)}${message.message.length > 50 ? '...' : ''}"`;
 
-    // Add to job queue for processing
+    // Prepare a more detailed HTML message for email
+    const htmlMessage = `
+      <h2>New message on ${serverDetails.hostname}</h2>
+      <p><strong>${message.userName}</strong> posted in <strong>${categoryName}</strong>:</p>
+      <blockquote>
+        ${message.message}
+      </blockquote>
+      <p>Login to view and respond to this message.</p>
+    `;
+    
+    // Process notifications with default delivery type 'both'
+    // In a future enhancement, this could check user preferences
+    const defaultDeliveryType: DeliveryType = 'both';
+    
+    // Add to job queue for processing with enhanced options
     await jobQueue.add('notification', { 
       title, 
       message: notificationMessage, 
-      userIds: Array.from(userIdsToNotify)
+      htmlMessage, // Add HTML version for email
+      userIds: Array.from(userIdsToNotify),
+      deliveryType: defaultDeliveryType
     });
   } catch (error) {
     console.error("Error sending chat notifications:", error);

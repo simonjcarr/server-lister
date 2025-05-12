@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, serial, index, boolean } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, serial, index, boolean, jsonb } from "drizzle-orm/pg-core";
 import { createInsertSchema, createSelectSchema, createUpdateSchema } from "drizzle-zod";
 import { z } from "zod";
 import { users } from './users';
@@ -9,8 +9,11 @@ export const notifications = pgTable(
     id: serial("id").primaryKey(),
     title: text("title").notNull(),
     message: text("message").notNull(),
+    htmlMessage: text("html_message"),
     userId: text("userId").notNull().references(() => users.id, { onDelete: "cascade" }),
     read: boolean("read").notNull().default(false),
+    deliveryType: text("delivery_type").notNull().default('browser'), // 'browser', 'email', or 'both'
+    deliveryStatus: jsonb("delivery_status").default({}), // Store delivery status info
     createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
   },

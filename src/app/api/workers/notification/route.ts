@@ -1,9 +1,18 @@
 import { db } from "@/db";
 import { eq, or, sql } from "drizzle-orm";
-import { notifications, users } from "@/db/schema";
+import { users } from "@/db/schema";
+import { createBulkNotifications, type DeliveryType } from '@/lib/notification/notificationService';
 
 export async function POST(request: Request) {
-  const { title, message, roleNames, userIds}: {title: string, message: string, roleNames?: string[], userIds?: string[]} = await request.json();
+  const { title, message, htmlMessage, roleNames, userIds, deliveryType = 'browser' }: 
+  {
+    title: string, 
+    message: string, 
+    htmlMessage?: string, 
+    roleNames?: string[], 
+    userIds?: string[], 
+    deliveryType?: DeliveryType
+  } = await request.json();
   
   // Roles is a json field with array of roles. Write a db query that select users that have the roles in the request array
   if((!roleNames || roleNames.length === 0) && (!userIds || userIds.length === 0)) {
@@ -26,28 +35,19 @@ export async function POST(request: Request) {
     .where(or(...allConditions))
     .groupBy(users.id);
 
-  const errors: string[] = [];
-  const createdNotifications = [];
-  
-  for (const user of usersResult) {
-    try {
-      const [notification] = await db.insert(notifications).values({
-        userId: user.id,
-        message,
-        title,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        read: false
-      }).returning();
-      
-      if (notification) {
-        createdNotifications.push(notification);
-      }
-    } catch {
-      errors.push(`error creating notification for user ${user.id}`);
-    }
+  // Use our streamlined notification service to handle delivery
+  try {
+    const notifications = await createBulkNotifications({
+      title,
+      message,
+      htmlMessage,
+      userIds: usersResult.map(user => user.id),
+      deliveryType: deliveryType as DeliveryType
+    });
+    
+    return Response.json(notifications);
+  } catch (error) {
+    console.error('Error creating notifications:', error);
+    return new Response('Failed to create notifications', { status: 500 });
   }
-
-  // Return the notifications as a direct array for simplicity
-  return Response.json(createdNotifications);
 }
