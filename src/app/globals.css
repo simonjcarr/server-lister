@@ -191,6 +191,16 @@ body {
   color: #e5e7eb !important;
 }
 
+/* Server detail page tabs - reduce vertical spacing */
+.server-tabs .ant-tabs-tab {
+  padding: 6px 16px !important;
+  margin: 0 !important;
+}
+
+.server-tabs .ant-tabs-nav-list {
+  gap: 2px !important;
+}
+
 /* Markdown content styling */
 .markdown-content {
   font-size: 0.875rem;

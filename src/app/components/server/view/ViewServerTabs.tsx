@@ -47,7 +47,15 @@ const ViewServerTabs = ({ serverId }: { serverId: number }) => {
       {data && (
         <>
           <ServerOnboardingStatus serverId={serverId} />
-          <Tabs className="max-h-[90vh]" tabPosition="left" items={items} />
+          <Tabs 
+            className="max-h-[90vh] server-tabs" 
+            tabPosition="left" 
+            items={items}
+            // Add custom inline styles for the tab component
+            style={{ 
+              // We'll add CSS classes instead for more specific styling
+            }} 
+          />
         </>
       )}
     </App>
