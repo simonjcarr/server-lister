@@ -124,7 +124,7 @@ const MyBookingsPage: React.FC = () => {
       title: 'Project',
       dataIndex: 'projectName',
       key: 'projectName',
-      render: (text: string, record: { projectId?: number }) => (
+      render: (text: string, record: { projectId: number | null }) => (
         record.projectId ? <Link href={`/project/${record.projectId}`}>{text}</Link> : '-'
       ),
     },

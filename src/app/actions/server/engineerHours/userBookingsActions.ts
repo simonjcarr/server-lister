@@ -5,7 +5,7 @@ import { engineerHours } from "@/db/schema/engineerHours";
 import { servers } from "@/db/schema/servers";
 import { projects } from "@/db/schema/projects";
 import { bookingCodes, bookingCodeGroups } from "@/db/schema/bookingCodes";
-import { desc, eq, and, gte, lte } from "drizzle-orm";
+import { desc, eq, and, gte, lte, sql } from "drizzle-orm";
 import dayjs from "dayjs";
 import isoWeek from "dayjs/plugin/isoWeek";
 import utc from "dayjs/plugin/utc";
@@ -18,7 +18,8 @@ dayjs.extend(timezone);   // For timezone handling
 
 // Set default timezone to ensure consistent date handling
 // This is critical for correct date boundaries
-const DEFAULT_TIMEZONE = "UTC";
+// Using UTC as default timezone throughout the application
+dayjs.tz.setDefault("UTC");
 
 // Define error type to replace any
 type ErrorWithMessage = {
@@ -149,7 +150,7 @@ export async function getUserWeeklyBookingMatrix(userId: string, weekOffset: num
     console.log(`Weekly matrix query - weekStart: ${weekStart.format('YYYY-MM-DD')}, weekEnd: ${weekEnd.format('YYYY-MM-DD')}`);
     console.log(`Found ${bookingData.length} booking entries for the week`);
     if (bookingData.length > 0) {
-      console.log(`Sample entry date: ${dayjs(bookingData[0].date).format('YYYY-MM-DD')}`);
+      console.log(`Sample entry date: ${dayjs(bookingData[0].date as string | number | Date).format('YYYY-MM-DD')}`);
     }
 
     // If no data found for the week

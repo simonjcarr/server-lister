@@ -12,7 +12,7 @@ import {
   updateBookingCodeSchema,
 } from "@/db/schema/bookingCodes";
 import { projects } from "@/db/schema/projects";
-import { and, asc, desc, eq, gte, lt } from "drizzle-orm";
+import { and, asc, desc, eq, ne, gte, lt } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
 // Define error type to replace any
@@ -390,7 +390,7 @@ export async function checkBookingCodeOverlap(
     if (excludeBookingCodeId) {
       conditions = and(conditions, 
         // Exclude the booking code being edited
-        eq(bookingCodes.id, excludeBookingCodeId, true) // eq(x, y, true) is equivalent to NOT eq
+        ne(bookingCodes.id, excludeBookingCodeId) // Use ne (not equal) instead of eq with third parameter
       );
     }
     

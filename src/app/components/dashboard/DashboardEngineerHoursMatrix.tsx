@@ -5,7 +5,7 @@ import { Card, Table, Spin, Empty, Radio, Switch, Space, Typography, InputNumber
 import { useQuery } from '@tanstack/react-query';
 import { getDashboardEngineerHoursMatrix } from '@/app/actions/server/engineerHours/dashboardActions';
 import type { ColumnsType } from 'antd/es/table';
-import { CalendarOutlined, UserOutlined, TeamOutlined } from '@ant-design/icons';
+import { CalendarOutlined } from '@ant-design/icons';
 
 const { Text } = Typography;
 
@@ -24,6 +24,10 @@ interface ProjectMatrixRow {
     [key: string]: number;
   };
   totalHours: number;
+  engineer?: {
+    id: string;
+    name: string;
+  };
 }
 
 // Matrix data is handled directly through the ProjectMatrixRow type
@@ -233,7 +237,7 @@ const DashboardEngineerHoursMatrix: React.FC<DashboardEngineerHoursMatrixProps> 
         <Table
           columns={getColumns()}
           dataSource={getDataSource()}
-          rowKey={(record: any) => record.engineer ? `${record.project.id}-${record.engineer.id}` : record.project.id}
+          rowKey={(record: ProjectMatrixRow) => record.engineer ? `${record.project.id}-${record.engineer.id}` : record.project.id}
           pagination={false}
           scroll={{ x: 'max-content' }} // Ensure horizontal scroll for many periods
           size="small"

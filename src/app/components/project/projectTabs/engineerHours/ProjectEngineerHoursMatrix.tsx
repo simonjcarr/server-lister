@@ -14,7 +14,7 @@ import timezone from 'dayjs/plugin/timezone';
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
-const { Text, Title } = Typography;
+const { Text } = Typography;
 const { Group: RadioGroup, Button: RadioButton } = Radio;
 
 // Types for the component props
@@ -34,29 +34,17 @@ interface EngineerMatrixRow {
   totalHours: number;
 }
 
-// Types for matrix data with just totals
-interface TotalsMatrixData {
-  periods: {
-    key: string;
-    label: string;
-    startDate: string;
-    endDate: string;
-  }[];
-  periodTotals: {
-    [key: string]: number;
-  };
-  grandTotal: number;
-  totalsIncluded: boolean;
+// Define Record type for periods to avoid 'any' casts
+type MatrixPeriod = {
+  key: string;
+  label: string;
+  startDate: string;
+  endDate: string;
 }
 
 // Types for matrix data with engineer breakdown
 interface EngineerMatrixData {
-  periods: {
-    key: string;
-    label: string;
-    startDate: string;
-    endDate: string;
-  }[];
+  periods: MatrixPeriod[];
   engineers: {
     id: string;
     name: string;
@@ -65,12 +53,14 @@ interface EngineerMatrixData {
   totalsIncluded: boolean;
 }
 
-// Combined type for the matrix data response
-type MatrixData = EngineerMatrixData | TotalsMatrixData;
-
 // Function to check if the data is engineer matrix data
-function isEngineerMatrixData(data: MatrixData): data is EngineerMatrixData {
-  return 'matrix' in data && Array.isArray(data.matrix);
+function isEngineerMatrixData(data: unknown): data is EngineerMatrixData {
+  const record = data as Record<string, unknown>;
+  return typeof data === 'object' && data !== null && 
+    'matrix' in record && Array.isArray(record.matrix) && 
+    'totalsIncluded' in record && typeof record.totalsIncluded === 'boolean' && 
+    'engineers' in record && Array.isArray(record.engineers) && 
+    'periods' in record && Array.isArray(record.periods);
 }
 
 const ProjectEngineerHoursMatrix: React.FC<ProjectEngineerHoursMatrixProps> = ({ projectId }) => {
@@ -141,14 +131,14 @@ const ProjectEngineerHoursMatrix: React.FC<ProjectEngineerHoursMatrixProps> = ({
       }
     }
     
-    const baseColumns: ColumnsType<any> = [
+    const baseColumns: ColumnsType<EngineerMatrixRow> = [
       {
         title: 'Engineer',
         dataIndex: ['engineer', 'name'],
         key: 'engineer',
         fixed: 'left',
         width: 180,
-        render: (text: string, record: any) => (
+        render: (text: string, record: EngineerMatrixRow) => (
           <div>
             {record.engineer.id === 'total' ? (
               <Text strong>{text}</Text>
@@ -170,7 +160,7 @@ const ProjectEngineerHoursMatrix: React.FC<ProjectEngineerHoursMatrixProps> = ({
       ),
       key: `period-${period.key}`,
       align: 'center' as const,
-      render: (text: string, record: any) => {
+      render: (text: string, record: EngineerMatrixRow) => {
         // Don't use dataIndex, instead calculate the value here to ensure proper engineer filtering
         // This protects against any data cross-contamination
         const hours = record.periodHours?.[period.key] || 0;
@@ -187,10 +177,10 @@ const ProjectEngineerHoursMatrix: React.FC<ProjectEngineerHoursMatrixProps> = ({
       align: 'center' as const,
       fixed: 'right' as const,
       width: 100,
-      render: (text: string, record: any) => {
+      render: (text: string, record: EngineerMatrixRow) => {
         // Calculate total from the record to ensure it's accurate
         const totalHours = Object.values(record.periodHours || {}).reduce(
-          (sum: number, hours: any) => sum + (typeof hours === 'number' ? hours : 0), 
+          (sum: number, hours: unknown) => sum + (typeof hours === 'number' ? hours : 0), 
           0
         );
         
@@ -223,7 +213,7 @@ const ProjectEngineerHoursMatrix: React.FC<ProjectEngineerHoursMatrixProps> = ({
               id: row.engineer.id, 
               name: row.engineer.name || 'Unknown'
             },
-            periodHours: {},
+            periodHours: {} as { [key: string]: number },
             totalHours: 0 // We'll recalculate this
           };
           
@@ -264,7 +254,7 @@ const ProjectEngineerHoursMatrix: React.FC<ProjectEngineerHoursMatrixProps> = ({
       const newTotalsRow = {
         key: 'total',
         engineer: { id: 'total', name: 'Total Hours' },
-        periodHours: {},
+        periodHours: {} as { [key: string]: number },
         totalHours: 0
       };
       
@@ -275,7 +265,7 @@ const ProjectEngineerHoursMatrix: React.FC<ProjectEngineerHoursMatrixProps> = ({
           (dayjs.utc('2025-04-13').isAfter(dayjs.utc(period.startDate)) && 
           dayjs.utc('2025-04-13').isBefore(dayjs.utc(period.endDate)));
         
-        const periodValue = matrixData.periodTotals[period.key];
+        const periodValue = matrixData.periodTotals?.[period.key] || 0;
         
         // Special logging for April 13 data
         if (isApril13Period && periodValue > 0) {

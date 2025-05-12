@@ -116,7 +116,7 @@ const EngineerHoursChart: React.FC<EngineerHoursChartProps> = ({ serverId }) => 
   };
 
   // Skip custom tooltip to fix TypeScript issues
-  const renderTooltipContent = undefined;
+  // Removed unused renderTooltipContent variable
 
   // Process data for the individual engineer chart
   const prepareIndividualChartData = () => {

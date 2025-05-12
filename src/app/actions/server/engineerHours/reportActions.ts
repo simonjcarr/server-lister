@@ -18,7 +18,8 @@ dayjs.extend(timezone);   // For timezone handling
 
 // Set default timezone to ensure consistent date handling
 // This is critical for correct date boundaries
-const DEFAULT_TIMEZONE = "UTC";
+// Using UTC as default timezone throughout the application
+dayjs.tz.setDefault("UTC");
 
 type TimeRange = "week" | "month" | "6months" | "year" | "all";
 
@@ -444,9 +445,9 @@ export async function getProjectEngineerHoursMatrix(
       // Debug log for April 13
       if (recordDate.format('YYYY-MM-DD') === '2025-04-13') {
         console.log(`[DEBUG] Processing April 13 record in reportActions:`, {
-          rawDate: rawDate.toISOString(),
+          // Remove reference to non-existent rawDate variable
           utcDate: recordDate.format('YYYY-MM-DD'),
-          localDate: dayjs(record.date).format('YYYY-MM-DD'),
+          localDate: dayjs(record.date as string | number | Date).format('YYYY-MM-DD'),
           engineerId: record.engineerId,
           engineerName: record.engineerName,
           minutes: record.minutes

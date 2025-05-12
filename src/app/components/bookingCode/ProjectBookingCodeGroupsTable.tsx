@@ -27,11 +27,13 @@ interface BookingCodeGroup {
     id: number;
     groupId: number;
     code: string;
-    description?: string | null;
-    validFrom: string | Date;
-    validTo: string | Date;
+    description: string | null;
+    validFrom: Date;
+    validTo: Date;
     enabled: boolean;
-  } | null;
+    createdAt: Date;
+    updatedAt: Date;
+  } | null | undefined;
   isExpired: boolean;
 }
 
