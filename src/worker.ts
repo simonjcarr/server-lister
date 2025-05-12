@@ -105,7 +105,12 @@ const worker = new Worker(
           await insertScan(job.data);
           break;
         case 'email':
-          // Email job processing would go here
+          // Process email job
+          const { sendEmail } = await import('./lib/email/emailService');
+          const success = await sendEmail(job.data);
+          if (!success) {
+            throw new Error('Failed to send email');
+          }
           break;
         default:
           throw new Error('Unknown job type');

@@ -1,6 +1,6 @@
 'use server'
 import { db } from "@/db"
-import { subTasks, users } from "@/db/schema"
+import { subTasks, users, tasks } from "@/db/schema"
 import { eq, asc } from "drizzle-orm"
 
 export const getServerSubTasks = async (taskId: number) => {
@@ -10,7 +10,9 @@ export const getServerSubTasks = async (taskId: number) => {
 
 export const createSubTask = async (taskId: number, title: string, description: string) => {
   const date = new Date()
-  const task = await db.insert(subTasks).values({
+  
+  // Create the subtask
+  const subtask = await db.insert(subTasks).values({
     taskId,
     title,
     description,
@@ -18,8 +20,51 @@ export const createSubTask = async (taskId: number, title: string, description: 
     isComplete: false,
     createdAt: date,
     updatedAt: date,
-  }).returning()
-  return task[0]
+  }).returning();
+  
+  // Get the parent task with owner information
+  const taskWithOwner = await db
+    .select({
+      id: tasks.id,
+      title: tasks.title,
+      userId: tasks.userId,
+      userName: users.name,
+      userEmail: users.email
+    })
+    .from(tasks)
+    .innerJoin(users, eq(tasks.userId, users.id))
+    .where(eq(tasks.id, taskId));
+  
+  if (taskWithOwner.length > 0 && taskWithOwner[0].userEmail) {
+    try {
+      // Import the email queue function
+      const { queueEmail } = await import('@/lib/email/emailQueue');
+      
+      // Queue the email notification
+      await queueEmail({
+        to: taskWithOwner[0].userEmail,
+        subject: `New subtask created: ${title}`,
+        html: `
+          <h1>New Subtask Created</h1>
+          <p>Hello ${taskWithOwner[0].userName},</p>
+          <p>A new subtask has been created for your task: <strong>${taskWithOwner[0].title}</strong></p>
+          <h2>Subtask Details:</h2>
+          <p><strong>Title:</strong> ${title}</p>
+          <p><strong>Description:</strong> ${description || 'No description provided'}</p>
+          <p>You can view and manage this task in your Server Lister dashboard.</p>
+          <p>Thanks,<br/>OPS Hive Team</p>
+        `,
+        text: `New Subtask Created\n\nHello ${taskWithOwner[0].userName},\n\nA new subtask has been created for your task: ${taskWithOwner[0].title}\n\nSubtask Details:\nTitle: ${title}\nDescription: ${description || 'No description provided'}\n\nYou can view and manage this task in your Server Lister dashboard.\n\nThanks,\nOPS Hive Team`
+      });
+      
+      console.log(`Email notification sent to task owner: ${taskWithOwner[0].userEmail}`);
+    } catch (error) {
+      console.error('Failed to send email notification:', error);
+      // Don't throw error here so that the subtask creation still succeeds
+    }
+  }
+  
+  return subtask[0];
 }
 
 export const toggleSubTaskComplete = async (subTaskId: number) => {
