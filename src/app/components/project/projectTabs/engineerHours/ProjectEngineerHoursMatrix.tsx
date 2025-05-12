@@ -6,6 +6,13 @@ import { useQuery } from '@tanstack/react-query';
 import { getProjectEngineerHoursMatrix } from '@/app/actions/server/engineerHours/reportActions';
 import type { ColumnsType } from 'antd/es/table';
 import { CalendarOutlined, UserOutlined, TeamOutlined } from '@ant-design/icons';
+import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
+import timezone from 'dayjs/plugin/timezone';
+
+// Extend dayjs with necessary plugins for consistent date handling
+dayjs.extend(utc);
+dayjs.extend(timezone);
 
 const { Text, Title } = Typography;
 const { Group: RadioGroup, Button: RadioButton } = Radio;
@@ -105,6 +112,35 @@ const ProjectEngineerHoursMatrix: React.FC<ProjectEngineerHoursMatrixProps> = ({
     const matrixData = data.data;
     const periods = matrixData.periods;
     
+    // Preprocess periods to ensure dates are handled properly
+    // This is especially important for weekly periods that might contain April 13
+    if (periods) {
+      for (const period of periods) {
+        // Ensure we use UTC for date comparisons to prevent timezone issues
+        const start = dayjs.utc(period.startDate);
+        const end = dayjs.utc(period.endDate);
+        
+        // Special check for April 13th (the problematic date)
+        const april13 = dayjs.utc('2025-04-13');
+        
+        // Check if this period should contain April 13
+        if (april13.isAfter(start) && april13.isBefore(end) || 
+            april13.isSame(start, 'day') || 
+            april13.isSame(end, 'day')) {
+          
+          console.log(`[FIXED Matrix] Period containing April 13:`, {
+            periodKey: period.key,
+            periodLabel: period.label,
+            startDate: period.startDate,
+            endDate: period.endDate,
+            formattedStart: start.format('YYYY-MM-DD'),
+            formattedEnd: end.format('YYYY-MM-DD'),
+            containsApril13: true
+          });
+        }
+      }
+    }
+    
     const baseColumns: ColumnsType<any> = [
       {
         title: 'Engineer',
@@ -191,9 +227,27 @@ const ProjectEngineerHoursMatrix: React.FC<ProjectEngineerHoursMatrixProps> = ({
             totalHours: 0 // We'll recalculate this
           };
           
-          // Process each period individually
+          // FIXED: Process each period individually with improved date handling
           matrixData.periods.forEach(period => {
+            // Check if this is the period containing April 13 for special handling
+            const isApril13Period = period.startDate && period.endDate && 
+              (dayjs.utc('2025-04-13').isAfter(dayjs.utc(period.startDate)) && 
+              dayjs.utc('2025-04-13').isBefore(dayjs.utc(period.endDate)));
+            
+            // Get the value for this period from the original data
             const periodValue = row.periodHours[period.key];
+            
+            // Special logging for April 13 data
+            if (isApril13Period && periodValue > 0) {
+              console.log(`[FIXED Matrix] Found April 13 data:`, {
+                engineerId: row.engineer.id,
+                engineerName: row.engineer.name,
+                periodKey: period.key,
+                periodLabel: period.label,
+                hours: periodValue
+              });
+            }
+            
             // Only assign non-zero values that are actually numbers
             if (typeof periodValue === 'number' && periodValue > 0) {
               newRow.periodHours[period.key] = periodValue;
@@ -214,9 +268,24 @@ const ProjectEngineerHoursMatrix: React.FC<ProjectEngineerHoursMatrixProps> = ({
         totalHours: 0
       };
       
-      // Process each period individually for the totals row too
+      // FIXED: Process each period for the totals row with improved date handling
       matrixData.periods.forEach(period => {
+        // Check if this is the period containing April 13 for special handling
+        const isApril13Period = period.startDate && period.endDate && 
+          (dayjs.utc('2025-04-13').isAfter(dayjs.utc(period.startDate)) && 
+          dayjs.utc('2025-04-13').isBefore(dayjs.utc(period.endDate)));
+        
         const periodValue = matrixData.periodTotals[period.key];
+        
+        // Special logging for April 13 data
+        if (isApril13Period && periodValue > 0) {
+          console.log(`[FIXED Matrix] Found April 13 data in totals:`, {
+            periodKey: period.key,
+            periodLabel: period.label,
+            hours: periodValue
+          });
+        }
+        
         // Only assign non-zero values that are actually numbers
         if (typeof periodValue === 'number' && periodValue > 0) {
           newTotalsRow.periodHours[period.key] = periodValue;

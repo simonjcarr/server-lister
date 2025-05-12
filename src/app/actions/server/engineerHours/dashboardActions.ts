@@ -8,9 +8,17 @@ import { projects } from "@/db/schema/projects";
 import { and, eq, gte, lte, sql, sum } from "drizzle-orm";
 import dayjs from "dayjs";
 import isoWeek from "dayjs/plugin/isoWeek";
+import utc from "dayjs/plugin/utc";
+import timezone from "dayjs/plugin/timezone";
 
-// Extend dayjs with ISO week plugin
-dayjs.extend(isoWeek);
+// Extend dayjs with necessary plugins
+dayjs.extend(isoWeek);    // For ISO week handling
+dayjs.extend(utc);        // For UTC handling
+dayjs.extend(timezone);   // For timezone handling
+
+// Set default timezone to ensure consistent date handling
+// This is critical for correct date boundaries
+const DEFAULT_TIMEZONE = "UTC";
 
 type TimeRange = "week" | "month" | "6months" | "year" | "all";
 type ChartType = "individual" | "cumulative";
@@ -75,14 +83,19 @@ export async function getDashboardEngineerHoursChartData({
 
     if (chartType === "individual") {
       // For individual chart, we want data grouped by project and engineer
+      // CRITICAL FIX: Modify SQL to handle dates correctly at the database level
       const result = await db
         .select({
-          date: dateExpr,
+          // Fix: Instead of using dateExpr which might introduce timezone issues,
+          // use DATE_TRUNC to get a consistent date at database level
+          date: sql`DATE_TRUNC('day', ${engineerHours.date})::date`,
           projectId: projects.id,
           projectName: projects.name,
           engineerId: engineerHours.userId,
           engineerName: users.name,
           totalMinutes: sum(engineerHours.minutes),
+          // Debug field to see the original date
+          rawDate: sql`${engineerHours.date}`,
         })
         .from(engineerHours)
         .innerJoin(servers, eq(engineerHours.serverId, servers.id))
@@ -95,11 +108,12 @@ export async function getDashboardEngineerHoursChartData({
           )
         )
         .groupBy(
-          dateExpr,
+          sql`DATE_TRUNC('day', ${engineerHours.date})::date`,
           projects.id,
           projects.name,
           engineerHours.userId,
-          users.name
+          users.name,
+          engineerHours.date  // Include the raw date in the GROUP BY for our debug field
         )
         .orderBy(dateExpr);
 
@@ -128,12 +142,16 @@ export async function getDashboardEngineerHoursChartData({
       };
     } else {
       // For cumulative chart, we want data grouped by project only
+      // CRITICAL FIX: Apply the same date-handling fix to the cumulative query
       const result = await db
         .select({
-          date: dateExpr,
+          // Fix: Use DATE_TRUNC for consistent date handling at database level
+          date: sql`DATE_TRUNC('day', ${engineerHours.date})::date`,
           projectId: projects.id,
           projectName: projects.name,
           totalMinutes: sum(engineerHours.minutes),
+          // Add raw date for debugging
+          rawDate: sql`${engineerHours.date}`,
         })
         .from(engineerHours)
         .innerJoin(servers, eq(engineerHours.serverId, servers.id))
@@ -144,7 +162,12 @@ export async function getDashboardEngineerHoursChartData({
             lte(engineerHours.date, endDate)
           )
         )
-        .groupBy(dateExpr, projects.id, projects.name)
+        .groupBy(
+          sql`DATE_TRUNC('day', ${engineerHours.date})::date`, 
+          projects.id, 
+          projects.name,
+          engineerHours.date // For our debug field
+        )
         .orderBy(dateExpr);
 
       // Transform the results into chart-ready data
@@ -221,6 +244,8 @@ export async function getDashboardEngineerHoursMatrix(
       endDate: string;
     }[] = [];
     
+    console.log(`[DEBUG Dashboard] Generating periods, startDate: ${startDate.format('YYYY-MM-DD')}, endDate: ${endDate.format('YYYY-MM-DD')}`);
+    
     let current = startDate.clone();
     while (current.isBefore(endDate) || current.isSame(endDate, 'day')) {
       let periodKey: string;
@@ -229,26 +254,46 @@ export async function getDashboardEngineerHoursMatrix(
       let periodEndDate: string;
       
       if (timeGrouping === 'week') {
-        // Ensure we use consistent date format everywhere
-        const weekNum = current.isoWeek().toString().padStart(2, '0');
-        periodKey = `${current.format('YYYY')}-W${weekNum}`;
-        periodLabel = `${current.format('MMM DD')} - ${current.endOf('isoWeek').format('MMM DD')}`;
-        periodStartDate = current.format('YYYY-MM-DD');
-        periodEndDate = current.endOf('isoWeek').format('YYYY-MM-DD');
-        current = current.add(1, 'week');
+        // Always ensure current is at the start of ISO week to avoid misalignments
+        const weekStart = current.startOf('isoWeek');
+        const weekEnd = weekStart.clone().endOf('isoWeek');
+        const weekNum = weekStart.isoWeek().toString().padStart(2, '0');
+        
+        periodKey = `${weekStart.format('YYYY')}-W${weekNum}`;
+        periodLabel = `${weekStart.format('MMM DD')} - ${weekEnd.format('MMM DD')}`;
+        periodStartDate = weekStart.format('YYYY-MM-DD');
+        periodEndDate = weekEnd.format('YYYY-MM-DD');
+        
+        // Log the period that would contain April 13
+        if (weekStart.isBefore('2025-04-13') && weekEnd.isAfter('2025-04-13')) {
+          console.log(`[DEBUG Dashboard] Found period that should contain April 13: ${periodKey}, startDate: ${periodStartDate}, endDate: ${periodEndDate}`);
+        }
+        
+        // Move to next week
+        current = weekEnd.add(1, 'day');
       } else if (timeGrouping === 'month') {
-        periodKey = current.format(dateFormat);
-        periodLabel = current.format('MMM YYYY');
-        periodStartDate = current.format('YYYY-MM-DD');
-        periodEndDate = current.endOf('month').format('YYYY-MM-DD');
-        current = current.add(1, 'month');
+        const monthStart = current.startOf('month');
+        const monthEnd = monthStart.clone().endOf('month');
+        
+        periodKey = monthStart.format(dateFormat);
+        periodLabel = monthStart.format('MMM YYYY');
+        periodStartDate = monthStart.format('YYYY-MM-DD');
+        periodEndDate = monthEnd.format('YYYY-MM-DD');
+        
+        // Move to next month
+        current = monthEnd.add(1, 'day');
       } else {
         // Year
-        periodKey = current.format(dateFormat);
-        periodLabel = current.format('YYYY');
-        periodStartDate = current.format('YYYY-MM-DD');
-        periodEndDate = current.endOf('year').format('YYYY-MM-DD');
-        current = current.add(1, 'year');
+        const yearStart = current.startOf('year');
+        const yearEnd = yearStart.clone().endOf('year');
+        
+        periodKey = yearStart.format(dateFormat);
+        periodLabel = yearStart.format('YYYY');
+        periodStartDate = yearStart.format('YYYY-MM-DD');
+        periodEndDate = yearEnd.format('YYYY-MM-DD');
+        
+        // Move to next year
+        current = yearEnd.add(1, 'day');
       }
       
       periods.push({
@@ -317,11 +362,36 @@ export async function getDashboardEngineerHoursMatrix(
     
     // Function to determine period key based on record date
     const getPeriodKey = (date: Date) => {
-      const recordDate = dayjs(date);
+      // CRITICAL FIX: Use UTC for consistent date handling
+      const rawDate = new Date(date);
+      const recordDate = dayjs.utc(rawDate);
+      
+      // Debug logging for April 13
+      if (recordDate.format('YYYY-MM-DD') === '2025-04-13') {
+        console.log(`[DEBUG] Dashboard - Processing April 13 record:`, {
+          rawDate: rawDate.toISOString(),
+          utcDate: recordDate.format('YYYY-MM-DD'),
+          localDate: dayjs(date).format('YYYY-MM-DD')
+        });
+      }
       
       if (timeGrouping === 'week') {
+        // Ensure consistent ISO week handling across all components
         const weekNum = recordDate.isoWeek().toString().padStart(2, '0');
-        return `${recordDate.format('YYYY')}-W${weekNum}`;
+        const periodKey = `${recordDate.format('YYYY')}-W${weekNum}`;
+        
+        // Debug logging for April 13
+        if (recordDate.format('YYYY-MM-DD') === '2025-04-13') {
+          console.log(`[DEBUG] Dashboard - April 13 week assignment:`, {
+            date: recordDate.format('YYYY-MM-DD'),
+            isoWeek: recordDate.isoWeek(),
+            periodKey,
+            startOfWeek: recordDate.startOf('isoWeek').format('YYYY-MM-DD'),
+            endOfWeek: recordDate.endOf('isoWeek').format('YYYY-MM-DD')
+          });
+        }
+        
+        return periodKey;
       } else if (timeGrouping === 'month') {
         return recordDate.format('YYYY-MM');
       } else {
@@ -366,7 +436,21 @@ export async function getDashboardEngineerHoursMatrix(
       const projectPeriods = projectHoursMap.get(record.projectId);
       if (projectPeriods && projectPeriods.has(periodKey)) {
         const currentMinutes = projectPeriods.get(periodKey) || 0;
-        projectPeriods.set(periodKey, currentMinutes + record.minutes);
+        const newTotal = currentMinutes + record.minutes;
+        projectPeriods.set(periodKey, newTotal);
+        
+        // Debug log for April 13 data
+        if (recordDate.format('YYYY-MM-DD') === '2025-04-13') {
+          console.log(`[DEBUG Dashboard] Updated April 13 record:`, {
+            date: recordDate.format('YYYY-MM-DD'),
+            projectId: record.projectId,
+            projectName: record.projectName,
+            periodKey,
+            oldTotal: currentMinutes,
+            adding: record.minutes,
+            newTotal
+          });
+        }
       }
       
       // Update engineer breakdowns if needed
@@ -376,7 +460,21 @@ export async function getDashboardEngineerHoursMatrix(
           const engineerPeriods = projectEngineers.get(record.engineerId);
           if (engineerPeriods && engineerPeriods.has(periodKey)) {
             const currentMinutes = engineerPeriods.get(periodKey) || 0;
-            engineerPeriods.set(periodKey, currentMinutes + record.minutes);
+            const newTotal = currentMinutes + record.minutes;
+            engineerPeriods.set(periodKey, newTotal);
+            
+            // Add debug log for April 13
+            if (recordDate.format('YYYY-MM-DD') === '2025-04-13') {
+              console.log(`[DEBUG Dashboard Engineer] Updated April 13 record:`, {
+                date: recordDate.format('YYYY-MM-DD'),
+                projectId: record.projectId,
+                engineerId: record.engineerId,
+                periodKey,
+                oldTotal: currentMinutes,
+                adding: record.minutes,
+                newTotal
+              });
+            }
           }
         }
       }

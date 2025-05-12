@@ -6,6 +6,12 @@ import { useQuery } from '@tanstack/react-query';
 import { getEngineerHoursChartData, getCumulativeEngineerHoursChartData } from '@/app/actions/server/engineerHours/reportActions';
 import { useSession } from 'next-auth/react';
 import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
+import timezone from 'dayjs/plugin/timezone';
+
+// Extend dayjs with necessary plugins to handle timezone correctly
+dayjs.extend(utc);
+dayjs.extend(timezone);
 import {
   LineChart,
   Line,
@@ -84,19 +90,28 @@ const EngineerHoursChart: React.FC<EngineerHoursChartProps> = ({ serverId }) => 
   const formatXAxisTick = (value: string) => {
     if (!value) return '';
     
+    // CRITICAL FIX: Use UTC for date formatting to ensure consistency
+    // Parse the date with UTC to avoid timezone shifts
+    const date = dayjs.utc(value);
+    
+    // Special handling to debug April 13 dates
+    if (value === '2025-04-13') {
+      console.log('[Chart] Formatting X-axis tick for April 13:', {
+        originalValue: value,
+        formattedValue: date.format('MM/DD')
+      });
+    }
+    
     // Format based on time range
     if (timeRange === 'week' || timeRange === 'month') {
       // For daily data, show day/month (e.g., "05/15")
-      const parts = value.split('-');
-      return `${parts[1]}/${parts[2]}`;
+      return date.format('MM/DD');
     } else if (timeRange === '6months') {
-      // For weekly data, show week number (e.g., "W23")
-      const parts = value.split('-');
-      return `W${parts[1]}`;
+      // For weekly data, show week number (e.g., "W15")
+      return `W${date.isoWeek()}`;
     } else {
-      // For monthly data, show month/year (e.g., "05/2023")
-      const parts = value.split('-');
-      return `${parts[1]}/${parts[0].substring(2)}`;
+      // For monthly data, show month/year (e.g., "05/23")
+      return date.format('MM/YY');
     }
   };
 
@@ -153,13 +168,32 @@ const EngineerHoursChart: React.FC<EngineerHoursChartProps> = ({ serverId }) => 
       }
     }
     
-    // Now populate with actual data
+    // Now populate with actual data - ensure consistent date handling
     (chartsData.data as EngineerDataPoint[]).forEach(item => {
-      if (!chartDataByDate.has(item.date)) {
-        chartDataByDate.set(item.date, { date: item.date });
+      // Normalize date format to prevent timezone issues
+      let normalizedDate = item.date;
+      
+      // If it's a timestamp string, extract just the date part
+      if (typeof item.date === 'string' && item.date.includes('T')) {
+        normalizedDate = item.date.split('T')[0];
       }
       
-      const dateEntry = chartDataByDate.get(item.date);
+      // Debug logging for April 13 data
+      if (normalizedDate === '2025-04-13' || (typeof item.date === 'string' && item.date.includes('2025-04-13'))) {
+        console.log(`[FIXED Individual Chart] Processing April 13 data point:`, {
+          originalDate: item.date,
+          normalizedDate,
+          engineer: item.engineerName,
+          hours: item.totalHours
+        });
+      }
+      
+      // Use the normalized date for the map key
+      if (!chartDataByDate.has(normalizedDate)) {
+        chartDataByDate.set(normalizedDate, { date: normalizedDate });
+      }
+      
+      const dateEntry = chartDataByDate.get(normalizedDate);
       // Store hours by engineer name to ensure unique keys
       dateEntry[item.engineerName] = item.totalHours;
     });
@@ -209,8 +243,9 @@ const EngineerHoursChart: React.FC<EngineerHoursChartProps> = ({ serverId }) => 
     if (timeRangeBoundaries && timeRange !== 'all') {
       const { startDate, endDate, intervalType } = timeRangeBoundaries;
       
-      let current = dayjs(startDate);
-      const end = dayjs(endDate);
+      // CRITICAL FIX: Ensure consistent date handling with UTC
+      let current = dayjs.utc(startDate);
+      const end = dayjs.utc(endDate);
       
       // Generate data points for the entire requested range
       while (current.isBefore(end) || current.isSame(end, 'day')) {
@@ -221,7 +256,8 @@ const EngineerHoursChart: React.FC<EngineerHoursChartProps> = ({ serverId }) => 
           current = current.add(1, 'day');
         } else if (intervalType === 'week') {
           // For week intervals, use the start of the week as the key
-          dateKey = current.startOf('week').format('YYYY-MM-DD');
+          // Ensure we're using ISO weeks consistently
+          dateKey = current.startOf('isoWeek').format('YYYY-MM-DD');
           current = current.add(1, 'week');
         } else {
           // For month intervals
@@ -239,9 +275,29 @@ const EngineerHoursChart: React.FC<EngineerHoursChartProps> = ({ serverId }) => 
       }
     }
     
-    // Now add the actual data
+    // Process and normalize the actual data for consistent date handling
     chartsData.data.forEach(item => {
-      cumulativeData.set(item.date, item);
+      // Normalize the date format to ensure consistency
+      let normalizedDate = item.date;
+      
+      // If it's a timestamp string, extract just the date part
+      if (typeof item.date === 'string' && item.date.includes('T')) {
+        normalizedDate = item.date.split('T')[0];
+      }
+      
+      // Debug logging for April 13 data
+      if (normalizedDate === '2025-04-13' || (typeof item.date === 'string' && item.date.includes('2025-04-13'))) {
+        console.log(`[FIXED Chart] Found April 13 data in chart`, {
+          originalDate: item.date,
+          normalizedDate,
+          hours: item.totalHours
+        });
+      }
+      
+      // Create a processed item with normalized date
+      const processedItem = {...item, date: normalizedDate};
+      
+      cumulativeData.set(normalizedDate, processedItem);
     });
     
     // Convert to array sorted by date
@@ -397,7 +453,10 @@ const EngineerHoursChart: React.FC<EngineerHoursChartProps> = ({ serverId }) => 
                   allowDecimals={false}
                   domain={[0, 'auto']}
                 />
-                <RechartsTooltip content={renderTooltipContent} />
+                <RechartsTooltip 
+                  formatter={(value: number) => [`${value.toFixed(1)} hours`, '']}
+                  labelFormatter={(label) => `Date: ${dayjs.utc(label).format('YYYY-MM-DD')}`}
+                />
                 <Legend />
                 
                 {chartType === 'individual' ? (
@@ -446,7 +505,10 @@ const EngineerHoursChart: React.FC<EngineerHoursChartProps> = ({ serverId }) => 
                   allowDecimals={false}
                   domain={[0, 'auto']}
                 />
-                <RechartsTooltip content={renderTooltipContent} />
+                <RechartsTooltip 
+                  formatter={(value: number) => [`${value.toFixed(1)} hours`, '']}
+                  labelFormatter={(label) => `Date: ${dayjs.utc(label).format('YYYY-MM-DD')}`}
+                />
                 <Legend />
                 
                 {chartType === 'individual' ? (

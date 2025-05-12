@@ -8,9 +8,17 @@ import { bookingCodes, bookingCodeGroups } from "@/db/schema/bookingCodes";
 import { desc, eq, and, gte, lte } from "drizzle-orm";
 import dayjs from "dayjs";
 import isoWeek from "dayjs/plugin/isoWeek";
+import utc from "dayjs/plugin/utc";
+import timezone from "dayjs/plugin/timezone";
 
-// Extend dayjs with isoWeek plugin
-dayjs.extend(isoWeek);
+// Extend dayjs with necessary plugins
+dayjs.extend(isoWeek);    // For ISO week handling
+dayjs.extend(utc);        // For UTC handling
+dayjs.extend(timezone);   // For timezone handling
+
+// Set default timezone to ensure consistent date handling
+// This is critical for correct date boundaries
+const DEFAULT_TIMEZONE = "UTC";
 
 // Define error type to replace any
 type ErrorWithMessage = {
@@ -112,6 +120,7 @@ export async function getUserWeeklyBookingMatrix(userId: string, weekOffset: num
     }
 
     // Get all booking hours for this user within the week
+    // CRITICAL FIX: Use DATE_TRUNC to ensure consistent date handling at database level
     const bookingData = await db
       .select({
         id: engineerHours.id,
@@ -121,7 +130,10 @@ export async function getUserWeeklyBookingMatrix(userId: string, weekOffset: num
         bookingGroupId: bookingCodes.groupId,
         bookingGroupName: bookingCodeGroups.name,
         minutes: engineerHours.minutes,
-        date: engineerHours.date,
+        // FIXED: Use DATE_TRUNC to ensure proper date handling without timezone issues
+        date: sql`DATE_TRUNC('day', ${engineerHours.date})::date`,
+        // Include raw date for debugging
+        rawDate: engineerHours.date,
       })
       .from(engineerHours)
       .innerJoin(bookingCodes, eq(engineerHours.bookingCodeId, bookingCodes.id))
@@ -133,6 +145,12 @@ export async function getUserWeeklyBookingMatrix(userId: string, weekOffset: num
           lte(engineerHours.date, weekEnd.toDate())
         )
       );
+      
+    console.log(`Weekly matrix query - weekStart: ${weekStart.format('YYYY-MM-DD')}, weekEnd: ${weekEnd.format('YYYY-MM-DD')}`);
+    console.log(`Found ${bookingData.length} booking entries for the week`);
+    if (bookingData.length > 0) {
+      console.log(`Sample entry date: ${dayjs(bookingData[0].date).format('YYYY-MM-DD')}`);
+    }
 
     // If no data found for the week
     if (bookingData.length === 0) {
@@ -174,11 +192,41 @@ export async function getUserWeeklyBookingMatrix(userId: string, weekOffset: num
       const dailyMinutes = daysOfWeek.map(day => {
         // Find all entries for this booking code on this day
         const dayEntries = bookingData.filter(record => {
-          const recordDate = dayjs(record.date);
-          return (
-            record.bookingCodeId === bookingCode.id &&
-            recordDate.format('YYYY-MM-DD') === day.date
-          );
+          // Now we're getting a clean date from the database thanks to DATE_TRUNC('day')::date
+          // This means we can directly compare the dates without worrying about timezone shifts
+          
+          // Format both dates consistently for comparison
+          let recordDateStr;
+          
+          if (record.date instanceof Date) {
+            // If it's a Date object, format it
+            recordDateStr = dayjs.utc(record.date).format('YYYY-MM-DD');
+          } else if (typeof record.date === 'string') {
+            // If it's a string, use it directly or extract date part
+            recordDateStr = record.date.includes('T') 
+              ? record.date.split('T')[0] 
+              : record.date;
+          } else {
+            // Fallback for any other format
+            recordDateStr = String(record.date);
+          }
+          
+          const isDayMatch = recordDateStr === day.date;
+          const isMatch = record.bookingCodeId === bookingCode.id && isDayMatch;
+          
+          // Add debug logging for April 13 data to track the issue
+          if ((day.date === '2025-04-13' || (record.rawDate && String(record.rawDate).includes('2025-04-13'))) && 
+              record.bookingCodeId === bookingCode.id) {
+            console.log(`[FIXED] April 13 record check:`, {
+              bookingCode: bookingCode.code, 
+              dayDate: day.date, 
+              recordDate: recordDateStr, 
+              rawDate: record.rawDate, 
+              isMatch
+            });
+          }
+          
+          return isMatch;
         });
 
         // Sum up the minutes
