@@ -200,35 +200,43 @@ const DashboardEngineerHoursMatrix: React.FC<DashboardEngineerHoursMatrixProps> 
       <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
         <Radio.Group 
           value={timeGrouping} 
-          onChange={(e) => setTimeGrouping(e.target.value)}
+          onChange={(e) => setTimeGrouping(e.target.value)} 
+          buttonStyle="solid"
           size="small"
         >
           <Radio.Button value="week">Weeks</Radio.Button>
           <Radio.Button value="month">Months</Radio.Button>
           <Radio.Button value="year">Years</Radio.Button>
         </Radio.Group>
-        
-        <Space>
-          <Text className="text-xs mr-2">Show by project:</Text>
-          <Switch
-            checkedChildren={<TeamOutlined />}
-            unCheckedChildren={<UserOutlined />}
-            checked={showByProject}
-            onChange={handleBreakdownModeChange}
+
+        <Space size="small">
+          <Text className="text-xs">Show by project:</Text>
+          <Switch 
+            checked={showByProject} 
+            onChange={handleBreakdownModeChange} 
             size="small"
           />
         </Space>
       </div>
-      
-      {!hasData ? (
+
+      {isLoading ? (
+        <div className="flex justify-center items-center py-4">
+          <Spin spinning={true} size="small">
+            <div className="h-12 flex items-center justify-center text-xs text-gray-500">
+              Loading data...
+            </div>
+          </Spin>
+        </div>
+      ) : !hasData ? (
         <Empty description="No engineer hours data available for any projects" />
       ) : (
         <Table
           columns={getColumns()}
           dataSource={getDataSource()}
+          rowKey={(record: any) => record.engineer ? `${record.project.id}-${record.engineer.id}` : record.project.id}
           pagination={false}
+          scroll={{ x: 'max-content' }} // Ensure horizontal scroll for many periods
           size="small"
-          scroll={{ x: 'max-content' }}
           bordered
         />
       )}
