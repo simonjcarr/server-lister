@@ -15,6 +15,7 @@ import ServerOnboardingStatus from "./ServerOnboardingStatus"
 import ProjectTabData from "./project/ProjectTabData"
 import ViewServerTasks from "./ViewServerTasks"
 import { EngineerHoursTab } from "./engineerHours"
+import { ChatPanel } from "@/app/components/chat/ChatPanel"
 
 
 const ViewServerTabs = ({ serverId }: { serverId: number }) => {
@@ -39,6 +40,7 @@ const ViewServerTabs = ({ serverId }: { serverId: number }) => {
     { key: 'notes', label: 'Notes', children: <ViewServerNotes serverId={serverId} /> },
     { key: 'tasks', label: 'Tasks', children: <ViewServerTasks serverId={serverId} /> },
     { key: 'hours', label: 'Engineer Hours', children: <EngineerHoursTab serverId={serverId} /> },
+    { key: 'chat', label: 'Chat', children: <ChatPanel serverId={serverId} /> },
   ]
   return (
     <App>
