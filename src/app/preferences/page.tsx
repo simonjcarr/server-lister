@@ -8,6 +8,8 @@ const { Title } = Typography;
 
 const PreferencesPage: React.FC = () => {
   const { data: session } = useSession();
+  // Will be used when implementing preference storage functionality
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const userId = session?.user?.id;
 
   // Tabs setup for different preference categories

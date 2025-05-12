@@ -140,7 +140,11 @@ const NotificationTable = ({ handleClickNotification }: { handleClickNotificatio
   
   const { data: notifications, isLoading, error } = useQuery({
     queryKey: ['notifications'],
-    queryFn: () => getUsersNotifications(),
+    // Type assertion to fix Json type compatibility with the SelectNotification
+    queryFn: async () => {
+      const data = await getUsersNotifications();
+      return data as SelectNotification[];
+    },
     refetchInterval: 5000,
     staleTime: 5000
   })

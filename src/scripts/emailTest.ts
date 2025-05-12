@@ -38,7 +38,7 @@ async function testEmailNotification() {
     }
 
     const task = taskResult[0];
-    console.log(`Found task: "${task.tasks.title}" owned by "${task.users.name}" (${task.users.email})`);
+    console.log(`Found task: "${task.tasks.title}" owned by "${task.user.name}" (${task.user.email})`);
     
     if (testEmail) {
       console.log(`NOTE: Email will be sent to ${testEmail} instead of the actual task owner`);

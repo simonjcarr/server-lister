@@ -28,7 +28,8 @@ interface BulkNotificationOptions {
  */
 export async function createNotification(options: NotificationOptions) {
   const now = new Date();
-  const deliveryStatus: Record<string, any> = {};
+  // Use a regular object that will be stored as JSON in the database
+  const deliveryStatus: Record<string, unknown> = {};
   
   // Insert notification into database
   const [notification] = await db
@@ -49,11 +50,13 @@ export async function createNotification(options: NotificationOptions) {
   if (['browser', 'both'].includes(options.deliveryType)) {
     // Send browser notification via SSE
     try {
-      await sendNotificationEvent(options.userId, notification, { internal: true });
-      deliveryStatus.browser = { sent: true, sentAt: new Date().toISOString() };
+      // Cast notification to ensure type compatibility with Json type
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await sendNotificationEvent(options.userId, notification as any, { internal: true });
+      deliveryStatus['browser'] = { sent: true, sentAt: new Date().toISOString() };
     } catch (error) {
       console.error('Failed to send browser notification:', error);
-      deliveryStatus.browser = { sent: false, error: (error as Error).message };
+      deliveryStatus['browser'] = { sent: false, error: (error as Error).message };
     }
   }
 
@@ -77,13 +80,13 @@ export async function createNotification(options: NotificationOptions) {
         };
         
         const jobId = await queueEmail(emailData);
-        deliveryStatus.email = { queued: true, jobId, queuedAt: new Date().toISOString() };
+        deliveryStatus['email'] = { queued: true, jobId, queuedAt: new Date().toISOString() };
       } else {
-        deliveryStatus.email = { sent: false, error: 'User email not found' };
+        deliveryStatus['email'] = { sent: false, error: 'User email not found' };
       }
     } catch (error) {
       console.error('Failed to queue email notification:', error);
-      deliveryStatus.email = { sent: false, error: (error as Error).message };
+      deliveryStatus['email'] = { sent: false, error: (error as Error).message };
     }
   }
 

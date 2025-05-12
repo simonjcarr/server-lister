@@ -1,13 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { queueEmail } from '@/lib/email/emailQueue';
 import { type EmailData } from '@/lib/email/emailService';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/app/auth.config';
+import { auth } from '@/auth';
 
 export async function POST(req: NextRequest) {
   try {
     // Check authentication
-    const session = await getServerSession(authOptions);
+    const session = await auth();
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
