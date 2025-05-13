@@ -124,6 +124,15 @@ const App: React.FC = () => {
           onClick: () => {
             router.push('/server/favourites');
           },
+        },
+        {
+          key: 'server-build-docs',
+          "data-testid": 'test-left-menu-server-build-docs',
+          label: 'Build Documentation',
+          icon: <FaFileInvoiceDollar />,
+          onClick: () => {
+            router.push('/server/list?tabKey=buildDocs');
+          },
         }
 
       ],

@@ -16,9 +16,11 @@ import ProjectTabData from "./project/ProjectTabData"
 import ViewServerTasks from "./ViewServerTasks"
 import { EngineerHoursTab } from "./engineerHours"
 import { ChatPanel } from "@/app/components/chat/ChatPanel"
+import { useRouter } from "next/navigation"
 
 
 const ViewServerTabs = ({ serverId }: { serverId: number }) => {
+  const router = useRouter();
   const { data, error, isLoading } = useQuery({
     queryKey: ["server", serverId],
     queryFn: () => getServerById(serverId),
@@ -26,6 +28,11 @@ const ViewServerTabs = ({ serverId }: { serverId: number }) => {
     staleTime: 600000, // 10 minutes
     refetchInterval: 600000, // 10 minutes
   })
+  
+  // Handle build docs navigation
+  const handleBuildDocsClick = () => {
+    router.push(`/server/view/${serverId}/build-docs`);
+  }; 
   const items = [
     { key: 'hardware', label: 'Hardware', children: <HardwareTabData serverId={serverId} /> },
     { key: 'network', label: 'Network', children: <NetworkTabData serverId={serverId} /> },
@@ -40,6 +47,7 @@ const ViewServerTabs = ({ serverId }: { serverId: number }) => {
     { key: 'notes', label: 'Notes', children: <ViewServerNotes serverId={serverId} /> },
     { key: 'tasks', label: 'Tasks', children: <ViewServerTasks serverId={serverId} /> },
     { key: 'hours', label: 'Engineer Hours', children: <EngineerHoursTab serverId={serverId} /> },
+    { key: 'buildDocs', label: 'Build Docs', children: <div className="p-4"><button onClick={handleBuildDocsClick} className="ant-btn ant-btn-primary">View Build Documentation</button></div> },
     { key: 'chat', label: 'Chat', children: <ChatPanel serverId={serverId} /> },
   ]
   return (

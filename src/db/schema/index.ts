@@ -18,3 +18,5 @@ export * from './bookingCodes';
 export * from './softwareWhitelist';
 export * from './serverTasks';
 export * from './engineerHours';
+export * from './buildDocs';
+export * from './preferences';
