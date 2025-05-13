@@ -4,7 +4,16 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { Button, Card, Typography, Skeleton, App, Tabs, Tree, Input, Modal, Form, Space, Divider, Dropdown, Select } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined, FileAddOutlined, DownOutlined, EyeOutlined, ExportOutlined, FileOutlined } from '@ant-design/icons';
+import { PlusOutlined, DeleteOutlined, EditOutlined, FileOutlined, EyeOutlined, DownOutlined, FileAddOutlined, ExportOutlined } from '@ant-design/icons';
+import type { DataNode } from 'antd/es/tree';
+import ReactMarkdown from 'react-markdown';
+import rehypeHighlight from 'rehype-highlight';
+import rehypeRaw from 'rehype-raw';
+import remarkGfm from 'remark-gfm';
+
+// Import syntax highlighting CSS
+import 'highlight.js/styles/github-dark.css';
+
 import {
   useBuildDoc,
   useBuildDocSections,
@@ -15,8 +24,6 @@ import {
   useCreateSectionFromTemplate,
   BuildDocSection
 } from '@/app/actions/buildDocs/clientActions';
-import { DataNode } from 'antd/es/tree';
-import ReactMarkdown from 'react-markdown';
 
 const { Title, Paragraph } = Typography;
 const { TextArea } = Input;
@@ -470,11 +477,18 @@ export default function BuildDocDetailPage() {
                       </span>
                     ),
                     children: (
-                      <div className="prose max-w-none border p-4 rounded min-h-[300px] bg-white">
+                      <div className="prose dark:prose-invert max-w-none border p-4 rounded min-h-[300px] dark:bg-gray-800 bg-white dark:text-gray-100">
                         {sectionContent ? (
-                          <ReactMarkdown>{sectionContent}</ReactMarkdown>
+                          <div className="dark:text-gray-200">
+                            <ReactMarkdown
+                              rehypePlugins={[rehypeRaw, [rehypeHighlight, { detect: true }]]}
+                              remarkPlugins={[remarkGfm]}
+                            >
+                              {sectionContent}
+                            </ReactMarkdown>
+                          </div>
                         ) : (
-                          <p className="text-gray-400 italic">No content to preview</p>
+                          <p className="text-gray-400 italic dark:text-gray-400">No content to preview</p>
                         )}
                       </div>
                     ),
