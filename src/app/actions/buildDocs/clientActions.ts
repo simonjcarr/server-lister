@@ -234,6 +234,8 @@ export function useCreateBuildDocSectionTemplate() {
       content?: string; 
       tags?: string[];
       isPublic?: boolean;
+      parentTemplateId?: number;
+      order?: number;
       userId: string;
     }) => {
       return crudActions.createBuildDocSectionTemplate(data);
@@ -244,6 +246,29 @@ export function useCreateBuildDocSectionTemplate() {
     },
     onError: () => {
       message.error('Failed to create template');
+    },
+  });
+}
+
+// Hook to create a template from a section with all its children
+export function useCreateTemplateFromSection() {
+  const queryClient = useQueryClient();
+  const { message } = App.useApp();
+
+  return useMutation({
+    mutationFn: async (data: { 
+      sectionId: number;
+      isPublic?: boolean;
+      userId: string;
+    }) => {
+      return crudActions.createTemplateFromSection(data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['buildDocSectionTemplates'] });
+      message.success('Template with child sections created successfully');
+    },
+    onError: () => {
+      message.error('Failed to create template with child sections');
     },
   });
 }

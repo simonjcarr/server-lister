@@ -332,9 +332,11 @@ export async function createBuildDocSectionTemplate(data: {
   content?: string; 
   tags?: string[];
   isPublic?: boolean;
+  parentTemplateId?: number;
+  order?: number;
   userId: string;
 }) {
-  const { title, content, tags = [], isPublic = true, userId } = data;
+  const { title, content, tags = [], isPublic = true, parentTemplateId = null, order = 0, userId } = data;
   
   try {
     const [newTemplate] = await db.insert(buildDocSectionTemplates)
@@ -343,6 +345,8 @@ export async function createBuildDocSectionTemplate(data: {
         content: content || null,
         tags,
         isPublic,
+        parentTemplateId: parentTemplateId || null,
+        order,
         createdBy: userId,
         updatedBy: userId,
         createdAt: new Date(),
@@ -355,6 +359,81 @@ export async function createBuildDocSectionTemplate(data: {
   } catch (error) {
     console.error('Error creating build doc section template:', error);
     return { success: false, error: 'Failed to create build doc section template' };
+  }
+}
+
+// Create a template from a section including all its child sections
+export async function createTemplateFromSection(data: {
+  sectionId: number;
+  isPublic?: boolean;
+  userId: string;
+}) {
+  const { sectionId, isPublic = true, userId } = data;
+  
+  try {
+    // Get the section to template
+    const section = await db.query.buildDocSections.findFirst({
+      where: eq(buildDocSections.id, sectionId),
+    });
+    
+    if (!section) {
+      return { success: false, error: 'Section not found' };
+    }
+    
+    // Create the root template
+    const rootTemplateResult = await createBuildDocSectionTemplate({
+      title: section.title,
+      content: section.content || '',
+      isPublic,
+      userId,
+    });
+    
+    if (!rootTemplateResult.success || !rootTemplateResult.data) {
+      return { success: false, error: 'Failed to create root template' };
+    }
+    
+    const rootTemplateId = rootTemplateResult.data.id;
+    
+    // Find all child sections
+    const childSections = await getChildBuildDocSections(sectionId);
+    
+    // Recursively template all child sections
+    await _createTemplatesForChildren(childSections, rootTemplateId, isPublic, userId);
+    
+    return { success: true, data: rootTemplateResult.data };
+  } catch (error) {
+    console.error('Error creating template from section:', error);
+    return { success: false, error: 'Failed to create template from section' };
+  }
+}
+
+// Helper function to recursively create templates for child sections
+async function _createTemplatesForChildren(
+  sections: BuildDocSection[],
+  parentTemplateId: number,
+  isPublic: boolean,
+  userId: string
+) {
+  for (const section of sections) {
+    // Create template for this section
+    const templateResult = await createBuildDocSectionTemplate({
+      title: section.title,
+      content: section.content || '',
+      isPublic,
+      parentTemplateId,
+      order: section.order,
+      userId,
+    });
+    
+    if (templateResult.success && templateResult.data) {
+      // Get this section's children
+      const childSections = await getChildBuildDocSections(section.id);
+      
+      if (childSections.length > 0) {
+        // Recursively create templates for this section's children
+        await _createTemplatesForChildren(childSections, templateResult.data.id, isPublic, userId);
+      }
+    }
   }
 }
 
@@ -376,6 +455,7 @@ export async function createSectionFromTemplate(data: {
       return { success: false, error: 'Template not found' };
     }
 
+    // Create the root section
     const result = await createBuildDocSection({
       buildDocId,
       parentSectionId,
@@ -384,9 +464,62 @@ export async function createSectionFromTemplate(data: {
       userId,
     });
 
+    if (!result.success || !result.data) {
+      return { success: false, error: 'Failed to create section from template' };
+    }
+
+    // Get child templates if any
+    const childTemplates = await db.select()
+      .from(buildDocSectionTemplates)
+      .where(eq(buildDocSectionTemplates.parentTemplateId, templateId))
+      .orderBy(buildDocSectionTemplates.order);
+
+    if (childTemplates.length > 0) {
+      // Recursively create child sections from child templates
+      await _createSectionsFromChildTemplates(childTemplates, buildDocId, result.data.id, userId);
+    }
+
     return result;
   } catch (error) {
     console.error('Error creating section from template:', error);
     return { success: false, error: 'Failed to create section from template' };
+  }
+}
+
+// Helper function to recursively create sections from child templates
+async function _createSectionsFromChildTemplates(
+  childTemplates: typeof buildDocSectionTemplates.$inferSelect[],
+  buildDocId: number,
+  parentSectionId: number,
+  userId: string
+) {
+  for (const childTemplate of childTemplates) {
+    // Create section for this child template
+    const childSectionResult = await createBuildDocSection({
+      buildDocId,
+      parentSectionId,
+      title: childTemplate.title,
+      content: childTemplate.content || '',
+      order: childTemplate.order,
+      userId,
+    });
+    
+    if (childSectionResult.success && childSectionResult.data) {
+      // Get this template's children
+      const nestedChildTemplates = await db.select()
+        .from(buildDocSectionTemplates)
+        .where(eq(buildDocSectionTemplates.parentTemplateId, childTemplate.id))
+        .orderBy(buildDocSectionTemplates.order);
+      
+      if (nestedChildTemplates.length > 0) {
+        // Recursively create sections for the child templates
+        await _createSectionsFromChildTemplates(
+          nestedChildTemplates, 
+          buildDocId,
+          childSectionResult.data.id,
+          userId
+        );
+      }
+    }
   }
 }

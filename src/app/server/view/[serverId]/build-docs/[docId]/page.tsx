@@ -23,6 +23,7 @@ import {
   useBuildDocSectionTemplates,
   useCreateSectionFromTemplate,
   useCreateBuildDocSectionTemplate,
+  useCreateTemplateFromSection,
   BuildDocSection
 } from '@/app/actions/buildDocs/clientActions';
 
@@ -56,6 +57,7 @@ export default function BuildDocDetailPage() {
   const { data: sectionsData, isLoading: isLoadingSections, refetch: refetchSections } = useBuildDocSections(buildDocId);
   const { data: templatesData } = useBuildDocSectionTemplates();
   const { mutate: createTemplate, isPending: isCreatingTemplate } = useCreateBuildDocSectionTemplate();
+  const { mutate: createTemplateFromSection, isPending: isCreatingTemplateFromSection } = useCreateTemplateFromSection();
   
   // Type guard for section data response
   type SectionResponse = { success: boolean; data: BuildDocSection[] };
@@ -302,17 +304,35 @@ export default function BuildDocDetailPage() {
   
   // Handle saving section as template
   const handleSaveAsTemplate = () => {
-    if (!session?.user?.id || !selectedSection || !sectionContent) return;
+    if (!session?.user?.id || !selectedSection) return;
     
     modal.confirm({
       title: 'Save as Template',
-      content: 'This will save the current section content as a reusable template. Continue?',
+      content: 'Do you want to save just this section, or this section and all its child sections? Saving with child sections will preserve the complete structure.',
+      okText: 'Save with Child Sections',
+      cancelText: 'Save This Section Only',
       onOk: () => {
+        // Save section with all children
+        createTemplateFromSection({
+          sectionId: selectedSection.id,
+          isPublic: true,
+          userId: session.user.id || ''
+        }, {
+          onSuccess: () => {
+            message.success('Template with child sections saved successfully');
+          },
+          onError: () => {
+            message.error('Failed to save template with child sections');
+          }
+        });
+      },
+      onCancel: () => {
+        // Save just this section
         createTemplate({
           title: selectedSection.title,
-          content: sectionContent,
+          content: sectionContent || '',
           isPublic: true,
-          userId: session.user.id || '' // Add fallback to empty string for TypeScript
+          userId: session.user.id || ''
         }, {
           onSuccess: () => {
             message.success('Template saved successfully');
@@ -502,7 +522,7 @@ export default function BuildDocDetailPage() {
                         <div className="flex justify-between">
                           <Button 
                             onClick={handleSaveAsTemplate}
-                            loading={isCreatingTemplate}
+                            loading={isCreatingTemplate || isCreatingTemplateFromSection}
                           >
                             Save as Template
                           </Button>

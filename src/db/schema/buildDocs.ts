@@ -54,6 +54,8 @@ export const buildDocSectionTemplates = pgTable(
     content: text("content"),
     tags: text("tags").array(),
     isPublic: boolean("is_public").notNull().default(true),
+    parentTemplateId: integer("parent_template_id").references((): AnyPgColumn => buildDocSectionTemplates.id, { onDelete: "cascade" }),
+    order: integer("order").notNull().default(0),
     createdBy: text("created_by").notNull().references(() => users.id),
     updatedBy: text("updated_by").notNull().references(() => users.id),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
