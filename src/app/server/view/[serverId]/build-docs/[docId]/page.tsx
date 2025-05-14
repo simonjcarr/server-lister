@@ -483,6 +483,27 @@ export default function BuildDocDetailPage() {
                             <ReactMarkdown
                               rehypePlugins={[rehypeRaw, [rehypeHighlight, { detect: true }]]}
                               remarkPlugins={[remarkGfm]}
+                              components={{
+                                h1: ({...props}) => <h1 className="text-2xl font-bold mt-4 mb-2" {...props} />,
+                                h2: ({...props}) => <h2 className="text-xl font-bold mt-3 mb-2" {...props} />,
+                                h3: ({...props}) => <h3 className="text-lg font-semibold mt-3 mb-2" {...props} />,
+                                h4: ({...props}) => <h4 className="text-base font-semibold mt-2 mb-1" {...props} />,
+                                h5: ({...props}) => <h5 className="text-sm font-semibold mt-2 mb-1" {...props} />,
+                                h6: ({...props}) => <h6 className="text-sm font-semibold mt-2 mb-1" {...props} />,
+                                p: ({...props}) => <p className="my-2" {...props} />,
+                                ul: ({...props}) => <ul className="list-disc pl-6 my-2" {...props} />,
+                                ol: ({...props}) => <ol className="list-decimal pl-6 my-2" {...props} />,
+                                li: ({...props}) => <li className="my-1" {...props} />,
+                                a: ({...props}) => <a className="text-blue-500 hover:underline" {...props} />,
+                                blockquote: ({...props}) => <blockquote className="border-l-4 border-gray-300 dark:border-gray-600 pl-4 my-2 italic" {...props} />,
+                                code: (props) => {
+                                  // @ts-expect-error - inline is a valid prop for code components in react-markdown
+                                  const isInline = props.inline;
+                                  return isInline 
+                                    ? <code className="bg-gray-100 dark:bg-gray-700 px-1 py-0.5 rounded text-red-500 dark:text-red-400" {...props} />
+                                    : <code {...props} />;
+                                }
+                              }}
                             >
                               {sectionContent}
                             </ReactMarkdown>
