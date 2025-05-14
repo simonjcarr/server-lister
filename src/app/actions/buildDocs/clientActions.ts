@@ -189,6 +189,35 @@ export function useUpdateBuildDocSection() {
   });
 }
 
+// Hook to update section order (for drag and drop)
+export function useUpdateSectionOrder() {
+  const queryClient = useQueryClient();
+  const { message } = App.useApp();
+
+  return useMutation({
+    mutationFn: async (data: { 
+      sectionId: number; 
+      buildDocId: number; // Used for cache invalidation after update
+      newOrder: number;
+      newParentId?: number | null;
+      userId: string;
+    }) => {
+      return crudActions.updateSectionOrder({
+        sectionId: data.sectionId,
+        newOrder: data.newOrder,
+        newParentId: data.newParentId,
+        userId: data.userId
+      });
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['buildDocSections', variables.buildDocId] });
+    },
+    onError: () => {
+      message.error('Failed to reorder section');
+    },
+  });
+}
+
 // Hook to delete a section
 export function useDeleteBuildDocSection() {
   const queryClient = useQueryClient();

@@ -1,15 +1,31 @@
 'use client';
 
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
-import { Button, Card, Typography, Skeleton, App, Tabs, Tree, Input, Modal, Form, Space, Divider, Dropdown, Select } from 'antd';
-import { PlusOutlined, DeleteOutlined, EditOutlined, FileOutlined, EyeOutlined, DownOutlined, FileAddOutlined, ExportOutlined, FolderAddOutlined } from '@ant-design/icons';
-import type { DataNode } from 'antd/es/tree';
+import { Button, Card, Typography, Skeleton, App, Tabs, Input, Modal, Form, Space, Divider, Dropdown, Select } from 'antd';
+import { PlusOutlined, DeleteOutlined, EditOutlined, EyeOutlined, DownOutlined, FileAddOutlined, ExportOutlined, FolderAddOutlined, HolderOutlined } from '@ant-design/icons';
 import ReactMarkdown from 'react-markdown';
 import rehypeHighlight from 'rehype-highlight';
 import rehypeRaw from 'rehype-raw';
 import remarkGfm from 'remark-gfm';
+import { 
+  DndContext, 
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 // Import syntax highlighting CSS
 import 'highlight.js/styles/github-dark.css';
@@ -19,6 +35,7 @@ import {
   useBuildDocSections,
   useCreateBuildDocSection,
   useUpdateBuildDocSection,
+  useUpdateSectionOrder,
   useDeleteBuildDocSection,
   useBuildDocSectionTemplates,
   useCreateSectionFromTemplate,
@@ -31,6 +48,87 @@ const { Title, Paragraph } = Typography;
 const { TextArea } = Input;
 
 type TabKey = 'edit' | 'preview';
+
+// SortableItem component for each section
+function SortableItem({ 
+  id, 
+  title, 
+  children, 
+  onSelect,
+  onAddChild,
+  isSelected,
+  hasChildren
+}: { 
+  id: string; 
+  title: string; 
+  children?: React.ReactNode; 
+  onSelect: (id: string) => void;
+  onAddChild: (parentId: number) => void;
+  isSelected: boolean;
+  hasChildren: boolean;
+}) {
+  const [expanded, setExpanded] = useState(true);
+  
+  const { 
+    attributes, 
+    listeners, 
+    setNodeRef, 
+    transform, 
+    transition,
+    isDragging
+  } = useSortable({ id });
+  
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    position: 'relative' as const,
+    marginBottom: '4px',
+    backgroundColor: isSelected ? 'rgba(24, 144, 255, 0.1)' : 'transparent',
+    borderRadius: '4px',
+    padding: '4px 8px',
+    border: isSelected ? '1px solid #1890ff' : '1px solid transparent',
+  };
+  
+  const toggleExpand = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setExpanded(!expanded);
+  };
+  
+  return (
+    <div ref={setNodeRef} style={style}>
+      <div className="flex items-center justify-between w-full">
+        <div className="flex items-center flex-1">
+          <div {...listeners} {...attributes} className="mr-2 cursor-grab">
+            <HolderOutlined />
+          </div>
+          {hasChildren && (
+            <div 
+              className="mr-1 cursor-pointer text-gray-500 hover:text-gray-700" 
+              onClick={toggleExpand}
+            >
+              {expanded ? <DownOutlined /> : <span style={{ display: 'inline-block', transform: 'rotate(-90deg)' }}>▼</span>}
+            </div>
+          )}
+          <div className="flex-1" onClick={() => onSelect(id)}>
+            <span>{title}</span>
+          </div>
+        </div>
+        <Button 
+          type="text" 
+          size="small" 
+          icon={<FolderAddOutlined />} 
+          onClick={(e) => {
+            e.stopPropagation();
+            onAddChild(parseInt(id, 10));
+          }}
+          title="Add child section"
+        />
+      </div>
+      {children && expanded && <div className="pl-6 mt-2">{children}</div>}
+    </div>
+  );
+}
 
 export default function BuildDocDetailPage() {
   const { serverId, docId } = useParams<{ serverId: string; docId: string }>();
@@ -52,12 +150,21 @@ export default function BuildDocDetailPage() {
   const [isEditMode, setIsEditMode] = useState(false);
   const [form] = Form.useForm();
   
+  // Drag and drop sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+  
   // Queries
   const { data: buildDocData, isLoading: isLoadingDoc } = useBuildDoc(buildDocId);
   const { data: sectionsData, isLoading: isLoadingSections, refetch: refetchSections } = useBuildDocSections(buildDocId);
   const { data: templatesData } = useBuildDocSectionTemplates(true); // Get root templates only
   const { mutate: createTemplate, isPending: isCreatingTemplate } = useCreateBuildDocSectionTemplate();
   const { mutate: createTemplateFromSection, isPending: isCreatingTemplateFromSection } = useCreateTemplateFromSection();
+  const { mutate: updateSectionOrder } = useUpdateSectionOrder();
   
   // Type guard for section data response
   type SectionResponse = { success: boolean; data: BuildDocSection[] };
@@ -91,41 +198,131 @@ export default function BuildDocDetailPage() {
       : [];
   }, [templatesData, isTemplateResponse]);
   
-  // Create a parent-child tree from flat section data
-  const createSectionTree = (sections: BuildDocSection[]): DataNode[] => {
-    // Create a map of all sections by id for easy lookup
-    const sectionsById = new Map<number, BuildDocSection>();
-    sections.forEach(section => sectionsById.set(section.id, section));
+  // Group sections by their parent for the draggable tree structure
+  const getSectionsGroupedByParent = useCallback((sectionList: BuildDocSection[]) => {
+    const result = new Map<number | null, BuildDocSection[]>();
     
-    // Group sections by their parent id
-    const childrenMap = new Map<number | null, BuildDocSection[]>();
-    
-    sections.forEach(section => {
+    sectionList.forEach(section => {
       const parentId = section.parentSectionId;
-      if (!childrenMap.has(parentId)) {
-        childrenMap.set(parentId, []);
+      if (!result.has(parentId)) {
+        result.set(parentId, []);
       }
-      childrenMap.get(parentId)?.push(section);
+      result.get(parentId)?.push(section);
     });
     
-    // Recursive function to build the tree
-    const buildTree = (parentId: number | null): DataNode[] => {
-      const children = childrenMap.get(parentId) || [];
-      return children
-        .sort((a, b) => a.order - b.order) // Sort by order
-        .map(section => ({
-          key: section.id.toString(),
-          title: section.title,
-          icon: <FileOutlined />,
-          children: buildTree(section.id)
-        }));
+    // Sort each group by order
+    result.forEach((sectionList) => {
+      sectionList.sort((a, b) => a.order - b.order);
+    });
+    
+    return result;
+  }, []);
+  
+  // Function to render the sortable tree
+  const SortableSectionTree = () => {
+    
+    const sectionsByParent = getSectionsGroupedByParent(sections);
+    
+    // Function to handle drag end and reordering
+    const handleDragEnd = (event: DragEndEvent) => {
+      const { active, over } = event;
+      
+      if (!over || active.id === over.id) {
+        return;
+      }
+      
+      // Find the affected sections
+      const activeSection = sections.find(s => s.id.toString() === active.id);
+      const overSection = sections.find(s => s.id.toString() === over.id);
+      
+      if (!activeSection || !overSection || !session?.user?.id) {
+        return;
+      }
+      
+      // If both sections have the same parent, just reorder
+      if (activeSection.parentSectionId === overSection.parentSectionId) {
+        const parentId = activeSection.parentSectionId;
+        const sectionsWithSameParent = [...(sectionsByParent.get(parentId) || [])];
+        
+        const oldIndex = sectionsWithSameParent.findIndex(s => s.id === activeSection.id);
+        const newIndex = sectionsWithSameParent.findIndex(s => s.id === overSection.id);
+        
+        if (oldIndex !== -1 && newIndex !== -1) {
+          // Reorder the array
+          const newSectionsOrder = arrayMove(sectionsWithSameParent, oldIndex, newIndex);
+          
+          // Update orders in database
+          newSectionsOrder.forEach((section, index) => {
+            updateSectionOrder({
+              sectionId: section.id,
+              buildDocId,
+              newOrder: index,
+              userId: session.user.id || ''
+            });
+          });
+        }
+      } else {
+        // If changing parent, we need to update the section's parent and order
+        const newParentId = overSection.parentSectionId;
+        const sectionsWithNewParent = [...(sectionsByParent.get(newParentId) || [])];
+        
+        // Find the index where the section should be inserted
+        const newIndex = sectionsWithNewParent.findIndex(s => s.id === overSection.id);
+        
+        // Update the section with new parent and order
+        updateSectionOrder({
+          sectionId: activeSection.id,
+          buildDocId,
+          newOrder: newIndex,
+          newParentId,
+          userId: session.user.id || ''
+        });
+      }
     };
     
-    // Start with root sections (parentId = null)
-    return buildTree(null);
+    // Recursive function to render section tree
+    const renderSections = (parentId: number | null): React.ReactNode[] => {
+      const parentSections = sectionsByParent.get(parentId) || [];
+      
+      if (parentSections.length === 0) {
+        return [];
+      }
+      
+      return parentSections.map(section => {
+        const sectionId = section.id.toString();
+        const hasChildren = sectionsByParent.has(section.id) && sectionsByParent.get(section.id)!.length > 0;
+        
+        return (
+          <SortableItem 
+            key={sectionId}
+            id={sectionId}
+            title={section.title}
+            onSelect={(id) => handleSelectSection([id])}
+            onAddChild={showAddSectionModal}
+            isSelected={selectedSectionId === section.id}
+            hasChildren={hasChildren}
+          >
+            {hasChildren && renderSections(section.id)}
+          </SortableItem>
+        );
+      });
+    };
+    
+    return (
+      <DndContext 
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragEnd={handleDragEnd}
+      >
+        <SortableContext
+          items={sections.map(section => section.id.toString())}
+          strategy={verticalListSortingStrategy}
+        >
+          {renderSections(null)}
+        </SortableContext>
+      </DndContext>
+    );
   };
-  
-  const treeData = createSectionTree(sections);
   
   // Function to get all section options for parent section dropdown
   const getSectionOptions = () => {
@@ -445,33 +642,11 @@ export default function BuildDocDetailPage() {
                 </Button>
               </div>
             ) : (
-              <div>
-                <Tree
-                  showLine
-                  treeData={treeData}
-                  onSelect={handleSelectSection}
-                  selectedKeys={selectedSectionId ? [selectedSectionId.toString()] : []}
-                  titleRender={(nodeData) => {
-                    const nodeId = parseInt(nodeData.key.toString(), 10);
-                    return (
-                      <div className="flex items-center justify-between w-full">
-                        <span>{nodeData.title?.toString()}</span>
-                        <div className="flex items-center ml-2 opacity-0 group-hover:opacity-100 hover:opacity-100">
-                          <Button 
-                            type="text" 
-                            size="small" 
-                            icon={<FolderAddOutlined />} 
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              showAddSectionModal(nodeId);
-                            }}
-                            title="Add child section"
-                          />
-                        </div>
-                      </div>
-                    );
-                  }}
-                />
+              <div className="mt-2">
+                <div className="mb-3 text-xs text-gray-500 flex items-center">
+                  <HolderOutlined className="mr-1" /> Drag sections to reorder or change parent
+                </div>
+                <SortableSectionTree />
               </div>
             )}
           </Card>

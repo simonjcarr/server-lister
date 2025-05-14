@@ -331,6 +331,47 @@ export async function updateBuildDocSection(data: {
   }
 }
 
+// Update section order - used for drag and drop reordering
+export async function updateSectionOrder(data: {
+  sectionId: number;
+  newOrder: number;
+  newParentId?: number | null;
+  userId: string;
+}) {
+  const { sectionId, newOrder, newParentId, userId } = data;
+  
+  try {
+    const existingSection = await db.query.buildDocSections.findFirst({
+      where: eq(buildDocSections.id, sectionId),
+    });
+
+    if (!existingSection) {
+      return { success: false, error: 'Section not found' };
+    }
+
+    const [updatedSection] = await db.update(buildDocSections)
+      .set({
+        order: newOrder,
+        ...(newParentId !== undefined && { parentSectionId: newParentId }),
+        updatedBy: userId,
+        updatedAt: new Date(),
+      })
+      .where(eq(buildDocSections.id, sectionId))
+      .returning();
+
+    const buildDocResult = await getBuildDoc(existingSection.buildDocId);
+    
+    if (buildDocResult.success && buildDocResult.data) {
+      revalidatePath(`/server/view/${buildDocResult.data.serverId}/build-docs/${existingSection.buildDocId}`);
+    }
+    
+    return { success: true, data: updatedSection };
+  } catch (error) {
+    console.error('Error updating section order:', error);
+    return { success: false, error: 'Failed to update section order' };
+  }
+}
+
 // Delete a build doc section
 export async function deleteBuildDocSection(id: number) {
   try {
