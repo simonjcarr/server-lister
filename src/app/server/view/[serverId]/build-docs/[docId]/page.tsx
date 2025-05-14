@@ -369,19 +369,62 @@ export default function BuildDocDetailPage() {
     return getSectionPath(section.parentSectionId, newPath);
   };
 
+  // Helper function to order sections hierarchically
+  const getOrderedSections = () => {
+    // We'll build a tree structure first and then flatten it
+    const sectionsByParent = getSectionsGroupedByParent(sections);
+    const orderedSections: BuildDocSection[] = [];
+    
+    // Function to recursively add sections in proper order
+    const addSectionsInOrder = (parentId: number | null, depth: number = 0) => {
+      const childSections = sectionsByParent.get(parentId) || [];
+      
+      // Add each child and then its descendants
+      childSections.forEach(section => {
+        // Add the current section
+        orderedSections.push({
+          ...section,
+          // Add a temporary property for depth (used for indentation/visual hierarchy)
+          depth
+        } as BuildDocSection & { depth: number });
+        
+        // Add all descendants of this section
+        addSectionsInOrder(section.id, depth + 1);
+      });
+    };
+    
+    // Start with root sections (those with no parent)
+    addSectionsInOrder(null);
+    
+    return orderedSections;
+  };
+
   // Function to get all section options for parent section dropdown
   const getSectionOptions = () => {
-    return sections.map(section => {
+    const orderedSections = getOrderedSections();
+    
+    return orderedSections.map(section => {
       // Get the full path for this section (excluding the section itself)
       const pathParts = getSectionPath(section.parentSectionId);
-      const fullPath = pathParts.length > 0 
-        ? [...pathParts, section.title].join(' > ')
-        : section.title;
       
-      return {
-        value: section.id,
-        label: fullPath
-      };
+      if (pathParts.length > 0) {
+        // Return with custom rendering that uses different styling for parent sections
+        return {
+          value: section.id,
+          label: (
+            <div>
+              <span className="text-gray-500">{pathParts.join(' > ')} &gt; </span>
+              <span className="font-medium">{section.title}</span>
+            </div>
+          )
+        };
+      } else {
+        // Simple case for root sections
+        return {
+          value: section.id,
+          label: <span className="font-medium">{section.title}</span>
+        };
+      }
     });
   };
   
