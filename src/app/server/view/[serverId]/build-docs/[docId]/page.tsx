@@ -358,12 +358,31 @@ export default function BuildDocDetailPage() {
     );
   };
   
+  // Helper function to get section path
+  const getSectionPath = (sectionId: number | null, path: string[] = []): string[] => {
+    if (!sectionId) return path;
+    
+    const section = sections.find(s => s.id === sectionId);
+    if (!section) return path;
+    
+    const newPath = [section.title, ...path];
+    return getSectionPath(section.parentSectionId, newPath);
+  };
+
   // Function to get all section options for parent section dropdown
   const getSectionOptions = () => {
-    return sections.map(section => ({
-      value: section.id,
-      label: section.title
-    }));
+    return sections.map(section => {
+      // Get the full path for this section (excluding the section itself)
+      const pathParts = getSectionPath(section.parentSectionId);
+      const fullPath = pathParts.length > 0 
+        ? [...pathParts, section.title].join(' > ')
+        : section.title;
+      
+      return {
+        value: section.id,
+        label: fullPath
+      };
+    });
   };
   
   // Effect to set section content when selection changes
