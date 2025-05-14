@@ -55,7 +55,7 @@ export default function BuildDocDetailPage() {
   // Queries
   const { data: buildDocData, isLoading: isLoadingDoc } = useBuildDoc(buildDocId);
   const { data: sectionsData, isLoading: isLoadingSections, refetch: refetchSections } = useBuildDocSections(buildDocId);
-  const { data: templatesData } = useBuildDocSectionTemplates();
+  const { data: templatesData } = useBuildDocSectionTemplates(true); // Get root templates only
   const { mutate: createTemplate, isPending: isCreatingTemplate } = useCreateBuildDocSectionTemplate();
   const { mutate: createTemplateFromSection, isPending: isCreatingTemplateFromSection } = useCreateTemplateFromSection();
   
@@ -85,7 +85,10 @@ export default function BuildDocDetailPage() {
   }, [sectionsData, isSectionResponse]);
   
   const templates = useMemo(() => {
-    return isTemplateResponse(templatesData) && templatesData.success ? templatesData.data : [];
+    return isTemplateResponse(templatesData) && templatesData.success ? templatesData.data
+      // Only include root templates in the dropdown
+      .filter((template) => template.parentTemplateId === null) 
+      : [];
   }, [templatesData, isTemplateResponse]);
   
   // Create a parent-child tree from flat section data
@@ -668,13 +671,16 @@ export default function BuildDocDetailPage() {
               label="Select Template"
               rules={[{ required: true, message: 'Please select a template' }]}
             >
-              <Select placeholder="Select a template">
-                {templates && templates.map((template) => (
-                  <Select.Option key={template.id} value={template.id}>
-                    {template.title}
-                  </Select.Option>
-                ))}
-              </Select>
+              <Select 
+                placeholder="Select a template"
+                style={{ width: '100%' }}
+                options={
+                  templates.map((template) => ({
+                    label: template.title,
+                    value: template.id
+                  }))
+                }
+              />
             </Form.Item>
           ) : (
             <Form.Item

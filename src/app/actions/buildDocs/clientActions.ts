@@ -41,11 +41,20 @@ export function useBuildDocSections(buildDocId: number | undefined) {
   });
 }
 
-// Hook to get all section templates
-export function useBuildDocSectionTemplates() {
+// Hook to get section templates, with option to get root templates only
+export function useBuildDocSectionTemplates(rootOnly: boolean = false) {
   return useQuery({
-    queryKey: ['buildDocSectionTemplates'],
-    queryFn: () => crudActions.getBuildDocSectionTemplates(),
+    queryKey: ['buildDocSectionTemplates', { rootOnly }],
+    queryFn: () => crudActions.getBuildDocSectionTemplates(true, rootOnly),
+  });
+}
+
+// Hook to get child templates for a parent template
+export function useChildTemplates(parentTemplateId: number | undefined) {
+  return useQuery({
+    queryKey: ['childTemplates', parentTemplateId],
+    queryFn: () => crudActions.getChildTemplates(parentTemplateId as number),
+    enabled: !!parentTemplateId,
   });
 }
 

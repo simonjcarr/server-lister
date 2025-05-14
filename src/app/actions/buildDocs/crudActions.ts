@@ -117,27 +117,58 @@ export async function getChildBuildDocSections(parentSectionId: number) {
 }
 
 // Get all build doc section templates
-export async function getBuildDocSectionTemplates(publicOnly: boolean = true) {
+export async function getBuildDocSectionTemplates(publicOnly: boolean = true, rootOnly: boolean = false) {
   try {
-    // Use a more specific approach to avoid typing issues
+    // Use separate queries based on parameters to avoid TypeScript issues with QueryBuilder
     let templates;
     
-    if (publicOnly) {
+    if (publicOnly && rootOnly) {
+      // Public and root templates only
+      templates = await db.select()
+        .from(buildDocSectionTemplates)
+        .where(and(
+          eq(buildDocSectionTemplates.isPublic, true),
+          isNull(buildDocSectionTemplates.parentTemplateId)
+        ))
+        .orderBy(buildDocSectionTemplates.title);
+    } else if (publicOnly) {
+      // Public templates only
       templates = await db.select()
         .from(buildDocSectionTemplates)
         .where(eq(buildDocSectionTemplates.isPublic, true))
         .orderBy(buildDocSectionTemplates.title);
+    } else if (rootOnly) {
+      // Root templates only
+      templates = await db.select()
+        .from(buildDocSectionTemplates)
+        .where(isNull(buildDocSectionTemplates.parentTemplateId))
+        .orderBy(buildDocSectionTemplates.title);
     } else {
+      // All templates
       templates = await db.select()
         .from(buildDocSectionTemplates)
         .orderBy(buildDocSectionTemplates.title);
     }
-    
 
     return { success: true, data: templates };
   } catch (error) {
     console.error('Error fetching build doc section templates:', error);
     return { success: false, error: 'Failed to fetch build doc section templates' };
+  }
+}
+
+// Get child templates for a parent template
+export async function getChildTemplates(parentTemplateId: number) {
+  try {
+    const childTemplates = await db.select()
+      .from(buildDocSectionTemplates)
+      .where(eq(buildDocSectionTemplates.parentTemplateId, parentTemplateId))
+      .orderBy(buildDocSectionTemplates.order);
+      
+    return { success: true, data: childTemplates };
+  } catch (error) {
+    console.error('Error fetching child templates:', error);
+    return { success: false, error: 'Failed to fetch child templates' };
   }
 }
 
