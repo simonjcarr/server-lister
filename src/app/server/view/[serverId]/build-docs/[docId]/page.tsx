@@ -57,7 +57,9 @@ function SortableItem({
   onSelect,
   onAddChild,
   isSelected,
-  hasChildren
+  hasChildren,
+  isExpanded,
+  onToggleExpand
 }: { 
   id: string; 
   title: string; 
@@ -66,9 +68,9 @@ function SortableItem({
   onAddChild: (parentId: number) => void;
   isSelected: boolean;
   hasChildren: boolean;
+  isExpanded: boolean;
+  onToggleExpand: (id: string, expanded: boolean) => void;
 }) {
-  const [expanded, setExpanded] = useState(true);
-  
   const { 
     attributes, 
     listeners, 
@@ -92,7 +94,7 @@ function SortableItem({
   
   const toggleExpand = (e: React.MouseEvent) => {
     e.stopPropagation();
-    setExpanded(!expanded);
+    onToggleExpand(id, !isExpanded);
   };
   
   return (
@@ -107,7 +109,7 @@ function SortableItem({
               className="mr-1 cursor-pointer text-gray-500 hover:text-gray-700" 
               onClick={toggleExpand}
             >
-              {expanded ? <DownOutlined /> : <span style={{ display: 'inline-block', transform: 'rotate(-90deg)' }}>▼</span>}
+              {isExpanded ? <DownOutlined /> : <span style={{ display: 'inline-block', transform: 'rotate(-90deg)' }}>▼</span>}
             </div>
           )}
           <div className="flex-1" onClick={() => onSelect(id)}>
@@ -125,7 +127,7 @@ function SortableItem({
           title="Add child section"
         />
       </div>
-      {children && expanded && <div className="pl-6 mt-2">{children}</div>}
+      {children && isExpanded && <div className="pl-6 mt-2">{children}</div>}
     </div>
   );
 }
@@ -148,6 +150,7 @@ export default function BuildDocDetailPage() {
   const [addModalType, setAddModalType] = useState<'new' | 'template'>('new');
   const [newSectionParentId, setNewSectionParentId] = useState<number | undefined>(undefined);
   const [isEditMode, setIsEditMode] = useState(false);
+  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
   const [form] = Form.useForm();
   
   // Drag and drop sensors
@@ -217,6 +220,26 @@ export default function BuildDocDetailPage() {
     
     return result;
   }, []);
+  
+  // Function to handle toggling section expansion
+  const handleToggleExpand = (sectionId: string, expanded: boolean) => {
+    setExpandedSections(prev => ({
+      ...prev,
+      [sectionId]: expanded
+    }));
+  };
+  
+  // Initialize expanded sections if needed
+  useEffect(() => {
+    // By default, set all sections to expanded when first loaded
+    if (sections.length > 0 && Object.keys(expandedSections).length === 0) {
+      const initialExpandedState: Record<string, boolean> = {};
+      sections.forEach(section => {
+        initialExpandedState[section.id.toString()] = true;
+      });
+      setExpandedSections(initialExpandedState);
+    }
+  }, [sections, expandedSections]);
   
   // Function to render the sortable tree
   const SortableSectionTree = () => {
@@ -301,6 +324,8 @@ export default function BuildDocDetailPage() {
             onAddChild={showAddSectionModal}
             isSelected={selectedSectionId === section.id}
             hasChildren={hasChildren}
+            isExpanded={expandedSections[sectionId] !== false} // Default to true if not explicitly set to false
+            onToggleExpand={handleToggleExpand}
           >
             {hasChildren && renderSections(section.id)}
           </SortableItem>
