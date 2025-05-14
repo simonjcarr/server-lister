@@ -22,6 +22,7 @@ import {
   useDeleteBuildDocSection,
   useBuildDocSectionTemplates,
   useCreateSectionFromTemplate,
+  useCreateBuildDocSectionTemplate,
   BuildDocSection
 } from '@/app/actions/buildDocs/clientActions';
 
@@ -36,7 +37,7 @@ export default function BuildDocDetailPage() {
   const buildDocId = parseInt(docId as string, 10);
   const router = useRouter();
   const { data: session } = useSession();
-  const { message } = App.useApp();
+  const { message, modal } = App.useApp();
   
   // State
   const [selectedSectionId, setSelectedSectionId] = useState<number | undefined>(undefined);
@@ -54,6 +55,7 @@ export default function BuildDocDetailPage() {
   const { data: buildDocData, isLoading: isLoadingDoc } = useBuildDoc(buildDocId);
   const { data: sectionsData, isLoading: isLoadingSections, refetch: refetchSections } = useBuildDocSections(buildDocId);
   const { data: templatesData } = useBuildDocSectionTemplates();
+  const { mutate: createTemplate, isPending: isCreatingTemplate } = useCreateBuildDocSectionTemplate();
   
   // Type guard for section data response
   type SectionResponse = { success: boolean; data: BuildDocSection[] };
@@ -250,7 +252,7 @@ export default function BuildDocDetailPage() {
   const handleDeleteSection = () => {
     if (!selectedSectionId) return;
     
-    Modal.confirm({
+    modal.confirm({
       title: 'Are you sure you want to delete this section?',
       content: 'This action cannot be undone and will also delete all child sections.',
       okText: 'Yes, Delete',
@@ -275,12 +277,23 @@ export default function BuildDocDetailPage() {
   const handleSaveAsTemplate = () => {
     if (!session?.user?.id || !selectedSection || !sectionContent) return;
     
-    Modal.confirm({
+    modal.confirm({
       title: 'Save as Template',
       content: 'This will save the current section content as a reusable template. Continue?',
       onOk: () => {
-        // This would call a create template action
-        message.success('Template saved successfully');
+        createTemplate({
+          title: selectedSection.title,
+          content: sectionContent,
+          isPublic: true,
+          userId: session.user.id || '' // Add fallback to empty string for TypeScript
+        }, {
+          onSuccess: () => {
+            message.success('Template saved successfully');
+          },
+          onError: () => {
+            message.error('Failed to save template');
+          }
+        });
       }
     });
   };
@@ -440,6 +453,7 @@ export default function BuildDocDetailPage() {
                         <div className="flex justify-between">
                           <Button 
                             onClick={handleSaveAsTemplate}
+                            loading={isCreatingTemplate}
                           >
                             Save as Template
                           </Button>
