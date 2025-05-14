@@ -261,9 +261,10 @@ export async function updateBuildDocSection(data: {
   title?: string; 
   content?: string; 
   order?: number;
+  parentSectionId?: number | null; // Added to support reparenting
   userId: string;
 }) {
-  const { id, title, content, order, userId } = data;
+  const { id, title, content, order, parentSectionId, userId } = data;
   
   try {
     const existingSection = await db.query.buildDocSections.findFirst({
@@ -279,6 +280,7 @@ export async function updateBuildDocSection(data: {
         ...(title && { title }),
         ...(content !== undefined && { content }),
         ...(order !== undefined && { order }),
+        ...(parentSectionId !== undefined && { parentSectionId }), // Include parentSectionId if provided
         updatedBy: userId,
         updatedAt: new Date(),
       })

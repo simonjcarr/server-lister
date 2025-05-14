@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { Button, Card, Typography, Skeleton, App, Tabs, Tree, Input, Modal, Form, Space, Divider, Dropdown, Select } from 'antd';
-import { PlusOutlined, DeleteOutlined, EditOutlined, FileOutlined, EyeOutlined, DownOutlined, FileAddOutlined, ExportOutlined } from '@ant-design/icons';
+import { PlusOutlined, DeleteOutlined, EditOutlined, FileOutlined, EyeOutlined, DownOutlined, FileAddOutlined, ExportOutlined, FolderAddOutlined } from '@ant-design/icons';
 import type { DataNode } from 'antd/es/tree';
 import ReactMarkdown from 'react-markdown';
 import rehypeHighlight from 'rehype-highlight';
@@ -122,6 +122,14 @@ export default function BuildDocDetailPage() {
   
   const treeData = createSectionTree(sections);
   
+  // Function to get all section options for parent section dropdown
+  const getSectionOptions = () => {
+    return sections.map(section => ({
+      value: section.id,
+      label: section.title
+    }));
+  };
+  
   // Effect to set section content when selection changes
   useEffect(() => {
     if (selectedSectionId) {
@@ -180,24 +188,29 @@ export default function BuildDocDetailPage() {
     if (!selectedSection) return;
     setIsEditMode(true);
     form.setFieldsValue({
-      title: selectedSection.title
+      title: selectedSection.title,
+      parentSectionId: selectedSection.parentSectionId
     });
     setIsEditModalVisible(true);
   };
   
   // Handle creating a new section
-  const handleCreateSection = (values: { title: string }) => {
+  const handleCreateSection = (values: { title: string; parentSectionId?: number }) => {
     if (!session?.user?.id) return;
+    
+    // Use newSectionParentId if it's set, otherwise use the selected parent from the form
+    const parentId = newSectionParentId !== undefined ? newSectionParentId : values.parentSectionId;
     
     createSection({
       buildDocId,
-      parentSectionId: newSectionParentId,
+      parentSectionId: parentId,
       title: values.title,
       content: '',
       userId: session.user.id
     }, {
       onSuccess: () => {
         setIsAddModalVisible(false);
+        setNewSectionParentId(undefined); // Reset the parent ID after creating
         form.resetFields();
         refetchSections();
         message.success('Section created successfully');
@@ -206,17 +219,21 @@ export default function BuildDocDetailPage() {
   };
   
   // Handle creating from template
-  const handleCreateFromTemplate = (values: { templateId: number }) => {
+  const handleCreateFromTemplate = (values: { templateId: number; parentSectionId?: number }) => {
     if (!session?.user?.id) return;
+    
+    // Use newSectionParentId if it's set, otherwise use the selected parent from the form
+    const parentId = newSectionParentId !== undefined ? newSectionParentId : values.parentSectionId;
     
     createFromTemplate({
       buildDocId,
-      parentSectionId: newSectionParentId,
+      parentSectionId: parentId,
       templateId: values.templateId,
       userId: session.user.id
     }, {
       onSuccess: () => {
         setIsAddModalVisible(false);
+        setNewSectionParentId(undefined); // Reset the parent ID after creating
         form.resetFields();
         refetchSections();
         message.success('Section created from template successfully');
@@ -225,7 +242,7 @@ export default function BuildDocDetailPage() {
   };
   
   // Handle form submission for editing sections
-  const handleFormSubmit = (values: { title: string }) => {
+  const handleFormSubmit = (values: { title: string; parentSectionId?: number }) => {
     if (isEditMode && selectedSectionId && selectedSection) {
       // Edit existing section
       updateSection({
@@ -233,6 +250,10 @@ export default function BuildDocDetailPage() {
         buildDocId,
         title: values.title,
         content: sectionContent,
+        // Conditionally include parentSectionId if it differs from the current value
+        ...(values.parentSectionId !== selectedSection.parentSectionId && { 
+          parentSectionId: values.parentSectionId === undefined ? null : values.parentSectionId 
+        }),
         userId: session?.user?.id || ''
       }, {
         onSuccess: () => {
@@ -252,9 +273,15 @@ export default function BuildDocDetailPage() {
   const handleDeleteSection = () => {
     if (!selectedSectionId) return;
     
+    // Check if this section has children
+    const childSections = sections.filter((s: BuildDocSection) => s.parentSectionId === selectedSectionId);
+    const hasChildren = childSections.length > 0;
+    
     modal.confirm({
       title: 'Are you sure you want to delete this section?',
-      content: 'This action cannot be undone and will also delete all child sections.',
+      content: hasChildren 
+        ? `This action cannot be undone and will also delete all ${childSections.length} child section(s).` 
+        : 'This action cannot be undone.',
       okText: 'Yes, Delete',
       okType: 'danger',
       cancelText: 'Cancel',
@@ -395,12 +422,34 @@ export default function BuildDocDetailPage() {
                 </Button>
               </div>
             ) : (
-              <Tree
-                showLine
-                treeData={treeData}
-                onSelect={handleSelectSection}
-                selectedKeys={selectedSectionId ? [selectedSectionId.toString()] : []}
-              />
+              <div>
+                <Tree
+                  showLine
+                  treeData={treeData}
+                  onSelect={handleSelectSection}
+                  selectedKeys={selectedSectionId ? [selectedSectionId.toString()] : []}
+                  titleRender={(nodeData) => {
+                    const nodeId = parseInt(nodeData.key.toString(), 10);
+                    return (
+                      <div className="flex items-center justify-between w-full">
+                        <span>{nodeData.title?.toString()}</span>
+                        <div className="flex items-center ml-2 opacity-0 group-hover:opacity-100 hover:opacity-100">
+                          <Button 
+                            type="text" 
+                            size="small" 
+                            icon={<FolderAddOutlined />} 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              showAddSectionModal(nodeId);
+                            }}
+                            title="Add child section"
+                          />
+                        </div>
+                      </div>
+                    );
+                  }}
+                />
+              </div>
             )}
           </Card>
         </div>
@@ -570,6 +619,29 @@ export default function BuildDocDetailPage() {
             }
           }}
         >
+          <Form.Item
+              name="parentSectionId"
+              label="Parent Section"
+              initialValue={isEditMode ? undefined : newSectionParentId}
+              help="Leave empty to create a top-level section"
+            >
+              <Select 
+                placeholder="Select a parent section" 
+                allowClear
+                options={
+                  isEditMode 
+                    // In edit mode, filter out the current section and its children
+                    // to prevent circular references
+                    ? getSectionOptions().filter(option => {
+                        const optionId = option.value as number;
+                        return optionId !== selectedSectionId;
+                      }) 
+                    : getSectionOptions()
+                }
+                disabled={!isEditMode && !!newSectionParentId} // Disable if pre-selected from tree and not in edit mode
+              />
+            </Form.Item>
+          
           {addModalType === 'template' && !isEditMode ? (
             <Form.Item
               name="templateId"

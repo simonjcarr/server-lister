@@ -157,6 +157,7 @@ export function useUpdateBuildDocSection() {
       title?: string; 
       content?: string; 
       order?: number;
+      parentSectionId?: number | null; // Added to support reparenting
       userId: string;
     }) => {
       // We don't pass buildDocId to the server action as it's already associated with the section
@@ -165,6 +166,7 @@ export function useUpdateBuildDocSection() {
         title: data.title,
         content: data.content,
         order: data.order,
+        parentSectionId: data.parentSectionId,
         userId: data.userId
       });
     },
