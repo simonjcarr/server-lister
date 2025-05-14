@@ -89,7 +89,11 @@ function SortableItem({
     backgroundColor: isSelected ? 'rgba(24, 144, 255, 0.1)' : 'transparent',
     borderRadius: '4px',
     padding: '4px 8px',
+    paddingRight: '0px',
     border: isSelected ? '1px solid #1890ff' : '1px solid transparent',
+    width: '100%',
+    boxSizing: 'border-box' as const,
+    overflow: 'visible' as const,
   };
   
   const toggleExpand = (e: React.MouseEvent) => {
@@ -99,8 +103,8 @@ function SortableItem({
   
   return (
     <div ref={setNodeRef} style={style}>
-      <div className="flex items-center justify-between w-full">
-        <div className="flex items-center flex-1">
+      <div className="flex items-center w-full">
+        <div className="flex items-center flex-grow mr-2">
           <div {...listeners} {...attributes} className="mr-2 cursor-grab">
             <HolderOutlined />
           </div>
@@ -112,22 +116,25 @@ function SortableItem({
               {isExpanded ? <DownOutlined /> : <span style={{ display: 'inline-block', transform: 'rotate(-90deg)' }}>▼</span>}
             </div>
           )}
-          <div className="flex-1" onClick={() => onSelect(id)}>
+          <div className="truncate" onClick={() => onSelect(id)}>
             <span>{title}</span>
           </div>
         </div>
-        <Button 
-          type="text" 
-          size="small" 
-          icon={<FolderAddOutlined />} 
-          onClick={(e) => {
-            e.stopPropagation();
-            onAddChild(parseInt(id, 10));
-          }}
-          title="Add child section"
-        />
+        <div className="flex-shrink-0">
+          <Button 
+            type="text" 
+            size="small" 
+            icon={<FolderAddOutlined />} 
+            onClick={(e) => {
+              e.stopPropagation();
+              onAddChild(parseInt(id, 10));
+            }}
+            title="Add child section"
+            style={{ marginRight: 0, padding: '0 8px' }}
+          />
+        </div>
       </div>
-      {children && isExpanded && <div className="pl-6 mt-2">{children}</div>}
+      {children && isExpanded && <div className="pl-6 mt-2 pr-[32px] -mr-[32px]">{children}</div>}
     </div>
   );
 }
@@ -334,18 +341,20 @@ export default function BuildDocDetailPage() {
     };
     
     return (
-      <DndContext 
-        sensors={sensors}
-        collisionDetection={closestCenter}
-        onDragEnd={handleDragEnd}
-      >
-        <SortableContext
-          items={sections.map(section => section.id.toString())}
-          strategy={verticalListSortingStrategy}
+      <div className="relative">
+        <DndContext 
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
         >
-          {renderSections(null)}
-        </SortableContext>
-      </DndContext>
+          <SortableContext
+            items={sections.map(section => section.id.toString())}
+            strategy={verticalListSortingStrategy}
+          >
+            {renderSections(null)}
+          </SortableContext>
+        </DndContext>
+      </div>
     );
   };
   
