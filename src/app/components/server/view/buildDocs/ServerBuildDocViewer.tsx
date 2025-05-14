@@ -240,11 +240,11 @@ export default function ServerBuildDocViewer({ buildDocId }: ServerBuildDocViewe
   
   // Initialize expanded sections if needed
   useEffect(() => {
-    // By default, set all sections to expanded when first loaded
+    // By default, set all sections to collapsed when first loaded
     if (sections.length > 0 && Object.keys(expandedSections).length === 0) {
       const initialExpandedState: Record<string, boolean> = {};
       sections.forEach(section => {
-        initialExpandedState[section.id.toString()] = true;
+        initialExpandedState[section.id.toString()] = false;
       });
       setExpandedSections(initialExpandedState);
     }
@@ -333,7 +333,7 @@ export default function ServerBuildDocViewer({ buildDocId }: ServerBuildDocViewe
             onAddChild={showAddSectionModal}
             isSelected={selectedSectionId === section.id}
             hasChildren={hasChildren}
-            isExpanded={expandedSections[sectionId] !== false} // Default to true if not explicitly set to false
+            isExpanded={expandedSections[sectionId] === true} // Default to false if not explicitly set to true
             onToggleExpand={handleToggleExpand}
           >
             {hasChildren && renderSections(section.id)}
