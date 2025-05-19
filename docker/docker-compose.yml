@@ -2,11 +2,11 @@ services:
   app:
     image: opshive:latest
     entrypoint: ["./scripts/app-start.sh"]
-    container_name: server-lister-app
+    container_name: opshive-app
     ports:
       - "3000:3000"
     networks:
-      - server-lister-network
+      - opshive-network
     environment:
       - NEXTAUTH_URL=${NEXTAUTH_URL}
       - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
@@ -32,7 +32,7 @@ services:
       - SMTP_PASSWORD=${SMTP_PASSWORD}
       - SMTP_FROM_EMAIL=${SMTP_FROM_EMAIL}
       - SMTP_FROM_NAME=${SMTP_FROM_NAME}
-    pull_policy: always
+    pull_policy: never
     restart: unless-stopped
     depends_on:
       - postgres
@@ -41,7 +41,7 @@ services:
     
   postgres:
     image: postgres:15
-    container_name: server-lister-postgres
+    container_name: opshive-postgres
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
@@ -51,30 +51,30 @@ services:
     volumes:
       - postgres-data:/var/lib/postgresql/data
     networks:
-      - server-lister-network
+      - opshive-network
     restart: unless-stopped
 
   redis:
     image: redis:alpine
-    container_name: server-lister-redis
+    container_name: opshive-redis
     command: ${REDIS_PASSWORD:+--requirepass ${REDIS_PASSWORD}}
     ports:
       - "${REDIS_PORT:-6379}:6379"
     volumes:
       - redis-data:/data
     networks:
-      - server-lister-network
+      - opshive-network
     restart: unless-stopped
 
   dex:
     image: dexidp/dex:latest
-    container_name: server-lister-dex
+    container_name: opshive-dex
     ports:
       - "${DEX_PORT:-5556}:5556"
     volumes:
       - ./dex-config.yaml:/etc/dex/config.yaml
     networks:
-      - server-lister-network
+      - opshive-network
     restart: unless-stopped
     environment:
       - CLIENT_ID=${AUTH_CLIENT_ID}
@@ -82,28 +82,28 @@ services:
 
   # mailhog:
   #   image: mailhog/mailhog
-  #   container_name: server-lister-mailhog
+  #   container_name: opshive-mailhog
   #   ports:
   #     - "${SMTP_PORT:-1025}:1025"
   #     - "${MAILHOG_UI_PORT:-8025}:8025"
   #   networks:
-  #     - server-lister-network
+  #     - opshive-network
   #   restart: unless-stopped
 
   # drawio:
   #   image: jgraph/drawio
-  #   container_name: server-lister-drawio
+  #   container_name: opshive-drawio
   #   ports:
   #     - "${DRAWIO_PORT:-8080}:8080"
   #   networks:
-  #     - server-lister-network
+  #     - opshive-network
   #   restart: unless-stopped
   #   environment:
   #     - DRAWIO_BASE_URL=/drawio
 
 networks:
-  server-lister-network:
-    name: server-lister-network
+  opshive-network:
+    name: opshive-network
 
 volumes:
   postgres-data:
