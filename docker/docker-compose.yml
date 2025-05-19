@@ -1,0 +1,110 @@
+services:
+  app:
+    image: opshive:latest
+    entrypoint: ["./scripts/app-start.sh"]
+    container_name: server-lister-app
+    ports:
+      - "3000:3000"
+    networks:
+      - server-lister-network
+    environment:
+      - NEXTAUTH_URL=${NEXTAUTH_URL}
+      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
+      - NEXTAUTH_URL_INTERNAL=${NEXTAUTH_URL_INTERNAL}
+      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
+      - DATABASE_URL=${DATABASE_URL}
+      - OIDC_ISSUER_URL=${OIDC_ISSUER_URL}
+      - AUTH_CLIENT_ID=${AUTH_CLIENT_ID}
+      - AUTH_CLIENT_SECRET=${AUTH_CLIENT_SECRET}
+      - REDIS_URL=${REDIS_URL}
+      - API_URL=${API_URL}
+      - SCAN_TOKEN=${SCAN_TOKEN}
+      - DRAWIO_URL=${DRAWIO_URL}
+      - REDIS_USER=${REDIS_USER}
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - REDIS_URL=${REDIS_URL}
+      - API_URL=${API_URL}
+      - SCAN_TOKEN=${SCAN_TOKEN}
+      - DRAWIO_URL=${DRAWIO_URL}
+      - SMTP_HOST=${SMTP_HOST}
+      - SMTP_PORT=${SMTP_PORT}
+      - SMTP_USER=${SMTP_USER}
+      - SMTP_PASSWORD=${SMTP_PASSWORD}
+      - SMTP_FROM_EMAIL=${SMTP_FROM_EMAIL}
+      - SMTP_FROM_NAME=${SMTP_FROM_NAME}
+    pull_policy: always
+    restart: unless-stopped
+    depends_on:
+      - postgres
+      - redis
+      - dex
+    
+  postgres:
+    image: postgres:15
+    container_name: server-lister-postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-ims}
+    ports:
+      - "${POSTGRES_PORT:-5440}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - server-lister-network
+    restart: unless-stopped
+
+  redis:
+    image: redis:alpine
+    container_name: server-lister-redis
+    command: ${REDIS_PASSWORD:+--requirepass ${REDIS_PASSWORD}}
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - server-lister-network
+    restart: unless-stopped
+
+  dex:
+    image: dexidp/dex:latest
+    container_name: server-lister-dex
+    ports:
+      - "${DEX_PORT:-5556}:5556"
+    volumes:
+      - ./dex-config.yaml:/etc/dex/config.yaml
+    networks:
+      - server-lister-network
+    restart: unless-stopped
+    environment:
+      - CLIENT_ID=${AUTH_CLIENT_ID}
+      - CLIENT_SECRET=${AUTH_CLIENT_SECRET}
+
+  # mailhog:
+  #   image: mailhog/mailhog
+  #   container_name: server-lister-mailhog
+  #   ports:
+  #     - "${SMTP_PORT:-1025}:1025"
+  #     - "${MAILHOG_UI_PORT:-8025}:8025"
+  #   networks:
+  #     - server-lister-network
+  #   restart: unless-stopped
+
+  # drawio:
+  #   image: jgraph/drawio
+  #   container_name: server-lister-drawio
+  #   ports:
+  #     - "${DRAWIO_PORT:-8080}:8080"
+  #   networks:
+  #     - server-lister-network
+  #   restart: unless-stopped
+  #   environment:
+  #     - DRAWIO_BASE_URL=/drawio
+
+networks:
+  server-lister-network:
+    name: server-lister-network
+
+volumes:
+  postgres-data:
+  redis-data:

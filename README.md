@@ -51,6 +51,46 @@ To learn more about Next.js, take a look at the following resources:
 
 You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
 
+## Docker Deployment
+
+You can deploy this application using Docker:
+
+### Building the Docker Image
+
+```bash
+docker build -t server-lister .
+```
+
+### Running the Container with Docker Compose
+
+A `docker-compose.yml` file is provided to easily run the application with PostgreSQL and Redis:
+
+```bash
+docker-compose up -d
+```
+
+This will start:
+- A PostgreSQL database container
+- A Redis container for job queues and caching
+- The application container
+
+The application will be available at http://localhost:3000
+
+### Environment Variables
+
+The application requires the following environment variables:
+
+- `DATABASE_URL`: PostgreSQL connection string
+- `POSTGRES_USER`: PostgreSQL user
+- `POSTGRES_PASSWORD`: PostgreSQL password
+- `POSTGRES_DB`: PostgreSQL database name
+- `POSTGRES_PORT`: PostgreSQL port
+- `REDIS_URL`: Redis connection string
+- `REDIS_USER`: Redis user (if applicable)
+- `REDIS_PASSWORD`: Redis password (if applicable)
+
+These can be set in a `.env` file for local development, or in the Docker Compose file for Docker deployment.
+
 ## Deploy on Vercel
 
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
