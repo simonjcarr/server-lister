@@ -14,6 +14,7 @@ services:
       - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
       - DATABASE_URL=${DATABASE_URL}
       - OIDC_ISSUER_URL=${OIDC_ISSUER_URL}
+      - PUBLIC_OIDC_ISSUER_URL=${PUBLIC_OIDC_ISSUER_URL}
       - AUTH_CLIENT_ID=${AUTH_CLIENT_ID}
       - AUTH_CLIENT_SECRET=${AUTH_CLIENT_SECRET}
       - REDIS_URL=${REDIS_URL}
@@ -72,7 +73,7 @@ services:
     ports:
       - "${DEX_PORT:-5556}:5556"
     volumes:
-      - ./dex-config.yaml:/etc/dex/config.yaml
+      - ./dex-config.yaml:/etc/dex/config.docker.yaml
     networks:
       - opshive-network
     restart: unless-stopped

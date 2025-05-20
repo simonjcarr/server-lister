@@ -7,6 +7,7 @@
 #   sleep 2
 # done
 
+
 # Migrate the database
 echo "Running database migrations..."
 npm run db:generate
